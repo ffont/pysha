@@ -6,9 +6,16 @@ import cairo
 import numpy
 
 
+try:
+    from settings import MIDI_OUT_DEVICE_NAME, PUSH_MIDI_DEVICE_NAME, USE_PUSH2_DISPLAY
+except ImportError:
+    MIDI_OUT_DEVICE_NAME = "USB MIDI Device"
+    USE_PUSH2_DISPLAY = True
+    PUSH_MIDI_DEVICE_NAME = None
+
+
 # Configure MIDI output port. If Deckard's Dream device is found, send messages to this device.
 midi_outport = None
-MIDI_OUT_DEVICE_NAME = u"USB MIDI Device"
 print('Available MIDI device names:')
 for name in mido.get_output_names():
     print('\t{0}'.format(name))
@@ -20,7 +27,7 @@ except IOError:
     midi_outport = mido.open_output('Push2App', virtual=True)
 
 
-push = push2_python.Push2()
+push = push2_python.Push2(push_midi_port_name=PUSH_MIDI_DEVICE_NAME)
 push.pads.set_polyphonic_aftertouch()
 push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
 push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'white')
@@ -139,10 +146,11 @@ def draw_pads():
 def draw_ui():
     draw_pads()
 
-    encoder_value = encoders_state[last_selected_encoder]['value']
-    encoder_color = encoders_state[last_selected_encoder]['color']
-    frame = generate_display_frame(encoder_value, encoder_color, last_selected_encoder)
-    push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB565)
+    if USE_PUSH2_DISPLAY:
+        encoder_value = encoders_state[last_selected_encoder]['value']
+        encoder_color = encoders_state[last_selected_encoder]['color']
+        frame = generate_display_frame(encoder_value, encoder_color, last_selected_encoder)
+        push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB565)
 
 
 @push2_python.on_pad_pressed()
@@ -186,4 +194,4 @@ def on_octave_down(push):
 print('App runnnig...')
 while True:
     draw_ui()
-    time.sleep(1.0/60)  # Sart drawing loop, aim at ~30fps
+    time.sleep(1.0/30)  # Sart drawing loop, aim at ~30fps
