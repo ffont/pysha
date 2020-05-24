@@ -14,7 +14,7 @@ WARNING: current implementation is a quick hack. I should find some time to orga
 
 ## Instructions for have this running on a RaspberryPi
 
-These are instructions to have the script running on a RapsberryPi and load at startup. I'm using this with a RaspberryPi2, although the power does not seem to be enough to do proper drawing on screen. This instructions might not be accurate, but hopefully will work in the future.
+These are instructions to have the script running on a RapsberryPi and load at startup. I'm using this with a RaspberryPi2 and Raspbian 2020-02-13. These instructions might not be accurate, but are hopefully useful. It worked for me!
 
 1. Install system dependencies
 ```
