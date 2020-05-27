@@ -12,12 +12,15 @@ except ImportError:
     MIDI_OUT_DEVICE_NAME = "USB MIDI Device"
     USE_PUSH2_DISPLAY = True
     PUSH_MIDI_DEVICE_NAME = None
+    MIDI_IN_MERGE_DEVICE_NAME = None
 
 TARGET_FRAME_RATE = 60 # fps
 actual_frame_rate = 0
 current_frame_rate_measurement = 0
 current_frame_rate_measurement_second = 0
 
+
+print('Configuring MIDI...')
 
 # Configure MIDI output port. If Deckard's Dream device is found, send messages to this device.
 midi_outport = None
@@ -29,10 +32,34 @@ try:
     print('Will send MIDI to port named "{0}"'.format(MIDI_OUT_DEVICE_NAME))
 except IOError:
     print('Could not connect to MIDI output port, using virtual MIDI out port')
-    midi_outport = mido.open_output('Push2App', virtual=True)
+    midi_outport = mido.open_output('Push2StandaloneController', virtual=True)
 
 
-print('Configuring app...')
+def midi_in_handler(msg):
+    global midi_outport
+    # Forward message to the MIDI out
+    midi_outport.send(msg)
+
+    # TODO: update internal state with notes pressed so these appear in Push2 as well
+    """
+    if msg.type == "note_on":
+        key = get_pad_state_key(pad_ij)
+        PADS_STATE[key]['state'] = PAD_STATE_ON
+
+    elif msg.type == "note_off":
+        key = get_pad_state_key(pad_ij)
+        PADS_STATE[key]['state'] = PAD_STATE_ON
+    """
+
+
+if MIDI_IN_MERGE_DEVICE_NAME is not None:
+    midi_in = mido.open_input(MIDI_IN_MERGE_DEVICE_NAME)
+    midi_in.callback = midi_in_handler
+
+
+print('Configuring Push...')
+
+# Configure push
 push = push2_python.Push2(push_midi_port_name=PUSH_MIDI_DEVICE_NAME)
 push.pads.set_polyphonic_aftertouch()
 push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
