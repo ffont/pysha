@@ -32,6 +32,7 @@ except IOError:
     midi_outport = mido.open_output('Push2App', virtual=True)
 
 
+print('Configuring app...')
 push = push2_python.Push2(push_midi_port_name=PUSH_MIDI_DEVICE_NAME)
 push.pads.set_polyphonic_aftertouch()
 push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
@@ -83,31 +84,8 @@ def generate_display_frame(encoder_value, encoder_color, encoder_name):
     ctx.move_to(10, font_size * 1.5)
     ctx.show_text("{0} fps".format(actual_frame_rate))
 
-
     buf = surface.get_data()
     return numpy.ndarray(shape=(HEIGHT, WIDTH), dtype=numpy.uint16, buffer=buf).transpose()
-
-
-# Set up action handlers to react to encoder touches and rotation
-@push2_python.on_encoder_rotated()
-def on_encoder_rotated(push, encoder_name, increment):
-    def update_encoder_value(encoder_idx, increment):
-        updated_value = int(encoders_state[encoder_idx]['value'] + increment)
-        if updated_value < 0:
-            encoders_state[encoder_idx]['value'] = 0
-        elif updated_value > max_encoder_value:
-            encoders_state[encoder_idx]['value'] = max_encoder_value
-        else:
-            encoders_state[encoder_idx]['value'] = updated_value
-
-    update_encoder_value(encoder_name, increment)
-    global last_selected_encoder
-    last_selected_encoder = encoder_name
-
-@push2_python.on_encoder_touched()
-def on_encoder_touched(push, encoder_name):
-    global last_selected_encoder
-    last_selected_encoder = encoder_name
 
 
 def get_pad_state_key(pad_ij):
@@ -127,7 +105,15 @@ def get_currently_played_midi_notes():
     return [pad['midi_note'] for pad in PADS_STATE.values() if pad['state'] == PAD_STATE_ON]
 
 
-def draw_pads():
+def update_push2_display():
+    if USE_PUSH2_DISPLAY:
+        encoder_value = encoders_state[last_selected_encoder]['value']
+        encoder_color = encoders_state[last_selected_encoder]['color']
+        frame = generate_display_frame(encoder_value, encoder_color, last_selected_encoder)
+        push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB565)
+
+
+def update_push2_pads():
     global current_color_matrix
 
     color_matrix = []
@@ -154,39 +140,56 @@ def draw_pads():
         current_color_matrix = color_matrix
 
 
-def draw_ui():
-    draw_pads()
-
-    if USE_PUSH2_DISPLAY:
-        encoder_value = encoders_state[last_selected_encoder]['value']
-        encoder_color = encoders_state[last_selected_encoder]['color']
-        frame = generate_display_frame(encoder_value, encoder_color, last_selected_encoder)
-        push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB565)
+def update_push2_buttons():
+    pass
 
 
+# Set up action handlers to react to encoder touches and rotation
+@push2_python.on_encoder_rotated()
+def on_encoder_rotated(push, encoder_name, increment):
+    def update_encoder_value(encoder_idx, increment):
+        updated_value = int(encoders_state[encoder_idx]['value'] + increment)
+        if updated_value < 0:
+            encoders_state[encoder_idx]['value'] = 0
+        elif updated_value > max_encoder_value:
+            encoders_state[encoder_idx]['value'] = max_encoder_value
+        else:
+            encoders_state[encoder_idx]['value'] = updated_value
+
+    update_encoder_value(encoder_name, increment)
+    global last_selected_encoder
+    last_selected_encoder = encoder_name
+
+
+@push2_python.on_encoder_touched()
+def on_encoder_touched(push, encoder_name):
+    global last_selected_encoder
+    last_selected_encoder = encoder_name
+
+
+# Set up action handlers to react to pads being pressed and released
 @push2_python.on_pad_pressed()
 def on_pad_pressed(push, pad_n, pad_ij, velocity):
     key = get_pad_state_key(pad_ij)
     PADS_STATE[key]['state'] = PAD_STATE_ON
-    msg = mido.Message(
-        'note_on', note=pad_ij_to_midi_note(pad_ij), velocity=velocity)
+    msg = mido.Message('note_on', note=pad_ij_to_midi_note(pad_ij), velocity=velocity)
     midi_outport.send(msg)
+    update_push2_pads()
 
 
 @push2_python.on_pad_released()
 def on_pad_released(push, pad_n, pad_ij, velocity):
     key = get_pad_state_key(pad_ij)
     PADS_STATE[key]['state'] = PAD_STATE_OFF
-    msg = mido.Message(
-        'note_off', note=pad_ij_to_midi_note(pad_ij), velocity=velocity)
+    msg = mido.Message('note_off', note=pad_ij_to_midi_note(pad_ij), velocity=velocity)
     midi_outport.send(msg)
+    update_push2_pads()
 
 
 @push2_python.on_pad_aftertouch()
 def on_pad_aftertouch(push, pad_n, pad_ij, velocity):
     # Don't change pad state here, just send the MIDI value
-    msg = mido.Message(
-        'polytouch', note=pad_ij_to_midi_note(pad_ij), value=velocity)
+    msg = mido.Message('polytouch', note=pad_ij_to_midi_note(pad_ij), value=velocity)
     midi_outport.send(msg)
 
 
@@ -194,19 +197,23 @@ def on_pad_aftertouch(push, pad_n, pad_ij, velocity):
 def on_octave_up(push):
     global ROOT_MIDI_NOTE
     ROOT_MIDI_NOTE += 12
+    update_push2_buttons()
 
 
 @push2_python.on_button_pressed(push2_python.constants.BUTTON_OCTAVE_DOWN)
 def on_octave_down(push):
     global ROOT_MIDI_NOTE
     ROOT_MIDI_NOTE -= 12
+    update_push2_buttons()
 
 
+update_push2_pads()
 print('App runnnig...')
 while True:
     before_draw_time = time.time()
+    
     # Draw ui
-    draw_ui()
+    update_push2_display()
     
     # Frame rate measurement
     now = time.time()
@@ -216,6 +223,7 @@ while True:
         current_frame_rate_measurement = 0
         current_frame_rate_measurement_second = now
         print('{0} fps'.format(actual_frame_rate))
+    
     after_draw_time = time.time()
 
     # Calculate sleep time to aproximate the target frame rate
