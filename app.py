@@ -26,6 +26,11 @@ except ImportError:
     MIDI_IN_MERGE_DEVICE_NAME = None
 
 try:
+    from settings import MIDI_IN_CHANNEL
+except ImportError:
+    MIDI_IN_CHANNEL = 0
+
+try:
     from settings import TARGET_FRAME_RATE
 except ImportError:
     TARGET_FRAME_RATE = 60
@@ -47,7 +52,7 @@ class Push2StandaloneControllerApp(object):
     actual_frame_rate = 0
     current_frame_rate_measurement = 0
     current_frame_rate_measurement_second = 0
-    pads_state = {}
+    notes_being_played = []
     root_midi_note = 32
     scale_pattern = [True, False, True, False, True, True, False, True, False, True, False, True]
     encoders_state = {}
@@ -65,8 +70,12 @@ class Push2StandaloneControllerApp(object):
 
 
     def init_midi(self):
-        print('Available MIDI device names:')
+        print('Available MIDI out device names:')
         for name in mido.get_output_names():
+            print('\t{0}'.format(name))
+
+        print('Available MIDI in device names:')
+        for name in mido.get_input_names():
             print('\t{0}'.format(name))
 
         print('Configuring MIDI...')
@@ -86,43 +95,21 @@ class Push2StandaloneControllerApp(object):
 
 
     def midi_in_handler(self, msg):
-        # Forward message to the MIDI out
-        self.midi_out.send(msg)
-         
-        # Update state to light pads if needed
-        # TODO: current implementation won't work well combining MIDI input and the
-        # pads being played at the same time as there can be collisions. A better way
-        # to handle that would be to store a list of MIDI notes being currently played
-        # and act intelligently based on that
 
-        currently_played_midi_notes = self.get_currently_played_midi_notes()
-
-        if msg.type == "note_on":
-
-            if msg.note in currently_played_midi_notes:
-                # If MIDI note is the same of a note being currently played, ignore it to avoid collisions
-                # TODO: this is a work around to reduce collisions, a better way to handle that shuld be implemented
-                return
-
-            # Check in PAD's state for pads assigned to this not and light them up
-            pad_keys = self.get_pad_keys_assigned_to_midi_note(msg.note)
-            for pad_key in pad_keys:
-                self.pads_state[pad_key]['state'] == PAD_STATE_ON
-
-        elif msg.type == "note_off":
-
-            if msg.note in currently_played_midi_notes:
-                # If MIDI note is the same of a note being currently played, ignore it to avoid collisions
-                # TODO: this is a work around to reduce collisions, a better way to handle that shuld be implemented
-                return
-
-            # Check in PAD's state for pads assigned to this not and light them of
-            pad_keys = self.get_pad_keys_assigned_to_midi_note(msg.note)
-            for pad_key in pad_keys:
-                self.pads_state[pad_key]['state'] == PAD_STATE_OFF
+        if hasattr(msg, 'channel') and msg.channel == MIDI_IN_CHANNEL:  # This will rule out sysex and other "strange" messages that don't have channel info
+            # Forward message to the MIDI out
+            self.midi_out.send(msg)
             
-        self.update_push2_pads()
-        
+            # Update the list of notes being currently played so push2 pads can be updated accordingly
+            if msg.type == "note_on":
+                if msg.velocity == 0:
+                    self.remove_note_being_played(msg.note, self.midi_in.name)
+                else:
+                    self.add_note_being_played(msg.note, self.midi_in.name)
+            elif msg.type == "note_off":
+                self.remove_note_being_played(msg.note, self.midi_in.name)
+            self.update_push2_pads()
+
 
     def init_push(self):
         print('Configuring Push...')
@@ -138,26 +125,34 @@ class Push2StandaloneControllerApp(object):
             }
         self.last_selected_encoder = list(self.encoders_state.keys())[0]
 
-        for i in range(0, 8):
-            for j in range(0, 8):
-                state = {'state': PAD_STATE_OFF, 'midi_note': self.pad_ij_to_midi_note((i, j))}
-                self.pads_state[self.get_pad_state_key((i, j))] = state
+
+    def add_note_being_played(self, midi_note, source):
+        self.notes_being_played.append({'note': midi_note, 'source': source})
 
     
-    def get_pad_keys_assigned_to_midi_note(self, midi_note):
-        pad_keys = []
-        for key, pad in self.pads_state.items():
-            if pad['midi_note'] == midi_note:
-                pad_keys.append(key)
-        return pad_keys
-
-    
-    def get_currently_played_midi_notes(self):
-        return [pad['midi_note'] for pad in self.pads_state.values() if pad['state'] == PAD_STATE_ON]
-
+    def remove_note_being_played(self, midi_note, source):
+        self.notes_being_played = [note for note in self.notes_being_played if note['note'] != midi_note or note['source'] != source] 
+        
 
     def pad_ij_to_midi_note(self, pad_ij):
         return self.root_midi_note + ((7 - pad_ij[0]) * 5 + pad_ij[1])
+    
+    
+    def is_midi_note_root_octave(self, midi_note):
+        relative_midi_note = (midi_note - self.root_midi_note) % 12
+        return relative_midi_note == 0
+
+
+    def is_black_key_midi_note(self, midi_note):
+        relative_midi_note = (midi_note - self.root_midi_note) % 12
+        return not self.scale_pattern[relative_midi_note]
+
+
+    def is_midi_note_being_played(self, midi_note):
+        for note in self.notes_being_played:
+            if note['note'] == midi_note:
+                return True
+        return False
 
 
     def get_pad_state_key(self, pad_ij):
@@ -169,19 +164,15 @@ class Push2StandaloneControllerApp(object):
         for i in range(0, 8):
             row_colors = []
             for j in range(0, 8):
-                key = self.get_pad_state_key((i, j))
-                if self.pads_state[key]['state'] == PAD_STATE_ON:
-                    row_colors.append('green')
-                elif self.pads_state[key]['midi_note'] in self.get_currently_played_midi_notes():
-                    row_colors.append('green')
-                elif (self.pads_state[key]['midi_note'] - self.root_midi_note) % 12 == 0:
-                    row_colors.append('yellow')
-                else:
-                    relative_midi_note = (self.pads_state[key]['midi_note'] - self.root_midi_note) % 12
-                    if self.scale_pattern[relative_midi_note]:
-                        row_colors.append('white')
-                    else:
-                        row_colors.append('black')
+                cell_color = 'white'
+                corresponding_midi_note = self.pad_ij_to_midi_note([i, j])
+                if self.is_black_key_midi_note(corresponding_midi_note): 
+                    cell_color = 'black'
+                if self.is_midi_note_root_octave(corresponding_midi_note):
+                    cell_color = 'yellow'
+                if self.is_midi_note_being_played(corresponding_midi_note):
+                    cell_color = 'green'
+                row_colors.append(cell_color)
             color_matrix.append(row_colors)
         
         self.push.pads.set_pads_color(color_matrix)
@@ -275,31 +266,31 @@ class Push2StandaloneControllerApp(object):
         self.last_selected_encoder = encoder_name
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
-        key = self.get_pad_state_key(pad_ij)
-        self.pads_state[key]['state'] = PAD_STATE_ON
-        msg = mido.Message('note_on', note=self.pad_ij_to_midi_note(pad_ij), velocity=velocity)
+        midi_note = self.pad_ij_to_midi_note(pad_ij)
+        self.add_note_being_played(midi_note, 'push')
+        msg = mido.Message('note_on', note=midi_note, velocity=velocity)
         self.midi_out.send(msg)
         self.update_push2_pads()
 
     def on_pad_released(self, pad_n, pad_ij, velocity):
-        key = self.get_pad_state_key(pad_ij)
-        self.pads_state[key]['state'] = PAD_STATE_OFF
-        msg = mido.Message('note_off', note=self.pad_ij_to_midi_note(pad_ij), velocity=velocity)
+        midi_note = self.pad_ij_to_midi_note(pad_ij)
+        self.remove_note_being_played(midi_note, 'push')
+        msg = mido.Message('note_off', note=midi_note, velocity=velocity)
         self.midi_out.send(msg)
         self.update_push2_pads()
 
     def on_pad_aftertouch(self, pad_n, pad_ij, velocity):
-        # Don't change pad state here, just send the MIDI value
-        msg = mido.Message('polytouch', note=self.pad_ij_to_midi_note(pad_ij), value=velocity)
+        midi_note = self.pad_ij_to_midi_note(pad_ij)
+        msg = mido.Message('polytouch', note=midi_note, value=velocity)
         self.midi_out.send(msg)
 
     def on_octave_up(self):
         self.root_midi_note += 12
-        self.update_push2_buttons()
+        self.update_push2_pads()
 
     def on_octave_down(self):
         self.root_midi_note -= 12
-        self.update_push2_buttons()
+        self.update_push2_pads()
 
 
 # Set up action handlers to react to encoder touches and rotation
