@@ -7,12 +7,25 @@ import numpy
 
 
 try:
-    from settings import MIDI_OUT_DEVICE_NAME, PUSH_MIDI_DEVICE_NAME, USE_PUSH2_DISPLAY
+    from settings import MIDI_OUT_DEVICE_NAME
 except ImportError:
     MIDI_OUT_DEVICE_NAME = "USB MIDI Device"
-    USE_PUSH2_DISPLAY = True
+   
+try:
+    from settings import PUSH_MIDI_DEVICE_NAME
+except ImportError:
     PUSH_MIDI_DEVICE_NAME = None
+
+try:
+    from settings import USE_PUSH2_DISPLAY
+except ImportError:
+    USE_PUSH2_DISPLAY = True
+
+try:
+    from settings import MIDI_IN_MERGE_DEVICE_NAME
+except ImportError:
     MIDI_IN_MERGE_DEVICE_NAME = None
+
 
 TARGET_FRAME_RATE = 60 # fps
 actual_frame_rate = 0
