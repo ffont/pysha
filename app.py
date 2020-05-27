@@ -13,6 +13,11 @@ except ImportError:
     USE_PUSH2_DISPLAY = True
     PUSH_MIDI_DEVICE_NAME = None
 
+TARGET_FRAME_RATE = 60 # fps
+actual_frame_rate = 0
+current_frame_rate_measurement = 0
+current_frame_rate_measurement_second = 0
+
 
 # Configure MIDI output port. If Deckard's Dream device is found, send messages to this device.
 midi_outport = None
@@ -47,10 +52,9 @@ for encoder_name in push.encoders.available_names:
         'color': [random.random(), random.random(), random.random()],
     }
 last_selected_encoder = list(encoders_state.keys())[0]
-
 current_color_matrix = None
 
-# Function that generates the contents of the frame do be displayed
+
 def generate_display_frame(encoder_value, encoder_color, encoder_name):
 
     # Prepare cairo canvas
@@ -71,11 +75,18 @@ def generate_display_frame(encoder_value, encoder_color, encoder_name):
     ctx.move_to(10, font_size * 2)
     ctx.show_text("{0}: {1}".format(encoder_name, encoder_value))
 
-    # Turn canvas into numpy array compatible with push.display.display_frame method
+    # Add frame rate indicator
+    ctx.set_source_rgb(1, 1, 1)
+    font_size = HEIGHT//8
+    ctx.set_font_size(font_size)
+    ctx.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+    ctx.move_to(10, font_size * 1.5)
+    ctx.show_text("{0} fps".format(actual_frame_rate))
+
+
     buf = surface.get_data()
-    frame = numpy.ndarray(shape=(HEIGHT, WIDTH), dtype=numpy.uint16, buffer=buf)
-    frame = frame.transpose()
-    return frame
+    return numpy.ndarray(shape=(HEIGHT, WIDTH), dtype=numpy.uint16, buffer=buf).transpose()
+
 
 # Set up action handlers to react to encoder touches and rotation
 @push2_python.on_encoder_rotated()
@@ -193,5 +204,21 @@ def on_octave_down(push):
 
 print('App runnnig...')
 while True:
+    before_draw_time = time.time()
+    # Draw ui
     draw_ui()
-    time.sleep(1.0/30)  # Sart drawing loop, aim at ~30fps
+    
+    # Frame rate measurement
+    now = time.time()
+    current_frame_rate_measurement += 1
+    if time.time() - current_frame_rate_measurement_second > 1.0:
+        actual_frame_rate = current_frame_rate_measurement
+        current_frame_rate_measurement = 0
+        current_frame_rate_measurement_second = now
+        print('{0} fps'.format(actual_frame_rate))
+    after_draw_time = time.time()
+
+    # Calculate sleep time to aproximate the target frame rate
+    sleep_time = (1.0 / TARGET_FRAME_RATE) - (after_draw_time - before_draw_time)
+    if sleep_time > 0:
+        time.sleep(sleep_time)
