@@ -484,6 +484,10 @@ class Push2StandaloneControllerApp(object):
         self.pads_need_update = True  # Using async update method because we don't really need immediate response here
         self.buttons_need_update = True
 
+    def on_touchstrip(self, value):
+        msg = mido.Message('pitchwheel', pitch=value)
+        self.send_midi(msg)
+
 
 # Set up action handlers to react to encoder touches and rotation
 @push2_python.on_encoder_rotated()
@@ -515,6 +519,11 @@ def on_octave_up(push):
 @push2_python.on_button_pressed(push2_python.constants.BUTTON_OCTAVE_DOWN)
 def on_octave_down(push):
     app.on_octave_down()
+
+
+@push2_python.on_touchstrip()
+def on_touchstrip(push, value):
+    app.on_touchstrip(value)
 
 
 if __name__ == "__main__":
