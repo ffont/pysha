@@ -6,9 +6,9 @@ import cairo
 import numpy
 
 try:
-    from settings import MIDI_OUT_DEVICE_NAME
+    from settings import MIDI_OUT_DEFAULT_DEVICE_NAME
 except ImportError:
-    MIDI_OUT_DEVICE_NAME = "USB MIDI Device"
+    MIDI_OUT_DEFAULT_DEVICE_NAME = None
    
 try:
     from settings import PUSH_MIDI_DEVICE_NAME
@@ -21,14 +21,19 @@ except ImportError:
     USE_PUSH2_DISPLAY = True
 
 try:
-    from settings import MIDI_IN_MERGE_DEVICE_NAME
+    from settings import MIDI_IN_MERGE_DEFAULT_DEVICE_NAME
 except ImportError:
-    MIDI_IN_MERGE_DEVICE_NAME = None
+    MIDI_IN_MERGE_DEFAULT_DEVICE_NAME = None
 
 try:
-    from settings import MIDI_IN_CHANNEL
+    from settings import MIDI_IN_DEFAULT_CHANNEL
 except ImportError:
-    MIDI_IN_CHANNEL = 0
+    MIDI_IN_DEFAULT_CHANNEL = 0
+
+try:
+    from settings import MIDI_OUT_DEFAULT_CHANNEL
+except ImportError:
+    MIDI_OUT_DEFAULT_CHANNEL = 0
 
 try:
     from settings import TARGET_FRAME_RATE
@@ -43,7 +48,13 @@ class Push2StandaloneControllerApp(object):
 
     # midi
     midi_out = None
+    available_midi_out_device_names = []
+    midi_out_channel = MIDI_OUT_DEFAULT_CHANNEL  # 0-15
+    
     midi_in = None
+    available_midi_in_device_names = []
+    midi_in_channel = MIDI_IN_DEFAULT_CHANNEL  # 0-15
+    
 
     # push
     push = None
@@ -61,7 +72,8 @@ class Push2StandaloneControllerApp(object):
 
 
     def __init__(self):
-        self.init_midi()
+        self.init_midi_in()
+        self.init_midi_out()
         self.init_push()
         self.init_state()
 
@@ -69,36 +81,60 @@ class Push2StandaloneControllerApp(object):
         self.update_push2_buttons()
 
 
-    def init_midi(self):
-        print('Available MIDI out device names:')
-        for name in mido.get_output_names():
-            print('\t{0}'.format(name))
+    def init_midi_in(self, device_name=MIDI_IN_MERGE_DEFAULT_DEVICE_NAME):
+        print('Configuring MIDI in...')
+        self.available_midi_in_device_names = mido.get_input_names()
+        
+        if device_name is not None:
+            if self.midi_in is not None:
+                    self.midi_in.callback = None  # Disable current callback (if any)
+            try:
+                self.midi_in = mido.open_input(device_name)
+                self.midi_in.callback = self.midi_in_handler
+                print('Receiving MIDI in from "{0}"'.format(device_name))
+            except IOError:
+                print('Could not connect to MIDI input port "{0}"\nAvailable device names:'.format(device_name))
+                for name in self.available_midi_in_device_names:
+                    print(' - {0}'.format(name))
+        else:
+            if self.midi_in is not None:
+                self.midi_in.callback = None # Disable current callback (if any)
+                self.midi_in = None
+            
+        if self.midi_in is None:
+            print('Not receiving from any MIDI input')
 
-        print('Available MIDI in device names:')
-        for name in mido.get_input_names():
-            print('\t{0}'.format(name))
 
-        print('Configuring MIDI...')
+    def init_midi_out(self, device_name=MIDI_OUT_DEFAULT_DEVICE_NAME):
+        print('Configuring MIDI out...')
+        self.available_midi_out_device_names = mido.get_output_names()
        
-        # MIDI out
-        try:
-            self.midi_out = mido.open_output(MIDI_OUT_DEVICE_NAME)
-            print('Will send MIDI to port named "{0}"'.format(MIDI_OUT_DEVICE_NAME))
-        except IOError:
-            print('Could not connect to MIDI output port, using virtual MIDI out port')
-            self.midi_out = mido.open_output('Push2StandaloneControllerApp', virtual=True)
+        if device_name is not None:
+            try:
+                self.midi_out = mido.open_output(device_name)
+                print('Will send MIDI to "{0}"'.format(device_name))
+            except IOError as e:
+                print('Could not connect to MIDI output port "{0}"\nAvailable device names:'.format(device_name))
+                for name in self.available_midi_out_device_names:
+                    print(' - {0}'.format(name))
+        else:
+            if self.midi_out is not None:
+                self.midi_out = None
 
-        # MIDI in
-        if MIDI_IN_MERGE_DEVICE_NAME is not None:
-            self.midi_in = mido.open_input(MIDI_IN_MERGE_DEVICE_NAME)
-            self.midi_in.callback = self.midi_in_handler
+        if self.midi_out is None:
+            print('Won\'t send MIDI to any device')
+
+
+    def send_midi(self, msg):
+        if self.midi_out is not None:
+            self.midi_out.send(msg)
 
 
     def midi_in_handler(self, msg):
 
-        if hasattr(msg, 'channel') and msg.channel == MIDI_IN_CHANNEL:  # This will rule out sysex and other "strange" messages that don't have channel info
+        if hasattr(msg, 'channel') and msg.channel == self.midi_in_channel:  # This will rule out sysex and other "strange" messages that don't have channel info
             # Forward message to the MIDI out
-            self.midi_out.send(msg)
+            self.send_midi(msg)
             
             # Update the list of notes being currently played so push2 pads can be updated accordingly
             if msg.type == "note_on":
@@ -269,20 +305,20 @@ class Push2StandaloneControllerApp(object):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
         self.add_note_being_played(midi_note, 'push')
         msg = mido.Message('note_on', note=midi_note, velocity=velocity)
-        self.midi_out.send(msg)
+        self.send_midi(msg)
         self.update_push2_pads()
 
     def on_pad_released(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
         self.remove_note_being_played(midi_note, 'push')
         msg = mido.Message('note_off', note=midi_note, velocity=velocity)
-        self.midi_out.send(msg)
+        self.send_midi(msg)
         self.update_push2_pads()
 
     def on_pad_aftertouch(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
         msg = mido.Message('polytouch', note=midi_note, value=velocity)
-        self.midi_out.send(msg)
+        self.send_midi(msg)
 
     def on_octave_up(self):
         self.root_midi_note += 12
