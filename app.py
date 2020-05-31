@@ -66,6 +66,7 @@ class Push2StandaloneControllerApp(object):
     encoders_state = {}
     pads_need_update = True
     buttons_need_update = True
+    use_poly_at = False
 
     def __init__(self):
         self.set_midi_in_channel(MIDI_IN_DEFAULT_CHANNEL)
@@ -343,8 +344,10 @@ class Push2StandaloneControllerApp(object):
                 show_title(part_x, 'ROOT NOTE')
                 show_value(part_x, self.note_number_to_name(self.root_midi_note), color)
 
-            elif i==5:  # Empty
-                pass
+            elif i==5:  # Poly AT/channel AT
+                show_title(part_x, 'AFTERTOUCH')
+                show_value(part_x, 'polyAT' if self.use_poly_at else 'channel', color)
+
             elif i==6:  # Empty
                 pass
             elif i==7:  # FPS indicator
@@ -370,7 +373,10 @@ class Push2StandaloneControllerApp(object):
                 self.set_midi_out_device_by_index(self.midi_out_tmp_device_idx)
                 self.midi_out_tmp_device_idx = None
 
-        if self.pads_need_update or not self.push.midi_is_configured():  # If MIDI not configured, make sure we try sending messages so it gets configured
+        if not self.push.midi_is_configured():  # If MIDI not configured, make sure we try sending messages so it gets configured
+            self.push.configure_midi()
+
+        if self.pads_need_update:
             self.update_push2_pads()
             self.pads_need_update = False
 
@@ -412,6 +418,14 @@ class Push2StandaloneControllerApp(object):
             if sleep_time > 0:
                 time.sleep(sleep_time)
 
+    def on_midi_push_connection_established(self):
+        # Do initial configuration of Push
+        app.update_push2_buttons()
+        app.update_push2_pads()
+        if self.use_poly_at:
+            app.push.pads.set_polyphonic_aftertouch()
+        else:
+            app.push.pads.set_channel_aftertouch()
 
     def on_encoder_rotated(self, encoder_name, increment):
 
@@ -451,6 +465,16 @@ class Push2StandaloneControllerApp(object):
             self.set_root_midi_note(self.root_midi_note + increment)
             self.pads_need_update = True  # Using async update method because we don't really need immediate response here
 
+        elif encoder_name == 'Track6 Encoder':
+            if increment >= 3:  # Only respond to "big" increments
+                if not self.use_poly_at:
+                    self.use_poly_at = True
+                    self.push.pads.set_polyphonic_aftertouch()
+            elif increment <= -3:
+                if self.use_poly_at:
+                    self.use_poly_at = False
+                    self.push.pads.set_channel_aftertouch()
+
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
         self.add_note_being_played(midi_note, 'push')
@@ -466,8 +490,13 @@ class Push2StandaloneControllerApp(object):
         self.update_push2_pads()  # Directly calling update pads method because we want user to feel feedback as quick as possible
 
     def on_pad_aftertouch(self, pad_n, pad_ij, velocity):
-        midi_note = self.pad_ij_to_midi_note(pad_ij)
-        msg = mido.Message('polytouch', note=midi_note, value=velocity)
+        if pad_n is not None:
+            # polyAT mode
+            midi_note = self.pad_ij_to_midi_note(pad_ij)
+            msg = mido.Message('polytouch', note=midi_note, value=velocity)
+        else:
+            # channel AT mode
+            msg = mido.Message('aftertouch', value=velocity)
         self.send_midi(msg)
 
     def on_octave_up(self):
@@ -524,10 +553,8 @@ def on_touchstrip(push, value):
 
 @push2_python.on_midi_connected()
 def on_midi_connected(push):
-    app.push.pads.set_polyphonic_aftertouch()
-    app.update_push2_buttons()
-    app.update_push2_pads()
-
+    app.on_midi_push_connection_established()
+    
 
 if __name__ == "__main__":
     app = Push2StandaloneControllerApp()
