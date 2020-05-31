@@ -9,11 +9,6 @@ try:
     from settings import MIDI_OUT_DEFAULT_DEVICE_NAME
 except ImportError:
     MIDI_OUT_DEFAULT_DEVICE_NAME = None
-   
-try:
-    from settings import PUSH_MIDI_DEVICE_NAME
-except ImportError:
-    PUSH_MIDI_DEVICE_NAME = None
 
 try:
     from settings import USE_PUSH2_DISPLAY
@@ -58,7 +53,6 @@ class Push2StandaloneControllerApp(object):
     midi_in_channel = 0  # 0-15
     midi_in_tmp_device_idx = None  # This is to store device names while rotating encoders
     
-
     # push
     push = None
 
@@ -84,7 +78,7 @@ class Push2StandaloneControllerApp(object):
 
     def init_midi_in(self, device_name=MIDI_IN_MERGE_DEFAULT_DEVICE_NAME):
         print('Configuring MIDI in...')
-        self.available_midi_in_device_names = mido.get_input_names()
+        self.available_midi_in_device_names = [name for name in mido.get_input_names() if 'Ableton Push' not in name]
         
         if device_name is not None:
             if self.midi_in is not None:
@@ -100,6 +94,7 @@ class Push2StandaloneControllerApp(object):
         else:
             if self.midi_in is not None:
                 self.midi_in.callback = None # Disable current callback (if any)
+                self.midi_in.close()
                 self.midi_in = None
             
         if self.midi_in is None:
@@ -108,7 +103,7 @@ class Push2StandaloneControllerApp(object):
 
     def init_midi_out(self, device_name=MIDI_OUT_DEFAULT_DEVICE_NAME):
         print('Configuring MIDI out...')
-        self.available_midi_out_device_names = mido.get_output_names()
+        self.available_midi_out_device_names = [name for name in mido.get_output_names() if 'Ableton Push' not in name]
        
         if device_name is not None:
             try:
@@ -120,6 +115,7 @@ class Push2StandaloneControllerApp(object):
                     print(' - {0}'.format(name))
         else:
             if self.midi_out is not None:
+                self.midi_out.close()
                 self.midi_out = None
 
         if self.midi_out is None:
@@ -158,6 +154,7 @@ class Push2StandaloneControllerApp(object):
 
     def send_midi(self, msg):
         if self.midi_out is not None:
+            msg = msg.copy(channel=self.midi_out_channel)
             self.midi_out.send(msg)
 
 
@@ -180,8 +177,7 @@ class Push2StandaloneControllerApp(object):
 
     def init_push(self):
         print('Configuring Push...')
-        self.push = push2_python.Push2(push_midi_port_name=PUSH_MIDI_DEVICE_NAME)
-        self.push.pads.set_polyphonic_aftertouch()
+        self.push = push2_python.Push2()
         
 
     def init_state(self):
@@ -305,7 +301,7 @@ class Push2StandaloneControllerApp(object):
                     if self.midi_in_tmp_device_idx < 0:
                         name = "None"
                     else:
-                        name = self.available_midi_in_device_names[self.midi_in_tmp_device_idx]
+                        name = "{0} {1}".format(self.midi_in_tmp_device_idx + 1, self.available_midi_in_device_names[self.midi_in_tmp_device_idx])
                 else:
                     if self.midi_in is not None:
                         name = self.midi_in.name
@@ -319,7 +315,7 @@ class Push2StandaloneControllerApp(object):
                 if self.midi_in is None:
                     color = [0.5, 0.5, 0.5]  # Gray font
                 show_title(part_x, 'IN CH')
-                show_value(part_x, self.midi_in_channel, color)
+                show_value(part_x, self.midi_in_channel + 1, color)
 
             elif i==2:  # MIDI out device
                 if self.midi_out_tmp_device_idx is not None:
@@ -327,7 +323,7 @@ class Push2StandaloneControllerApp(object):
                     if self.midi_out_tmp_device_idx < 0:
                         name = "None"
                     else:
-                        name = self.available_midi_out_device_names[self.midi_out_tmp_device_idx]
+                        name = "{0} {1}".format(self.midi_out_tmp_device_idx + 1, self.available_midi_out_device_names[self.midi_out_tmp_device_idx])
                 else:
                     if self.midi_out is not None:
                         name = self.midi_out.name
@@ -341,7 +337,7 @@ class Push2StandaloneControllerApp(object):
                 if self.midi_out is None:
                     color = [0.5, 0.5, 0.5]  # Gray font
                 show_title(part_x, 'OUT CH')
-                show_value(part_x, self.midi_out_channel, color)
+                show_value(part_x, self.midi_out_channel + 1, color)
 
             elif i==4:  # Root note
                 show_title(part_x, 'ROOT NOTE')
@@ -374,13 +370,13 @@ class Push2StandaloneControllerApp(object):
                 self.set_midi_out_device_by_index(self.midi_out_tmp_device_idx)
                 self.midi_out_tmp_device_idx = None
 
-        if self.pads_need_update:
+        if self.pads_need_update or not self.push.midi_is_configured():  # If MIDI not configured, make sure we try sending messages so it gets configured
             self.update_push2_pads()
             self.pads_need_update = False
 
         if self.buttons_need_update:
             self.update_push2_buttons()
-            self.pads_need_update = False
+            self.buttons_need_update = False
 
 
     def update_push2_display(self):
@@ -524,6 +520,13 @@ def on_octave_down(push):
 @push2_python.on_touchstrip()
 def on_touchstrip(push, value):
     app.on_touchstrip(value)
+
+
+@push2_python.on_midi_connected()
+def on_midi_connected(push):
+    app.push.pads.set_polyphonic_aftertouch()
+    app.update_push2_buttons()
+    app.update_push2_pads()
 
 
 if __name__ == "__main__":
