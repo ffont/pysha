@@ -135,10 +135,10 @@ class Push2StandaloneControllerApp(object):
     
     def set_midi_in_channel(self, channel, wrap=False):
         self.midi_in_channel = channel
-        if self.midi_in_channel < 0:
-            self.midi_in_channel = 0 if not wrap else 15
+        if self.midi_in_channel < -1:  # Use "-1" for "all channels"
+            self.midi_in_channel = -1 if not wrap else 15
         elif self.midi_in_channel > 15:
-            self.midi_in_channel = 15 if not wrap else 0
+            self.midi_in_channel = 15 if not wrap else -1
 
 
     def set_midi_out_channel(self, channel, wrap=False):
@@ -170,21 +170,23 @@ class Push2StandaloneControllerApp(object):
             self.midi_out.send(msg)
 
 
-    def midi_in_handler(self, msg):
+    def midi_in_handler(self, msg): 
 
-        if hasattr(msg, 'channel') and msg.channel == self.midi_in_channel:  # This will rule out sysex and other "strange" messages that don't have channel info
-            # Forward message to the MIDI out
-            self.send_midi(msg)
-            
-            # Update the list of notes being currently played so push2 pads can be updated accordingly
-            if msg.type == "note_on":
-                if msg.velocity == 0:
+        if hasattr(msg, 'channel'):  # This will rule out sysex and other "strange" messages that don't have channel info
+            if self.midi_in_channel == -1 or msg.channel == self.midi_in_channel:   # If midi input channel is set to -1 (all) or a specific channel
+             
+                # Forward message to the MIDI out
+                self.send_midi(msg)
+                
+                # Update the list of notes being currently played so push2 pads can be updated accordingly
+                if msg.type == "note_on":
+                    if msg.velocity == 0:
+                        self.remove_note_being_played(msg.note, self.midi_in.name)
+                    else:
+                        self.add_note_being_played(msg.note, self.midi_in.name)
+                elif msg.type == "note_off":
                     self.remove_note_being_played(msg.note, self.midi_in.name)
-                else:
-                    self.add_note_being_played(msg.note, self.midi_in.name)
-            elif msg.type == "note_off":
-                self.remove_note_being_played(msg.note, self.midi_in.name)
-            self.pads_need_update = True  # Using the async update method because we don't really need immediate response here
+                self.pads_need_update = True  # Using the async update method because we don't really need immediate response here
 
 
     def init_push(self):
@@ -338,7 +340,7 @@ class Push2StandaloneControllerApp(object):
             
             if i==0:  # MIDI in device
                 if self.midi_in_tmp_device_idx is not None:
-                    color = [0.0, 1.0, 0.0]  # Green font
+                    color = [1.0, 0.64, 0.0]  # Orange font
                     if self.midi_in_tmp_device_idx < 0:
                         name = "None"
                     else:
@@ -356,11 +358,11 @@ class Push2StandaloneControllerApp(object):
                 if self.midi_in is None:
                     color = [0.5, 0.5, 0.5]  # Gray font
                 show_title(part_x, 'IN CH')
-                show_value(part_x, self.midi_in_channel + 1, color)
+                show_value(part_x, self.midi_in_channel + 1 if self.midi_in_channel > -1 else "All", color)
 
             elif i==2:  # MIDI out device
                 if self.midi_out_tmp_device_idx is not None:
-                    color = [0.0, 1.0, 0.0]  # Green font
+                    color = [1.0, 0.64, 0.0]  # Orange font
                     if self.midi_out_tmp_device_idx < 0:
                         name = "None"
                     else:
@@ -487,7 +489,7 @@ class Push2StandaloneControllerApp(object):
                 self.midi_in_tmp_device_idx = -1  # Will use -1 for "None"
         
         elif encoder_name == push2_python.constants.ENCODER_TRACK2_ENCODER:
-            self.set_midi_in_channel(self.midi_in_channel + increment, wrap=True)
+            self.set_midi_in_channel(self.midi_in_channel + increment, wrap=False)
         
         elif encoder_name == push2_python.constants.ENCODER_TRACK3_ENCODER:
             if self.midi_out_tmp_device_idx is None:
@@ -502,7 +504,7 @@ class Push2StandaloneControllerApp(object):
                 self.midi_out_tmp_device_idx = -1  # Will use -1 for "None"
         
         elif encoder_name == push2_python.constants.ENCODER_TRACK4_ENCODER:
-            self.set_midi_out_channel(self.midi_out_channel + increment, wrap=True)
+            self.set_midi_out_channel(self.midi_out_channel + increment, wrap=False)
         
         elif encoder_name == push2_python.constants.ENCODER_TRACK5_ENCODER:
             self.set_root_midi_note(self.root_midi_note + increment)
