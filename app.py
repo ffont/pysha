@@ -46,12 +46,15 @@ class Push2StandaloneControllerApp(object):
     buttons_need_update = True
     use_poly_at = False
     rhythmic_notes_matrix = [  # Midi note layout to use for rhythmic layout mode
-        [48, 49, 50, 51],
-        [44, 45, 46, 47],
-        [40, 41, 42, 43],
-        [36, 37, 38, 39]
+        [64, 65, 66, 67, 96, 97, 98, 99],
+        [60, 61, 62, 63, 92, 93, 94, 95],
+        [56, 57, 58, 59, 88, 89, 90, 91],
+        [52, 53, 54, 55, 84, 85, 86, 87],
+        [48, 49, 50, 51, 80, 81, 82, 83],
+        [44, 45, 46, 47, 76, 77, 78, 79],
+        [40, 41, 42, 43, 72, 73, 74, 75],
+        [36, 37, 38, 39, 68, 69, 70, 71]
     ]
-
 
     def __init__(self):
         if os.path.exists('settings.json'):
@@ -216,12 +219,7 @@ class Push2StandaloneControllerApp(object):
         if self.pad_layout_mode == PAD_LAYOUT_MELODIC:
             return self.root_midi_note + ((7 - pad_ij[0]) * 5 + pad_ij[1])
         else:
-            i = pad_ij[0]
-            j = pad_ij[1]
-            if i >= 4 and j < 4:
-                return self.rhythmic_notes_matrix[i - 4][j]
-            else:
-                return None
+            return self.rhythmic_notes_matrix[pad_ij[0]][pad_ij[1]]
     
     
     def is_midi_note_root_octave(self, midi_note):
@@ -274,8 +272,14 @@ class Push2StandaloneControllerApp(object):
                     cell_color = 'black'
                     if i >= 4 and j < 4:
                         cell_color = 'orange'
-                        if self.is_midi_note_being_played(corresponding_midi_note):
-                            cell_color = 'green'
+                    elif i >= 4 and j >= 4:
+                        cell_color = 'turquoise'
+                    elif i < 4 and j < 4:
+                        cell_color = 'purple'
+                    elif i < 4 and j >= 4:
+                        cell_color = 'pink'
+                    if self.is_midi_note_being_played(corresponding_midi_note):
+                        cell_color = 'green'
 
                 row_colors.append(cell_color)
             color_matrix.append(row_colors)
