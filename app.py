@@ -155,7 +155,8 @@ class Push2StandaloneControllerApp(object):
 
     def send_midi(self, msg):
         if self.midi_out is not None:
-            msg = msg.copy(channel=self.midi_out_channel)
+            if hasattr(msg, 'channel'):
+                msg = msg.copy(channel=self.midi_out_channel)  # If message has a channel attribute, update it
             self.midi_out.send(msg)
 
 
