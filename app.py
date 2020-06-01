@@ -10,6 +10,8 @@ import os
 
 PAD_STATE_ON = True
 PAD_STATE_OFF = False
+PAD_LAYOUT_MELODIC = 'melodic'
+PAD_LAYOUT_RHYTHMIC = 'rhythmic'
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
 
 
@@ -38,10 +40,17 @@ class Push2StandaloneControllerApp(object):
     notes_being_played = []
     root_midi_note = 0
     scale_pattern = [True, False, True, False, True, True, False, True, False, True, False, True]
+    pad_layout_mode = None
     encoders_state = {}
     pads_need_update = True
     buttons_need_update = True
     use_poly_at = False
+    rhythmic_notes_matrix = [  # Midi note layout to use for rhythmic layout mode
+        [48, 49, 50, 51],
+        [44, 45, 46, 47],
+        [40, 41, 42, 43],
+        [36, 37, 38, 39]
+    ]
 
 
     def __init__(self):
@@ -56,6 +65,7 @@ class Push2StandaloneControllerApp(object):
         self.set_root_midi_note(settings.get('root_midi_note', 64))
         self.target_frame_rate = settings.get('target_frame_rate', 60)
         self.use_push2_display = settings.get('use_push2_display', True)
+        self.pad_layout_mode = settings.get('pad_layout_mode', PAD_LAYOUT_MELODIC)
 
         self.init_midi_in(device_name=settings.get('default_midi_in_device_name', None))
         self.init_midi_out(device_name=settings.get('default_midi_out_device_name', None))
@@ -72,7 +82,8 @@ class Push2StandaloneControllerApp(object):
             'use_push2_display': self.use_push2_display,
             'target_frame_rate': self.target_frame_rate,
             'use_poly_at': self.use_poly_at,
-            'root_midi_note': self.root_midi_note
+            'root_midi_note': self.root_midi_note,
+            'pad_layout_mode': self.pad_layout_mode
         }, open('settings.json', 'w'))
 
 
@@ -200,7 +211,15 @@ class Push2StandaloneControllerApp(object):
         
 
     def pad_ij_to_midi_note(self, pad_ij):
-        return self.root_midi_note + ((7 - pad_ij[0]) * 5 + pad_ij[1])
+        if self.pad_layout_mode == PAD_LAYOUT_MELODIC:
+            return self.root_midi_note + ((7 - pad_ij[0]) * 5 + pad_ij[1])
+        else:
+            i = pad_ij[0]
+            j = pad_ij[1]
+            if i >= 4 and j < 4:
+                return self.rhythmic_notes_matrix[i - 4][j]
+            else:
+                return None
     
     
     def is_midi_note_root_octave(self, midi_note):
@@ -239,14 +258,23 @@ class Push2StandaloneControllerApp(object):
         for i in range(0, 8):
             row_colors = []
             for j in range(0, 8):
-                cell_color = 'white'
                 corresponding_midi_note = self.pad_ij_to_midi_note([i, j])
-                if self.is_black_key_midi_note(corresponding_midi_note): 
+
+                if self.pad_layout_mode == PAD_LAYOUT_MELODIC:
+                    cell_color = 'white'
+                    if self.is_black_key_midi_note(corresponding_midi_note): 
+                        cell_color = 'black'
+                    if self.is_midi_note_root_octave(corresponding_midi_note):
+                        cell_color = 'yellow'
+                    if self.is_midi_note_being_played(corresponding_midi_note):
+                        cell_color = 'green'
+                elif self.pad_layout_mode == PAD_LAYOUT_RHYTHMIC:
                     cell_color = 'black'
-                if self.is_midi_note_root_octave(corresponding_midi_note):
-                    cell_color = 'yellow'
-                if self.is_midi_note_being_played(corresponding_midi_note):
-                    cell_color = 'green'
+                    if i >= 4 and j < 4:
+                        cell_color = 'orange'
+                        if self.is_midi_note_being_played(corresponding_midi_note):
+                            cell_color = 'green'
+
                 row_colors.append(cell_color)
             color_matrix.append(row_colors)
         
@@ -254,8 +282,6 @@ class Push2StandaloneControllerApp(object):
         
 
     def update_push2_buttons(self):
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, 'white')
@@ -266,7 +292,11 @@ class Push2StandaloneControllerApp(object):
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, 'white')
         else:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, 'red')
-
+        
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'white')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_NOTE, 'white')
+        
 
     def generate_display_frame(self):
 
@@ -351,8 +381,10 @@ class Push2StandaloneControllerApp(object):
                 show_value(part_x, self.midi_out_channel + 1, color)
 
             elif i==4:  # Root note
+                if self.pad_layout_mode == PAD_LAYOUT_RHYTHMIC:
+                    color = [0.5, 0.5, 0.5]  # Gray font
                 show_title(part_x, 'ROOT NOTE')
-                show_value(part_x, self.note_number_to_name(self.root_midi_note), color)
+                show_value(part_x, "{0} ({1})".format(self.note_number_to_name(self.root_midi_note), self.root_midi_note), color)
 
             elif i==5:  # Poly AT/channel AT
                 show_title(part_x, 'AFTERTOUCH')
@@ -549,25 +581,35 @@ class Push2StandaloneControllerApp(object):
             self.set_root_midi_note(self.root_midi_note - 12)
             self.pads_need_update = True  # Using async update method because we don't really need immediate response here
 
+        elif button_name == push2_python.constants.BUTTON_NOTE:
+            if self.pad_layout_mode == PAD_LAYOUT_MELODIC:
+                self.pad_layout_mode = PAD_LAYOUT_RHYTHMIC
+            else:
+                self.pad_layout_mode = PAD_LAYOUT_MELODIC
+            self.pads_need_update = True
+
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
-        self.add_note_being_played(midi_note, 'push')
-        msg = mido.Message('note_on', note=midi_note, velocity=velocity)
-        self.send_midi(msg)
-        self.update_push2_pads()  # Directly calling update pads method because we want user to feel feedback as quick as possible
+        if midi_note is not None:
+            self.add_note_being_played(midi_note, 'push')
+            msg = mido.Message('note_on', note=midi_note, velocity=velocity)
+            self.send_midi(msg)
+            self.update_push2_pads()  # Directly calling update pads method because we want user to feel feedback as quick as possible
 
     def on_pad_released(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
-        self.remove_note_being_played(midi_note, 'push')
-        msg = mido.Message('note_off', note=midi_note, velocity=velocity)
-        self.send_midi(msg)
-        self.update_push2_pads()  # Directly calling update pads method because we want user to feel feedback as quick as possible
+        if midi_note is not None:
+            self.remove_note_being_played(midi_note, 'push')
+            msg = mido.Message('note_off', note=midi_note, velocity=velocity)
+            self.send_midi(msg)
+            self.update_push2_pads()  # Directly calling update pads method because we want user to feel feedback as quick as possible
 
     def on_pad_aftertouch(self, pad_n, pad_ij, velocity):
         if pad_n is not None:
             # polyAT mode
             midi_note = self.pad_ij_to_midi_note(pad_ij)
-            msg = mido.Message('polytouch', note=midi_note, value=velocity)
+            if midi_note is not None:
+                msg = mido.Message('polytouch', note=midi_note, value=velocity)
         else:
             # channel AT mode
             msg = mido.Message('aftertouch', value=velocity)
