@@ -513,6 +513,10 @@ class Push2StandaloneControllerApp(object):
         msg = mido.Message('pitchwheel', pitch=value)
         self.send_midi(msg)
 
+    def on_sustain_pedal(self, sustain_on):
+        msg = mido.Message('control_change', control=64, value=127 if sustain_on else 0)
+        self.send_midi(msg)
+        
 
 # Set up action handlers to react to encoder touches and rotation
 @push2_python.on_encoder_rotated()
@@ -555,6 +559,11 @@ def on_touchstrip(push, value):
 def on_midi_connected(push):
     app.on_midi_push_connection_established()
     
+
+@push2_python.on_sustain_pedal()
+def on_sustain_pedal(push, sustain_on):
+    app.on_sustain_pedal(sustain_on)
+
 
 if __name__ == "__main__":
     app = Push2StandaloneControllerApp()
