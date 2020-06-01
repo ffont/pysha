@@ -55,6 +55,17 @@ class Push2StandaloneControllerApp(object):
         [40, 41, 42, 43, 72, 73, 74, 75],
         [36, 37, 38, 39, 68, 69, 70, 71]
     ]
+    pyramid_track_button_names = [
+        push2_python.constants.BUTTON_LOWER_ROW_1,
+        push2_python.constants.BUTTON_LOWER_ROW_2,
+        push2_python.constants.BUTTON_LOWER_ROW_3,
+        push2_python.constants.BUTTON_LOWER_ROW_4,
+        push2_python.constants.BUTTON_LOWER_ROW_5,
+        push2_python.constants.BUTTON_LOWER_ROW_6,
+        push2_python.constants.BUTTON_LOWER_ROW_7,
+        push2_python.constants.BUTTON_LOWER_ROW_8
+    ]
+    selected_pyramid_track = 0
 
     def __init__(self):
         if os.path.exists('settings.json'):
@@ -302,7 +313,13 @@ class Push2StandaloneControllerApp(object):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_NOTE, 'white')
-        
+
+        for count, name in enumerate(self.pyramid_track_button_names):
+            if self.selected_pyramid_track != count:
+                self.push.buttons.set_button_color(name, 'orange')
+            else:
+                self.push.buttons.set_button_color(name, 'green')
+    
 
     def generate_display_frame(self):
 
@@ -593,6 +610,13 @@ class Push2StandaloneControllerApp(object):
             else:
                 self.pad_layout_mode = PAD_LAYOUT_MELODIC
             self.pads_need_update = True
+
+        elif button_name in self.pyramid_track_button_names:
+            self.selected_pyramid_track = self.pyramid_track_button_names.index(button_name)
+            self.buttons_need_update = True
+            msg = mido.Message('control_change', control=0, value=self.selected_pyramid_track + 1) # Follos pyramidi specification
+            self.send_midi(msg)
+            
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
