@@ -55,6 +55,7 @@ class Push2StandaloneControllerApp(object):
     
     # push
     push = None
+    use_push2_display = USE_PUSH2_DISPLAY
 
     # state
     actual_frame_rate = 0
@@ -257,6 +258,10 @@ class Push2StandaloneControllerApp(object):
     def update_push2_buttons(self):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'white')
+        if self.use_push2_display:
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, 'white')
+        else:
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, 'red')
 
 
     def generate_display_frame(self):
@@ -387,7 +392,7 @@ class Push2StandaloneControllerApp(object):
 
 
     def update_push2_display(self):
-        if USE_PUSH2_DISPLAY:
+        if self.use_push2_display:
             frame = self.generate_display_frame()
             self.push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB565)
 
@@ -421,6 +426,7 @@ class Push2StandaloneControllerApp(object):
 
     def on_midi_push_connection_established(self):
         # Do initial configuration of Push
+        print('Doing initial Push config...')
         app.update_push2_buttons()
         app.update_push2_pads()
         if self.use_poly_at:
@@ -517,6 +523,12 @@ class Push2StandaloneControllerApp(object):
     def on_sustain_pedal(self, sustain_on):
         msg = mido.Message('control_change', control=64, value=127 if sustain_on else 0)
         self.send_midi(msg)
+
+    def on_tooggle_use_display(self):
+        self.use_push2_display = not self.use_push2_display
+        if not self.use_push2_display:
+            self.push.display.send_to_display(self.push.display.prepare_frame(self.push.display.make_black_frame()))
+        self.buttons_need_update = True
         
 
 # Set up action handlers to react to encoder touches and rotation
@@ -549,6 +561,11 @@ def on_octave_up(push):
 @push2_python.on_button_pressed(push2_python.constants.BUTTON_OCTAVE_DOWN)
 def on_octave_down(push):
     app.on_octave_down()
+
+
+@push2_python.on_button_pressed(push2_python.constants.BUTTON_UPPER_ROW_8)
+def on_toggle_use_display(push):
+    app.on_tooggle_use_display()
 
 
 @push2_python.on_touchstrip()
