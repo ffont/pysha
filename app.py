@@ -122,20 +122,20 @@ class Push2StandaloneControllerApp(object):
             print('Won\'t send MIDI to any device')
 
     
-    def set_midi_in_channel(self, channel):
+    def set_midi_in_channel(self, channel, wrap=False):
         self.midi_in_channel = channel
         if self.midi_in_channel < 0:
-            self.midi_in_channel = 0
+            self.midi_in_channel = 0 if not wrap else 15
         elif self.midi_in_channel > 15:
-            self.midi_in_channel = 15
+            self.midi_in_channel = 15 if not wrap else 0
 
 
-    def set_midi_out_channel(self, channel):
+    def set_midi_out_channel(self, channel, wrap=False):
         self.midi_out_channel = channel
         if self.midi_out_channel < 0:
-            self.midi_out_channel = 0
+            self.midi_out_channel = 0 if not wrap else 15
         elif self.midi_out_channel > 15:
-            self.midi_out_channel = 15
+            self.midi_out_channel = 15 if not wrap else 0
 
 
     def set_midi_in_device_by_index(self, device_idx):
@@ -256,6 +256,11 @@ class Push2StandaloneControllerApp(object):
     def update_push2_buttons(self):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'white')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, 'white')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, 'white')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, 'white')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, 'white')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, 'green')
         if self.use_push2_display:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, 'white')
@@ -310,7 +315,7 @@ class Push2StandaloneControllerApp(object):
                         name = "{0} {1}".format(self.midi_in_tmp_device_idx + 1, self.available_midi_in_device_names[self.midi_in_tmp_device_idx])
                 else:
                     if self.midi_in is not None:
-                        name = self.midi_in.name
+                        name = "{0} {1}".format(self.available_midi_in_device_names.index(self.midi_in.name) + 1, self.midi_in.name)
                     else:
                         color = [0.5, 0.5, 0.5]  # Gray font
                         name = "None"
@@ -332,7 +337,7 @@ class Push2StandaloneControllerApp(object):
                         name = "{0} {1}".format(self.midi_out_tmp_device_idx + 1, self.available_midi_out_device_names[self.midi_out_tmp_device_idx])
                 else:
                     if self.midi_out is not None:
-                        name = self.midi_out.name
+                        name = "{0} {1}".format(self.available_midi_out_device_names.index(self.midi_out.name) + 1, self.midi_out.name)
                     else:
                         color = [0.5, 0.5, 0.5]  # Gray font
                         name = "None"
@@ -368,13 +373,13 @@ class Push2StandaloneControllerApp(object):
 
         if self.midi_in_tmp_device_idx is not None:
             # Means we are in the process of changing the MIDI in device
-            if current_time - self.encoders_state['Track1 Encoder']['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
+            if current_time - self.encoders_state[push2_python.constants.ENCODER_TRACK1_ENCODER]['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
                 self.set_midi_in_device_by_index(self.midi_in_tmp_device_idx)
                 self.midi_in_tmp_device_idx = None
 
         if self.midi_out_tmp_device_idx is not None:
             # Means we are in the process of changing the MIDI in device
-            if current_time - self.encoders_state['Track3 Encoder']['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
+            if current_time - self.encoders_state[push2_python.constants.ENCODER_TRACK3_ENCODER]['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
                 self.set_midi_out_device_by_index(self.midi_out_tmp_device_idx)
                 self.midi_out_tmp_device_idx = None
 
@@ -437,7 +442,7 @@ class Push2StandaloneControllerApp(object):
 
         self.encoders_state[encoder_name]['last_message_received'] = time.time()
 
-        if encoder_name == 'Track1 Encoder':
+        if encoder_name == push2_python.constants.ENCODER_TRACK1_ENCODER:
             if self.midi_in_tmp_device_idx is None:
                 if self.midi_in is not None:
                     self.midi_in_tmp_device_idx = self.available_midi_in_device_names.index(self.midi_in.name)
@@ -449,10 +454,10 @@ class Push2StandaloneControllerApp(object):
             elif self.midi_in_tmp_device_idx < -1:
                 self.midi_in_tmp_device_idx = -1  # Will use -1 for "None"
         
-        elif encoder_name == 'Track2 Encoder':
-            self.set_midi_in_channel(self.midi_in_channel + increment)
+        elif encoder_name == push2_python.constants.ENCODER_TRACK2_ENCODER:
+            self.set_midi_in_channel(self.midi_in_channel + increment, wrap=True)
         
-        elif encoder_name == 'Track3 Encoder':
+        elif encoder_name == push2_python.constants.ENCODER_TRACK3_ENCODER:
             if self.midi_out_tmp_device_idx is None:
                 if self.midi_out is not None:
                     self.midi_out_tmp_device_idx = self.available_midi_out_device_names.index(self.midi_out.name)
@@ -464,14 +469,14 @@ class Push2StandaloneControllerApp(object):
             elif self.midi_out_tmp_device_idx < -1:
                 self.midi_out_tmp_device_idx = -1  # Will use -1 for "None"
         
-        elif encoder_name == 'Track4 Encoder':
-            self.set_midi_out_channel(self.midi_out_channel + increment)
+        elif encoder_name == push2_python.constants.ENCODER_TRACK4_ENCODER:
+            self.set_midi_out_channel(self.midi_out_channel + increment, wrap=True)
         
-        elif encoder_name == 'Track5 Encoder':
+        elif encoder_name == push2_python.constants.ENCODER_TRACK5_ENCODER:
             self.set_root_midi_note(self.root_midi_note + increment)
             self.pads_need_update = True  # Using async update method because we don't really need immediate response here
 
-        elif encoder_name == 'Track6 Encoder':
+        elif encoder_name == push2_python.constants.ENCODER_TRACK6_ENCODER:
             if increment >= 3:  # Only respond to "big" increments
                 if not self.use_poly_at:
                     self.use_poly_at = True
@@ -480,6 +485,69 @@ class Push2StandaloneControllerApp(object):
                 if self.use_poly_at:
                     self.use_poly_at = False
                     self.push.pads.set_channel_aftertouch()
+
+    def on_button_pressed(self, button_name):
+        
+        if button_name == push2_python.constants.BUTTON_UPPER_ROW_1:
+            if self.midi_in_tmp_device_idx is None:
+                if self.midi_in is not None:
+                    self.midi_in_tmp_device_idx = self.available_midi_in_device_names.index(self.midi_in.name)
+                else:
+                    self.midi_in_tmp_device_idx = -1
+            self.midi_in_tmp_device_idx += 1
+            # Make index position wrap
+            if self.midi_in_tmp_device_idx >= len(self.available_midi_in_device_names):
+                self.midi_in_tmp_device_idx = -1  # Will use -1 for "None"
+            elif self.midi_in_tmp_device_idx < -1:
+                self.midi_in_tmp_device_idx = len(self.available_midi_in_device_names) - 1
+
+        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_2:
+            self.set_midi_in_channel(self.midi_in_channel + 1, wrap=True)
+
+        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_3:
+            if self.midi_out_tmp_device_idx is None:
+                if self.midi_out is not None:
+                    self.midi_out_tmp_device_idx = self.available_midi_out_device_names.index(self.midi_out.name)
+                else:
+                    self.midi_out_tmp_device_idx = -1
+            self.midi_out_tmp_device_idx += 1
+            # Make index position wrap
+            if self.midi_out_tmp_device_idx >= len(self.available_midi_out_device_names):
+                self.midi_out_tmp_device_idx = -1  # Will use -1 for "None"
+            elif self.midi_out_tmp_device_idx < -1:
+                self.midi_out_tmp_device_idx = len(self.available_midi_out_device_names) - 1
+            
+        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_4:
+            self.set_midi_out_channel(self.midi_out_channel + 1, wrap=True)
+
+        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_5:
+            pass
+
+        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_6:
+            self.use_poly_at = not self.use_poly_at
+            if self.use_poly_at:
+                self.push.pads.set_polyphonic_aftertouch()
+            else:
+                self.push.pads.set_channel_aftertouch()
+
+        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_7:
+            # Save current settings
+            app.save_current_settings_to_file()
+
+        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_8:
+            # Toogle use display
+            self.use_push2_display = not self.use_push2_display
+            if not self.use_push2_display:
+                self.push.display.send_to_display(self.push.display.prepare_frame(self.push.display.make_black_frame()))
+            self.buttons_need_update = True
+
+        elif button_name == push2_python.constants.BUTTON_OCTAVE_UP:
+            self.set_root_midi_note(self.root_midi_note + 12)
+            self.pads_need_update = True  # Using async update method because we don't really need immediate response here
+
+        elif button_name == push2_python.constants.BUTTON_OCTAVE_DOWN:
+            self.set_root_midi_note(self.root_midi_note - 12)
+            self.pads_need_update = True  # Using async update method because we don't really need immediate response here
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
@@ -505,16 +573,6 @@ class Push2StandaloneControllerApp(object):
             msg = mido.Message('aftertouch', value=velocity)
         self.send_midi(msg)
 
-    def on_octave_up(self):
-        self.set_root_midi_note(self.root_midi_note + 12)
-        self.pads_need_update = True  # Using async update method because we don't really need immediate response here
-        self.buttons_need_update = True
-
-    def on_octave_down(self):
-        self.set_root_midi_note(self.root_midi_note - 12)
-        self.pads_need_update = True  # Using async update method because we don't really need immediate response here
-        self.buttons_need_update = True
-
     def on_touchstrip(self, value):
         msg = mido.Message('pitchwheel', pitch=value)
         self.send_midi(msg)
@@ -523,12 +581,6 @@ class Push2StandaloneControllerApp(object):
         msg = mido.Message('control_change', control=64, value=127 if sustain_on else 0)
         self.send_midi(msg)
 
-    def on_tooggle_use_display(self):
-        self.use_push2_display = not self.use_push2_display
-        if not self.use_push2_display:
-            self.push.display.send_to_display(self.push.display.prepare_frame(self.push.display.make_black_frame()))
-        self.buttons_need_update = True
-        
 
 # Set up action handlers to react to encoder touches and rotation
 @push2_python.on_encoder_rotated()
@@ -552,24 +604,9 @@ def on_pad_aftertouch(push, pad_n, pad_ij, velocity):
     app.on_pad_aftertouch(pad_n, pad_ij, velocity)
 
 
-@push2_python.on_button_pressed(push2_python.constants.BUTTON_OCTAVE_UP)
-def on_octave_up(push):
-    app.on_octave_up()
-
-
-@push2_python.on_button_pressed(push2_python.constants.BUTTON_OCTAVE_DOWN)
-def on_octave_down(push):
-    app.on_octave_down()
-
-
-@push2_python.on_button_pressed(push2_python.constants.BUTTON_UPPER_ROW_7)
-def on_save_current_settings(push):
-    app.save_current_settings_to_file()
-
-
-@push2_python.on_button_pressed(push2_python.constants.BUTTON_UPPER_ROW_8)
-def on_toggle_use_display(push):
-    app.on_tooggle_use_display()
+@push2_python.on_button_pressed()
+def on_button_pressed(push, name):
+    app.on_button_pressed(name)
 
 
 @push2_python.on_touchstrip()
