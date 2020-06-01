@@ -4,41 +4,14 @@ import time
 import random
 import cairo
 import numpy
-
-try:
-    from settings import MIDI_OUT_DEFAULT_DEVICE_NAME
-except ImportError:
-    MIDI_OUT_DEFAULT_DEVICE_NAME = None
-
-try:
-    from settings import USE_PUSH2_DISPLAY
-except ImportError:
-    USE_PUSH2_DISPLAY = True
-
-try:
-    from settings import MIDI_IN_MERGE_DEFAULT_DEVICE_NAME
-except ImportError:
-    MIDI_IN_MERGE_DEFAULT_DEVICE_NAME = None
-
-try:
-    from settings import MIDI_IN_DEFAULT_CHANNEL
-except ImportError:
-    MIDI_IN_DEFAULT_CHANNEL = 0
-
-try:
-    from settings import MIDI_OUT_DEFAULT_CHANNEL
-except ImportError:
-    MIDI_OUT_DEFAULT_CHANNEL = 0
-
-try:
-    from settings import TARGET_FRAME_RATE
-except ImportError:
-    TARGET_FRAME_RATE = 60
+import json
+import os
 
 
 PAD_STATE_ON = True
 PAD_STATE_OFF = False
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
+
 
 class Push2StandaloneControllerApp(object):
 
@@ -55,30 +28,55 @@ class Push2StandaloneControllerApp(object):
     
     # push
     push = None
-    use_push2_display = USE_PUSH2_DISPLAY
+    use_push2_display = None
+    target_frame_rate = None
 
     # state
     actual_frame_rate = 0
     current_frame_rate_measurement = 0
     current_frame_rate_measurement_second = 0
     notes_being_played = []
-    root_midi_note = 64
+    root_midi_note = 0
     scale_pattern = [True, False, True, False, True, True, False, True, False, True, False, True]
     encoders_state = {}
     pads_need_update = True
     buttons_need_update = True
     use_poly_at = False
 
+
     def __init__(self):
-        self.set_midi_in_channel(MIDI_IN_DEFAULT_CHANNEL)
-        self.set_midi_out_channel(MIDI_OUT_DEFAULT_CHANNEL)
-        self.init_midi_in()
-        self.init_midi_out()
+        if os.path.exists('settings.json'):
+            settings = json.load(open('settings.json'))
+        else:
+            settings = {}
+
+        self.set_midi_in_channel(settings.get('midi_in_default_channel', 0))
+        self.set_midi_out_channel(settings.get('midi_out_default_channel', 0)) 
+        self.use_poly_at = settings.get('use_poly_at', True)        
+        self.set_root_midi_note(settings.get('root_midi_note', 64))
+        self.target_frame_rate = settings.get('target_frame_rate', 60)
+        self.use_push2_display = settings.get('use_push2_display', True)
+
+        self.init_midi_in(device_name=settings.get('default_midi_in_device_name', None))
+        self.init_midi_out(device_name=settings.get('default_midi_out_device_name', None))
         self.init_push()
         self.init_state()
 
 
-    def init_midi_in(self, device_name=MIDI_IN_MERGE_DEFAULT_DEVICE_NAME):
+    def save_current_settings_to_file(self):
+        json.dump({
+            'midi_in_default_channel': self.midi_in_channel,
+            'midi_out_default_channel': self.midi_out_channel,
+            'default_midi_in_device_name': self.midi_in.name if self.midi_in is not None else None,
+            'default_midi_out_device_name': self.midi_out.name if self.midi_out is not None else None,
+            'use_push2_display': self.use_push2_display,
+            'target_frame_rate': self.target_frame_rate,
+            'use_poly_at': self.use_poly_at,
+            'root_midi_note': self.root_midi_note
+        }, open('settings.json', 'w'))
+
+
+    def init_midi_in(self, device_name=None):
         print('Configuring MIDI in...')
         self.available_midi_in_device_names = [name for name in mido.get_input_names() if 'Ableton Push' not in name]
         
@@ -103,7 +101,7 @@ class Push2StandaloneControllerApp(object):
             print('Not receiving from any MIDI input')
 
 
-    def init_midi_out(self, device_name=MIDI_OUT_DEFAULT_DEVICE_NAME):
+    def init_midi_out(self, device_name=None):
         print('Configuring MIDI out...')
         self.available_midi_out_device_names = [name for name in mido.get_output_names() if 'Ableton Push' not in name]
        
@@ -258,6 +256,7 @@ class Push2StandaloneControllerApp(object):
     def update_push2_buttons(self):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'white')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, 'green')
         if self.use_push2_display:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, 'white')
         else:
@@ -354,8 +353,8 @@ class Push2StandaloneControllerApp(object):
                 show_title(part_x, 'AFTERTOUCH')
                 show_value(part_x, 'polyAT' if self.use_poly_at else 'channel', color)
 
-            elif i==6:  # Empty
-                pass
+            elif i==6:  # Save button
+                show_title(part_x, 'SAVE')
             elif i==7:  # FPS indicator
                 show_title(part_x, 'FPS')
                 show_value(part_x, self.actual_frame_rate, color)
@@ -420,7 +419,7 @@ class Push2StandaloneControllerApp(object):
             after_draw_time = time.time()
 
             # Calculate sleep time to aproximate the target frame rate
-            sleep_time = (1.0 / TARGET_FRAME_RATE) - (after_draw_time - before_draw_time)
+            sleep_time = (1.0 / self.target_frame_rate) - (after_draw_time - before_draw_time)
             if sleep_time > 0:
                 time.sleep(sleep_time)
 
@@ -561,6 +560,11 @@ def on_octave_up(push):
 @push2_python.on_button_pressed(push2_python.constants.BUTTON_OCTAVE_DOWN)
 def on_octave_down(push):
     app.on_octave_down()
+
+
+@push2_python.on_button_pressed(push2_python.constants.BUTTON_UPPER_ROW_7)
+def on_save_current_settings(push):
+    app.save_current_settings_to_file()
 
 
 @push2_python.on_button_pressed(push2_python.constants.BUTTON_UPPER_ROW_8)
