@@ -177,10 +177,11 @@ class Push2StandaloneControllerApp(object):
             self.init_midi_out(None)
 
 
-    def send_midi(self, msg):
+    def send_midi(self, msg, force_channel=None):
         if self.midi_out is not None:
             if hasattr(msg, 'channel'):
-                msg = msg.copy(channel=self.midi_out_channel)  # If message has a channel attribute, update it
+                channel = force_channel if force_channel is not None else self.midi_out_channel
+                msg = msg.copy(channel=channel)  # If message has a channel attribute, update it
             self.midi_out.send(msg)
 
 
@@ -614,8 +615,9 @@ class Push2StandaloneControllerApp(object):
         elif button_name in self.pyramid_track_button_names:
             self.selected_pyramid_track = self.pyramid_track_button_names.index(button_name)
             self.buttons_need_update = True
-            msg = mido.Message('control_change', control=0, value=self.selected_pyramid_track + 1) # Follos pyramidi specification
-            self.send_midi(msg)
+            # Follos pyramidi specification (Pyramid configured to receive on ch 16)
+            msg = mido.Message('control_change', control=0, value=self.selected_pyramid_track + 1)
+            self.send_midi(msg, force_channel=15)
             
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
