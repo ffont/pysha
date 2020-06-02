@@ -314,10 +314,13 @@ class Push2StandaloneControllerApp(object):
         
 
     def update_push2_buttons(self):
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_MUTE, 'red')
+
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, 'white')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, 'green')
         if self.use_push2_display:
@@ -593,7 +596,8 @@ class Push2StandaloneControllerApp(object):
             self.set_midi_out_channel(self.midi_out_channel + 1, wrap=True)
 
         elif button_name == push2_python.constants.BUTTON_UPPER_ROW_5:
-            pass
+            self.set_root_midi_note(self.root_midi_note + 1)
+            self.pads_need_update = True
 
         elif button_name == push2_python.constants.BUTTON_UPPER_ROW_6:
             self.use_poly_at = not self.use_poly_at
@@ -638,7 +642,14 @@ class Push2StandaloneControllerApp(object):
         elif button_name == push2_python.constants.BUTTON_ACCENT:
             self.fixed_velocity_mode = not self.fixed_velocity_mode
             self.buttons_need_update = True     
-            self.pads_need_update = True       
+            self.pads_need_update = True
+
+        elif button_name == push2_python.constants.BUTTON_MUTE:
+            # Send MIDI 
+            self.notes_being_played = []
+            self.pads_need_update = True
+            if self.midi_out is not None:
+                self.midi_out.panic()
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
