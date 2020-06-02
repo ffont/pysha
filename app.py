@@ -57,7 +57,7 @@ class Push2StandaloneControllerApp(object):
         [40, 41, 42, 43, 72, 73, 74, 75],
         [36, 37, 38, 39, 68, 69, 70, 71]
     ]
-    pyramid_track_button_names = [
+    pyramid_track_button_names_a = [
         push2_python.constants.BUTTON_LOWER_ROW_1,
         push2_python.constants.BUTTON_LOWER_ROW_2,
         push2_python.constants.BUTTON_LOWER_ROW_3,
@@ -67,7 +67,19 @@ class Push2StandaloneControllerApp(object):
         push2_python.constants.BUTTON_LOWER_ROW_7,
         push2_python.constants.BUTTON_LOWER_ROW_8
     ]
+    pyramid_track_button_names_b = [  
+        push2_python.constants.BUTTON_1_32T,
+        push2_python.constants.BUTTON_1_32,
+        push2_python.constants.BUTTON_1_16T,
+        push2_python.constants.BUTTON_1_16,
+        push2_python.constants.BUTTON_1_8T,
+        push2_python.constants.BUTTON_1_8,
+        push2_python.constants.BUTTON_1_4T,
+        push2_python.constants.BUTTON_1_4
+    ]
+    pyramid_track_selection_button_a = False
     selected_pyramid_track = 0
+
 
     def __init__(self):
         if os.path.exists('settings.json'):
@@ -332,11 +344,20 @@ class Push2StandaloneControllerApp(object):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_NOTE, 'white')
 
-        for count, name in enumerate(self.pyramid_track_button_names):
-            if self.selected_pyramid_track != count:
-                self.push.buttons.set_button_color(name, 'orange')
-            else:
+        for count, name in enumerate(self.pyramid_track_button_names_a):
+            if self.selected_pyramid_track % 8 == count:
                 self.push.buttons.set_button_color(name, 'green')
+            else:
+                self.push.buttons.set_button_color(name, 'orange')
+
+        for count, name in enumerate(self.pyramid_track_button_names_b):
+            if self.pyramid_track_selection_button_a:
+                if self.selected_pyramid_track // 8 == count:
+                    self.push.buttons.set_button_color(name, 'green')
+                else:
+                    self.push.buttons.set_button_color(name, 'orange')
+            else:
+                self.push.buttons.set_button_color(name, 'black')
     
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'green')
         
@@ -632,12 +653,16 @@ class Push2StandaloneControllerApp(object):
                 self.pad_layout_mode = PAD_LAYOUT_MELODIC
             self.pads_need_update = True
 
-        elif button_name in self.pyramid_track_button_names:
-            self.selected_pyramid_track = self.pyramid_track_button_names.index(button_name)
+        elif button_name in self.pyramid_track_button_names_a:
+            self.pyramid_track_selection_button_a = button_name
             self.buttons_need_update = True
-            # Follos pyramidi specification (Pyramid configured to receive on ch 16)
-            msg = mido.Message('control_change', control=0, value=self.selected_pyramid_track + 1)
-            self.send_midi(msg, force_channel=15)
+
+        elif button_name in self.pyramid_track_button_names_b:
+            if self.pyramid_track_selection_button_a:
+                self.selected_pyramid_track = self.pyramid_track_button_names_a.index(self.pyramid_track_selection_button_a) + self.pyramid_track_button_names_b.index(button_name) * 8
+                self.buttons_need_update = True
+                self.send_select_track_to_pyramid(self.selected_pyramid_track)
+                self.pyramid_track_selection_button_a = False
 
         elif button_name == push2_python.constants.BUTTON_ACCENT:
             self.fixed_velocity_mode = not self.fixed_velocity_mode
@@ -650,6 +675,15 @@ class Push2StandaloneControllerApp(object):
             self.pads_need_update = True
             if self.midi_out is not None:
                 self.midi_out.panic()
+
+    def on_button_released(self, button_name):
+        if button_name in self.pyramid_track_button_names_a:
+            if self.pyramid_track_selection_button_a:
+                self.pyramid_track_selection_button_a = False
+                self.buttons_need_update = True
+                #self.selected_pyramid_track = self.pyramid_track_button_names_a.index(button_name)
+                #self.send_select_track_to_pyramid(self.selected_pyramid_track)
+            
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
@@ -686,6 +720,11 @@ class Push2StandaloneControllerApp(object):
         msg = mido.Message('control_change', control=64, value=127 if sustain_on else 0)
         self.send_midi(msg)
 
+    def send_select_track_to_pyramid(self, track_idx):
+        # Follows pyramidi specification (Pyramid configured to receive on ch 16)
+        msg = mido.Message('control_change', control=0, value=track_idx + 1)
+        self.send_midi(msg, force_channel=15)
+
 
 # Set up action handlers to react to encoder touches and rotation
 @push2_python.on_encoder_rotated()
@@ -712,6 +751,11 @@ def on_pad_aftertouch(push, pad_n, pad_ij, velocity):
 @push2_python.on_button_pressed()
 def on_button_pressed(push, name):
     app.on_button_pressed(name)
+
+
+@push2_python.on_button_released()
+def on_button_released(push, name):
+    app.on_button_released(name)
 
 
 @push2_python.on_touchstrip()
