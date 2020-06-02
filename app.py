@@ -6,6 +6,7 @@ import cairo
 import numpy
 import json
 import os
+import platform
 
 
 PAD_STATE_ON = True
@@ -195,6 +196,12 @@ class Push2StandaloneControllerApp(object):
     def init_push(self):
         print('Configuring Push...')
         self.push = push2_python.Push2()
+        if platform.system() == "Linux":
+            # When this app runs in Linux is because it is running on the Raspberrypi
+            #  I've overved problems trying to reconnect many times withotu success on the Raspberrypi, resulting in
+            # "ALSA lib seq_hw.c:466:(snd_seq_hw_open) open /dev/snd/seq failed: Cannot allocate memory" issues.
+            # A work around is make the reconnection time bigger, but a better solution should probably be found.
+            self.push.set_push2_reconnect_call_interval(2)
         
 
     def init_state(self):
