@@ -42,6 +42,7 @@ class Push2StandaloneControllerApp(object):
     root_midi_note = 0
     scale_pattern = [True, False, True, False, True, True, False, True, False, True, False, True]
     pad_layout_mode = None
+    fixed_velocity_mode = False
     encoders_state = {}
     pads_need_update = True
     buttons_need_update = True
@@ -284,17 +285,23 @@ class Push2StandaloneControllerApp(object):
                     if self.is_black_key_midi_note(corresponding_midi_note): 
                         cell_color = 'black'
                     if self.is_midi_note_root_octave(corresponding_midi_note):
-                        cell_color = 'yellow'
+                        if not self.fixed_velocity_mode:
+                            cell_color = 'yellow'
+                        else:
+                            cell_color = 'blue'
                     if self.is_midi_note_being_played(corresponding_midi_note):
                         cell_color = 'green'
                 elif self.pad_layout_mode == PAD_LAYOUT_RHYTHMIC:
                     cell_color = 'black'
                     if i >= 4 and j < 4:
-                        cell_color = 'orange'
+                        if not self.fixed_velocity_mode:
+                            cell_color = 'yellow'
+                        else:
+                            cell_color = 'blue'
                     elif i >= 4 and j >= 4:
                         cell_color = 'turquoise'
                     elif i < 4 and j < 4:
-                        cell_color = 'purple'
+                        cell_color = 'orange'
                     elif i < 4 and j >= 4:
                         cell_color = 'pink'
                     if self.is_midi_note_being_played(corresponding_midi_note):
@@ -328,6 +335,8 @@ class Push2StandaloneControllerApp(object):
             else:
                 self.push.buttons.set_button_color(name, 'green')
     
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'green')
+        
 
     def generate_display_frame(self):
 
@@ -625,13 +634,17 @@ class Push2StandaloneControllerApp(object):
             # Follos pyramidi specification (Pyramid configured to receive on ch 16)
             msg = mido.Message('control_change', control=0, value=self.selected_pyramid_track + 1)
             self.send_midi(msg, force_channel=15)
-            
+
+        elif button_name == push2_python.constants.BUTTON_ACCENT:
+            self.fixed_velocity_mode = not self.fixed_velocity_mode
+            self.buttons_need_update = True     
+            self.pads_need_update = True       
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
         if midi_note is not None:
             self.add_note_being_played(midi_note, 'push')
-            msg = mido.Message('note_on', note=midi_note, velocity=velocity)
+            msg = mido.Message('note_on', note=midi_note, velocity=velocity if not self.fixed_velocity_mode else 127)
             self.send_midi(msg)
             self.update_push2_pads()  # Directly calling update pads method because we want user to feel feedback as quick as possible
 
