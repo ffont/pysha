@@ -527,6 +527,8 @@ class Push2StandaloneControllerApp(object):
     def on_midi_push_connection_established(self):
         # Do initial configuration of Push
         print('Doing initial Push config...')
+        app.push.pads.set_channel_aftertouch_range(range_start=401, range_end=800)
+        app.push.pads.set_velocity_curve(velocities=[int(i * 127/40) if i < 40 else 127 for i in range(0,128)])
         app.update_push2_buttons()
         app.update_push2_pads()
         if self.use_poly_at:
