@@ -681,8 +681,8 @@ class Push2StandaloneControllerApp(object):
             if self.pyramid_track_selection_button_a:
                 self.pyramid_track_selection_button_a = False
                 self.buttons_need_update = True
-                #self.selected_pyramid_track = self.pyramid_track_button_names_a.index(button_name)
-                #self.send_select_track_to_pyramid(self.selected_pyramid_track)
+                self.selected_pyramid_track = self.pyramid_track_button_names_a.index(button_name)
+                self.send_select_track_to_pyramid(self.selected_pyramid_track)
             
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
