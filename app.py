@@ -354,9 +354,9 @@ class Push2StandaloneControllerApp(object):
         for count, name in enumerate(self.pyramid_track_button_names_b):
             if self.pyramid_track_selection_button_a:
                 if self.selected_pyramid_track // 8 == count:
-                    self.push.buttons.set_button_color(name, 'green')
+                    self.push.buttons.set_button_color(name, 'green', animation='pulsing')
                 else:
-                    self.push.buttons.set_button_color(name, 'orange')
+                    self.push.buttons.set_button_color(name, 'orange', animation='pulsing')
             else:
                 self.push.buttons.set_button_color(name, 'black')
     
@@ -529,7 +529,7 @@ class Push2StandaloneControllerApp(object):
         # Do initial configuration of Push
         print('Doing initial Push config...')
         app.push.pads.set_channel_aftertouch_range(range_start=401, range_end=800)
-        app.push.pads.set_velocity_curve(velocities=[int(i * 127/40) if i < 40 else 127 for i in range(0,128)])
+        #app.push.pads.set_velocity_curve(velocities=[int(i * 127/40) if i < 40 else 127 for i in range(0,128)])
         app.update_push2_buttons()
         app.update_push2_pads()
         if self.use_poly_at:
