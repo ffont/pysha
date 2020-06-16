@@ -78,6 +78,7 @@ class Push2StandaloneControllerApp(object):
         push2_python.constants.BUTTON_1_4
     ]
     pyramid_track_selection_button_a = False
+    pyramid_track_selection_button_a_pressing_time = 0 
     selected_pyramid_track = 0
 
 
@@ -657,6 +658,7 @@ class Push2StandaloneControllerApp(object):
 
         elif button_name in self.pyramid_track_button_names_a:
             self.pyramid_track_selection_button_a = button_name
+            self.pyramid_track_selection_button_a_pressing_time = time.time()
             self.buttons_need_update = True
 
         elif button_name in self.pyramid_track_button_names_b:
@@ -665,6 +667,7 @@ class Push2StandaloneControllerApp(object):
                 self.buttons_need_update = True
                 self.send_select_track_to_pyramid(self.selected_pyramid_track)
                 self.pyramid_track_selection_button_a = False
+                self.pyramid_track_selection_button_a_pressing_time = 0
 
         elif button_name == push2_python.constants.BUTTON_ACCENT:
             self.fixed_velocity_mode = not self.fixed_velocity_mode
@@ -681,11 +684,13 @@ class Push2StandaloneControllerApp(object):
     def on_button_released(self, button_name):
         if button_name in self.pyramid_track_button_names_a:
             if self.pyramid_track_selection_button_a:
+                if time.time() - self.pyramid_track_selection_button_a_pressing_time < 0.200:
+                    # Only switch to track if it was a quick press
+                    self.selected_pyramid_track = self.pyramid_track_button_names_a.index(button_name)
+                    self.send_select_track_to_pyramid(self.selected_pyramid_track)
                 self.pyramid_track_selection_button_a = False
+                self.pyramid_track_selection_button_a_pressing_time = 0
                 self.buttons_need_update = True
-                #self.selected_pyramid_track = self.pyramid_track_button_names_a.index(button_name)
-                #self.send_select_track_to_pyramid(self.selected_pyramid_track)
-            
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)

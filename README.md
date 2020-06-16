@@ -1,6 +1,6 @@
-# Push2 Standalone Controller
+# Pysha
 
-Python 3 utility to use Push2 as a standalone MIDI controller. Simply run `app.py` on a computer connected to Push2 and with a MIDI interface than can be used to output MIDI messages. Instructions to run it (whout might want to create a virtualenvironment)):
+**Pysha** is a Python 3 app to use Push2 as a standalone MIDI controller. Simply run `app.py` on a computer connected to Push2 and with a MIDI interface than can be used to output MIDI messages. Pysha can work on a Raspberry Pi so you can use Push2 as a standalone controller without your laptop around. The name is some sort of blend of the names of the technologies it involves. Generic instructions to run it:
 
 ```
 pip install -r requirements.txt
