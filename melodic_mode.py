@@ -6,7 +6,6 @@ from definitions import PyshaMode
 
 class MelodicMode(PyshaMode):
 
-    name = 'melodic_mode'
     notes_being_played = []
     root_midi_note = 0
     scale_pattern = [True, False, True, False, True, True, False, True, False, True, False, True]
@@ -15,13 +14,13 @@ class MelodicMode(PyshaMode):
 
     def add_note_being_played(self, midi_note, source):
         self.notes_being_played.append({'note': midi_note, 'source': source})
-    
+
     def remove_note_being_played(self, midi_note, source):
-        self.notes_being_played = [note for note in self.notes_being_played if note['note'] != midi_note or note['source'] != source]   
+        self.notes_being_played = [note for note in self.notes_being_played if note['note'] != midi_note or note['source'] != source]
 
     def pad_ij_to_midi_note(self, pad_ij):
         return self.root_midi_note + ((7 - pad_ij[0]) * 5 + pad_ij[1])
-    
+
     def is_midi_note_root_octave(self, midi_note):
         relative_midi_note = (midi_note - self.root_midi_note) % 12
         return relative_midi_note == 0
@@ -66,7 +65,7 @@ class MelodicMode(PyshaMode):
         if self.fixed_velocity_mode:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'white')
         else:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'light_gray')
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'dark_gray')
 
     def update_pads(self):
         color_matrix = []
@@ -75,7 +74,7 @@ class MelodicMode(PyshaMode):
             for j in range(0, 8):
                 corresponding_midi_note = self.pad_ij_to_midi_note([i, j])
                 cell_color = 'white'
-                if self.is_black_key_midi_note(corresponding_midi_note): 
+                if self.is_black_key_midi_note(corresponding_midi_note):
                     cell_color = 'black'
                 if self.is_midi_note_root_octave(corresponding_midi_note):
                     if not self.fixed_velocity_mode:
@@ -84,10 +83,10 @@ class MelodicMode(PyshaMode):
                         cell_color = 'blue'
                 if self.is_midi_note_being_played(corresponding_midi_note):
                     cell_color = 'green'
-            
+
                 row_colors.append(cell_color)
             color_matrix.append(row_colors)
-        
+
         self.push.pads.set_pads_color(color_matrix)
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
@@ -136,6 +135,5 @@ class MelodicMode(PyshaMode):
 
         elif button_name == push2_python.constants.BUTTON_ACCENT:
             self.fixed_velocity_mode = not self.fixed_velocity_mode
-            self.buttons_need_update = True     
+            self.buttons_need_update = True
             self.app.pads_need_update = True
-

@@ -4,6 +4,8 @@ DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this 
 
 
 class PyshaMode(object):
+    """
+    """
 
     name = ''
 
@@ -15,7 +17,6 @@ class PyshaMode(object):
         return self.app.push
 
     # Methhods that are run before the mode is activated and when it is deactivated
-    
     def activate(self):
         pass
 
@@ -23,7 +24,6 @@ class PyshaMode(object):
         pass
 
     # Push2 update methods
-    
     def update_pads(self):
         pass
 
@@ -34,11 +34,10 @@ class PyshaMode(object):
         pass
 
     # Push2 action callbacks
-
     def on_encoder_rotated(self, encoder_name, increment):
         pass
 
-    def on_button_pressed(self, button_name):        
+    def on_button_pressed(self, button_name):
         pass
 
     def on_button_released(self, button_name):

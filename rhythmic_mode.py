@@ -2,9 +2,9 @@ import push2_python
 
 from melodic_mode import MelodicMode
 
+
 class RhythmicMode(MelodicMode):
 
-    name = 'rhythmic_mode'
     rhythmic_notes_matrix = [
         [64, 65, 66, 67, 96, 97, 98, 99],
         [60, 61, 62, 63, 92, 93, 94, 95],
@@ -26,7 +26,7 @@ class RhythmicMode(MelodicMode):
         if self.fixed_velocity_mode:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'white')
         else:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'light_gray')
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'dark_gray')
 
     def update_pads(self):
         color_matrix = []
@@ -48,14 +48,14 @@ class RhythmicMode(MelodicMode):
                     cell_color = 'pink'
                 if self.is_midi_note_being_played(corresponding_midi_note):
                     cell_color = 'green'
-            
+
                 row_colors.append(cell_color)
             color_matrix.append(row_colors)
-        
+
         self.push.pads.set_pads_color(color_matrix)
 
     def on_button_pressed(self, button_name):
         if button_name == push2_python.constants.BUTTON_ACCENT:
             self.fixed_velocity_mode = not self.fixed_velocity_mode
-            self.buttons_need_update = True     
+            self.buttons_need_update = True
             self.app.pads_need_update = True

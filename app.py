@@ -12,6 +12,7 @@ from definitions import PAD_STATE_ON, PAD_STATE_OFF, DELAYED_ACTIONS_APPLY_TIME
 from melodic_mode import MelodicMode
 from rhythmic_mode import RhythmicMode
 
+
 class PyshaApp(object):
 
     # midi
@@ -19,12 +20,12 @@ class PyshaApp(object):
     available_midi_out_device_names = []
     midi_out_channel = 0  # 0-15
     midi_out_tmp_device_idx = None  # This is to store device names while rotating encoders
-    
+
     midi_in = None
     available_midi_in_device_names = []
     midi_in_channel = 0  # 0-15
     midi_in_tmp_device_idx = None  # This is to store device names while rotating encoders
-    
+
     # push
     push = None
     use_push2_display = None
@@ -34,11 +35,11 @@ class PyshaApp(object):
     actual_frame_rate = 0
     current_frame_rate_measurement = 0
     current_frame_rate_measurement_second = 0
-    
+
     # other state vars
     modes = []
     active_modes = []
-    encoders_state = {} 
+    encoders_state = {}
     pads_need_update = True
     buttons_need_update = True
 
@@ -52,7 +53,7 @@ class PyshaApp(object):
         push2_python.constants.BUTTON_LOWER_ROW_7,
         push2_python.constants.BUTTON_LOWER_ROW_8
     ]
-    pyramid_track_button_names_b = [  
+    pyramid_track_button_names_b = [
         push2_python.constants.BUTTON_1_32T,
         push2_python.constants.BUTTON_1_32,
         push2_python.constants.BUTTON_1_16T,
@@ -63,20 +64,17 @@ class PyshaApp(object):
         push2_python.constants.BUTTON_1_4
     ]
     pyramid_track_selection_button_a = False
-    pyramid_track_selection_button_a_pressing_time = 0 
+    pyramid_track_selection_button_a_pressing_time = 0
     selected_pyramid_track = 0
 
-
     def __init__(self):
-        
-
         if os.path.exists('settings.json'):
             settings = json.load(open('settings.json'))
         else:
             settings = {}
 
         self.set_midi_in_channel(settings.get('midi_in_default_channel', 0))
-        self.set_midi_out_channel(settings.get('midi_out_default_channel', 0)) 
+        self.set_midi_out_channel(settings.get('midi_out_default_channel', 0))
         self.target_frame_rate = settings.get('target_frame_rate', 60)
         self.use_push2_display = settings.get('use_push2_display', True)
 
@@ -86,26 +84,18 @@ class PyshaApp(object):
         self.init_state()
 
         self.init_modes()
-        melodic_mode = self.get_mode_by_name('melodic_mode')
-        melodic_mode.use_poly_at = settings.get('use_poly_at', True)        
-        melodic_mode.set_root_midi_note(settings.get('root_midi_note', 64))
-        self.set_active_mode(self.get_mode_by_name('melodic_mode'))
+        self.melodic_mode.use_poly_at = settings.get('use_poly_at', True)
+        self.melodic_mode.set_root_midi_note(settings.get('root_midi_note', 64))
+        self.set_active_mode(self.melodic_mode)
 
     def init_modes(self):
-        self.modes = [MelodicMode(self), RhythmicMode(self)]
+        self.melodic_mode = MelodicMode(self)
+        self.rhyhtmic_mode = RhythmicMode(self)
+        self.modes = [self.melodic_mode, self.rhyhtmic_mode]
 
-    def get_mode_by_name(self, name):
-        for mode in self.modes:
-            if mode.name == name:
-                return mode
-        return None
+    def is_mode_active(self, mode):
+        return mode in self.active_modes
 
-    def get_active_mode(self):
-        if self.active_modes:
-            return self.active_modes[0]
-        else:
-            return None
-        
     def set_active_mode(self, new_active_mode=None):
         # For now we only support one active mode at a time, this function deactivates existing active modes (will be 1), and activates the next one
         for mode in self.active_modes:
@@ -115,7 +105,6 @@ class PyshaApp(object):
             new_active_mode.activate()
 
     def save_current_settings_to_file(self):
-        melodic_mode = self.get_mode_by_name('melodic_mode')
         json.dump({
             'midi_in_default_channel': self.midi_in_channel,
             'midi_out_default_channel': self.midi_out_channel,
@@ -123,14 +112,14 @@ class PyshaApp(object):
             'default_midi_out_device_name': self.midi_out.name if self.midi_out is not None else None,
             'use_push2_display': self.use_push2_display,
             'target_frame_rate': self.target_frame_rate,
-            'use_poly_at': melodic_mode.use_poly_at,
-            'root_midi_note': melodic_mode.root_midi_note
+            'use_poly_at': self.melodic_mode.use_poly_at,
+            'root_midi_note': self.melodic_mode.root_midi_note
         }, open('settings.json', 'w'))
 
     def init_midi_in(self, device_name=None):
         print('Configuring MIDI in...')
         self.available_midi_in_device_names = [name for name in mido.get_input_names() if 'Ableton Push' not in name]
-        
+
         if device_name is not None:
             if self.midi_in is not None:
                     self.midi_in.callback = None  # Disable current callback (if any)
@@ -144,17 +133,17 @@ class PyshaApp(object):
                     print(' - {0}'.format(name))
         else:
             if self.midi_in is not None:
-                self.midi_in.callback = None # Disable current callback (if any)
+                self.midi_in.callback = None  # Disable current callback (if any)
                 self.midi_in.close()
                 self.midi_in = None
-            
+
         if self.midi_in is None:
             print('Not receiving from any MIDI input')
 
     def init_midi_out(self, device_name=None):
         print('Configuring MIDI out...')
         self.available_midi_out_device_names = [name for name in mido.get_output_names() if 'Ableton Push' not in name]
-       
+
         if device_name is not None:
             try:
                 self.midi_out = mido.open_output(device_name)
@@ -204,23 +193,22 @@ class PyshaApp(object):
                 msg = msg.copy(channel=channel)  # If message has a channel attribute, update it
             self.midi_out.send(msg)
 
-    def midi_in_handler(self, msg): 
+    def midi_in_handler(self, msg):
 
         if hasattr(msg, 'channel'):  # This will rule out sysex and other "strange" messages that don't have channel info
             if self.midi_in_channel == -1 or msg.channel == self.midi_in_channel:   # If midi input channel is set to -1 (all) or a specific channel
-             
+
                 # Forward message to the MIDI out
                 self.send_midi(msg)
-                
+
                 # Update the list of notes being currently played so push2 pads can be updated accordingly
-                melodic_mode = self.get_mode_by_name('melodic_mode')
                 if msg.type == "note_on":
                     if msg.velocity == 0:
-                        melodic_mode.remove_note_being_played(msg.note, self.midi_in.name)
+                        self.melodic_mode.remove_note_being_played(msg.note, self.midi_in.name)
                     else:
-                        melodic_mode.add_note_being_played(msg.note, self.midi_in.name)
+                        self.melodic_mode.add_note_being_played(msg.note, self.midi_in.name)
                 elif msg.type == "note_off":
-                    melodic_mode.remove_note_being_played(msg.note, self.midi_in.name)
+                    self.melodic_mode.remove_note_being_played(msg.note, self.midi_in.name)
                 self.pads_need_update = True  # Using the async update method because we don't really need immediate response here
 
     def init_push(self):
@@ -232,7 +220,7 @@ class PyshaApp(object):
             # "ALSA lib seq_hw.c:466:(snd_seq_hw_open) open /dev/snd/seq failed: Cannot allocate memory" issues.
             # A work around is make the reconnection time bigger, but a better solution should probably be found.
             self.push.set_push2_reconnect_call_interval(2)
-        
+
     def init_state(self):
         current_time = time.time()
         self.last_time_pads_updated = current_time
@@ -244,7 +232,7 @@ class PyshaApp(object):
 
     def update_push2_pads(self):
         for mode in self.active_modes:
-            mode.update_pads()   
+            mode.update_pads()
 
     def update_push2_buttons(self):
         for mode in self.active_modes:
@@ -277,7 +265,6 @@ class PyshaApp(object):
                     self.push.buttons.set_button_color(name, 'orange', animation='pulsing')
             else:
                 self.push.buttons.set_button_color(name, 'black')
-    
 
     def generate_display_frame(self):
 
@@ -308,7 +295,7 @@ class PyshaApp(object):
         part_w = w // 8
         part_h = h
         for i in range(0, 8):
-            part_x = i * part_w 
+            part_x = i * part_w
             part_y = 0
 
             ctx.set_source_rgb(0, 0, 0)  # Draw black background
@@ -316,8 +303,8 @@ class PyshaApp(object):
             ctx.fill()
 
             color = [1.0, 1.0, 1.0]
-            
-            if i==0:  # MIDI in device
+
+            if i == 0:  # MIDI in device
                 if self.midi_in_tmp_device_idx is not None:
                     color = [1.0, 0.64, 0.0]  # Orange font
                     if self.midi_in_tmp_device_idx < 0:
@@ -332,14 +319,14 @@ class PyshaApp(object):
                         name = "None"
                 show_title(part_x, 'IN DEVICE')
                 show_value(part_x, name, color)
-                
-            elif i==1:  # MIDI in channel
+
+            elif i == 1:  # MIDI in channel
                 if self.midi_in is None:
                     color = [0.5, 0.5, 0.5]  # Gray font
                 show_title(part_x, 'IN CH')
                 show_value(part_x, self.midi_in_channel + 1 if self.midi_in_channel > -1 else "All", color)
 
-            elif i==2:  # MIDI out device
+            elif i == 2:  # MIDI out device
                 if self.midi_out_tmp_device_idx is not None:
                     color = [1.0, 0.64, 0.0]  # Orange font
                     if self.midi_out_tmp_device_idx < 0:
@@ -355,33 +342,30 @@ class PyshaApp(object):
                 show_title(part_x, 'OUT DEVICE')
                 show_value(part_x, name, color)
 
-            elif i==3:  # MIDI out channel
+            elif i == 3:  # MIDI out channel
                 if self.midi_out is None:
                     color = [0.5, 0.5, 0.5]  # Gray font
                 show_title(part_x, 'OUT CH')
                 show_value(part_x, self.midi_out_channel + 1, color)
 
-            elif i==4:  # Root note
-                if self.get_active_mode() is not None and self.get_active_mode().name != 'melodic_mode':
+            elif i == 4:  # Root note
+                if not self.is_mode_active(self.melodic_mode):
                     color = [0.5, 0.5, 0.5]  # Gray font
                 show_title(part_x, 'ROOT NOTE')
-                melodic_mode = self.get_mode_by_name('melodic_mode')
-                show_value(part_x, "{0} ({1})".format(melodic_mode.note_number_to_name(melodic_mode.root_midi_note), melodic_mode.root_midi_note), color)
+                show_value(part_x, "{0} ({1})".format(self.melodic_mode.note_number_to_name(self.melodic_mode.root_midi_note), self.melodic_mode.root_midi_note), color)
 
-            elif i==5:  # Poly AT/channel AT
+            elif i == 5:  # Poly AT/channel AT
                 show_title(part_x, 'AFTERTOUCH')
-                melodic_mode = self.get_mode_by_name('melodic_mode')
-                show_value(part_x, 'polyAT' if melodic_mode.use_poly_at else 'channel', color)
+                show_value(part_x, 'polyAT' if self.melodic_mode.use_poly_at else 'channel', color)
 
-            elif i==6:  # Save button
+            elif i == 6:  # Save button
                 show_title(part_x, 'SAVE')
-            elif i==7:  # FPS indicator
+            elif i == 7:  # FPS indicator
                 show_title(part_x, 'FPS')
                 show_value(part_x, self.actual_frame_rate, color)
 
         buf = surface.get_data()
         return numpy.ndarray(shape=(h, w), dtype=numpy.uint16, buffer=buf).transpose()
-
 
     def check_for_delayed_actions(self):
         current_time = time.time()
@@ -409,48 +393,63 @@ class PyshaApp(object):
             self.update_push2_buttons()
             self.buttons_need_update = False
 
-
     def update_push2_display(self):
         if self.use_push2_display:
             frame = self.generate_display_frame()
             self.push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB565)
 
-
     def run_loop(self):
-        print('App runnnig...')
-        while True:
-            before_draw_time = time.time()
-            
-            # Draw ui
-            self.update_push2_display()
-            
-            # Frame rate measurement
-            now = time.time()
-            self.current_frame_rate_measurement += 1
-            if time.time() - self.current_frame_rate_measurement_second > 1.0:
-                self.actual_frame_rate = self.current_frame_rate_measurement
-                self.current_frame_rate_measurement = 0
-                self.current_frame_rate_measurement_second = now
-                print('{0} fps'.format(self.actual_frame_rate))
-            
-            # Check if any delayed actions need to be applied
-            self.check_for_delayed_actions()
+        print('Pysha is runnnig...')
+        try:
+            while True:
+                before_draw_time = time.time()
 
-            after_draw_time = time.time()
+                # Draw ui
+                self.update_push2_display()
 
-            # Calculate sleep time to aproximate the target frame rate
-            sleep_time = (1.0 / self.target_frame_rate) - (after_draw_time - before_draw_time)
-            if sleep_time > 0:
-                time.sleep(sleep_time)
+                # Frame rate measurement
+                now = time.time()
+                self.current_frame_rate_measurement += 1
+                if time.time() - self.current_frame_rate_measurement_second > 1.0:
+                    self.actual_frame_rate = self.current_frame_rate_measurement
+                    self.current_frame_rate_measurement = 0
+                    self.current_frame_rate_measurement_second = now
+                    print('{0} fps'.format(self.actual_frame_rate))
+
+                # Check if any delayed actions need to be applied
+                self.check_for_delayed_actions()
+
+                after_draw_time = time.time()
+
+                # Calculate sleep time to aproximate the target frame rate
+                sleep_time = (1.0 / self.target_frame_rate) - (after_draw_time - before_draw_time)
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+
+        except KeyboardInterrupt:
+            print('Exiting Pysha...')
+            self.push.f_stop.set()
 
     def on_midi_push_connection_established(self):
         # Do initial configuration of Push
         print('Doing initial Push config...')
+
+        # Configure custom colors
+        # TODO: custom color for RGB buttons does not seem to work nicely
+        app.push.set_color_palette_entry(1, ['my_dark_gray', 'my_dark_gray'], rgb=[32, 32, 32], bw=32)
+        app.push.reapply_color_palette()
+
+        # Initialize all buttons to dark gray color, initialize all pads to off
+        app.push.buttons.set_all_buttons_color(color='my_dark_gray')
+        app.push.pads.set_all_pads_to_color('black')
+        input()
+        
+        # Configure polyAT and AT
         app.push.pads.set_channel_aftertouch_range(range_start=401, range_end=800)
         #app.push.pads.set_velocity_curve(velocities=[int(i * 127/40) if i < 40 else 127 for i in range(0,128)])
+        
         app.update_push2_buttons()
         app.update_push2_pads()
-        
 
     def on_encoder_rotated(self, encoder_name, increment):
 
@@ -467,10 +466,10 @@ class PyshaApp(object):
                 self.midi_in_tmp_device_idx = len(self.available_midi_in_device_names) - 1
             elif self.midi_in_tmp_device_idx < -1:
                 self.midi_in_tmp_device_idx = -1  # Will use -1 for "None"
-        
+
         elif encoder_name == push2_python.constants.ENCODER_TRACK2_ENCODER:
             self.set_midi_in_channel(self.midi_in_channel + increment, wrap=False)
-        
+
         elif encoder_name == push2_python.constants.ENCODER_TRACK3_ENCODER:
             if self.midi_out_tmp_device_idx is None:
                 if self.midi_out is not None:
@@ -482,28 +481,26 @@ class PyshaApp(object):
                 self.midi_out_tmp_device_idx = len(self.available_midi_out_device_names) - 1
             elif self.midi_out_tmp_device_idx < -1:
                 self.midi_out_tmp_device_idx = -1  # Will use -1 for "None"
-        
+
         elif encoder_name == push2_python.constants.ENCODER_TRACK4_ENCODER:
             self.set_midi_out_channel(self.midi_out_channel + increment, wrap=False)
-        
+
         elif encoder_name == push2_python.constants.ENCODER_TRACK5_ENCODER:
-            melodic_mode = self.get_mode_by_name('melodic_mode')
-            melodic_mode.set_root_midi_note(melodic_mode.root_midi_note + increment)
+            self.melodic_mode.set_root_midi_note(self.melodic_mode.root_midi_note + increment)
             self.pads_need_update = True  # Using async update method because we don't really need immediate response here
 
         elif encoder_name == push2_python.constants.ENCODER_TRACK6_ENCODER:
-            melodic_mode = self.get_mode_by_name('melodic_mode')
             if increment >= 3:  # Only respond to "big" increments
-                if not melodic_mode.use_poly_at:
-                    melodic_mode.use_poly_at = True
+                if not self.melodic_mode.use_poly_at:
+                    self.melodic_mode.use_poly_at = True
                     self.push.pads.set_polyphonic_aftertouch()
             elif increment <= -3:
-                if melodic_mode.use_poly_at:
-                    melodic_mode.use_poly_at = False
+                if self.melodic_mode.use_poly_at:
+                    self.melodic_mode.use_poly_at = False
                     self.push.pads.set_channel_aftertouch()
 
     def on_button_pressed(self, button_name):
-        
+
         if button_name == push2_python.constants.BUTTON_UPPER_ROW_1:
             if self.midi_in_tmp_device_idx is None:
                 if self.midi_in is not None:
@@ -532,19 +529,17 @@ class PyshaApp(object):
                 self.midi_out_tmp_device_idx = -1  # Will use -1 for "None"
             elif self.midi_out_tmp_device_idx < -1:
                 self.midi_out_tmp_device_idx = len(self.available_midi_out_device_names) - 1
-            
+
         elif button_name == push2_python.constants.BUTTON_UPPER_ROW_4:
             self.set_midi_out_channel(self.midi_out_channel + 1, wrap=True)
 
         elif button_name == push2_python.constants.BUTTON_UPPER_ROW_5:
-            melodic_mode = self.get_mode_by_name('melodic_mode')
-            melodic_mode.set_root_midi_note(melodic_mode.root_midi_note + 1)
+            self.melodic_mode.set_root_midi_note(self.melodic_mode.root_midi_note + 1)
             self.pads_need_update = True
 
         elif button_name == push2_python.constants.BUTTON_UPPER_ROW_6:
-            melodic_mode = self.get_mode_by_name('melodic_mode')
-            melodic_mode.use_poly_at = not melodic_mode.use_poly_at
-            if melodic_mode.use_poly_at:
+            self.melodic_mode.use_poly_at = not self.melodic_mode.use_poly_at
+            if self.melodic_mode.use_poly_at:
                 self.push.pads.set_polyphonic_aftertouch()
             else:
                 self.push.pads.set_channel_aftertouch()
@@ -561,10 +556,10 @@ class PyshaApp(object):
             self.buttons_need_update = True
 
         elif button_name == push2_python.constants.BUTTON_NOTE:
-            if self.get_active_mode() is not None and self.get_active_mode().name == 'melodic_mode':
-                self.set_active_mode(self.get_mode_by_name('rhythmic_mode'))
+            if self.is_mode_active(self.melodic_mode):
+                self.set_active_mode(self.rhyhtmic_mode)
             else:
-                self.set_active_mode(self.get_mode_by_name('melodic_mode'))
+                self.set_active_mode(self.melodic_mode)
             self.pads_need_update = True
             self.buttons_need_update = True
 
@@ -575,12 +570,12 @@ class PyshaApp(object):
 
         elif button_name in self.pyramid_track_button_names_b:
             if self.pyramid_track_selection_button_a:
-                self.selected_pyramid_track = self.pyramid_track_button_names_a.index(self.pyramid_track_selection_button_a) + self.pyramid_track_button_names_b.index(button_name) * 8
+                self.selected_pyramid_track = self.pyramid_track_button_names_a.index(
+                    self.pyramid_track_selection_button_a) + self.pyramid_track_button_names_b.index(button_name) * 8
                 self.buttons_need_update = True
                 self.send_select_track_to_pyramid(self.selected_pyramid_track)
                 self.pyramid_track_selection_button_a = False
                 self.pyramid_track_selection_button_a_pressing_time = 0
-
 
     def on_button_released(self, button_name):
         if button_name in self.pyramid_track_button_names_a:
@@ -647,7 +642,7 @@ def on_touchstrip(push, value):
 @push2_python.on_midi_connected()
 def on_midi_connected(push):
     app.on_midi_push_connection_established()
-    
+
 
 @push2_python.on_sustain_pedal()
 def on_sustain_pedal(push, sustain_on):
