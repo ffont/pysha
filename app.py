@@ -12,6 +12,7 @@ from definitions import DELAYED_ACTIONS_APPLY_TIME, OFF_BTN_COLOR, PyshaMode
 from melodic_mode import MelodicMode
 from rhythmic_mode import RhythmicMode
 from settings_mode import SettingsMode
+from pyramidi_mode import PyramidiMode
 
 
 class PyshaApp(object):
@@ -42,30 +43,6 @@ class PyshaApp(object):
     pads_need_update = True
     buttons_need_update = True
 
-    pyramid_track_button_names_a = [
-        push2_python.constants.BUTTON_LOWER_ROW_1,
-        push2_python.constants.BUTTON_LOWER_ROW_2,
-        push2_python.constants.BUTTON_LOWER_ROW_3,
-        push2_python.constants.BUTTON_LOWER_ROW_4,
-        push2_python.constants.BUTTON_LOWER_ROW_5,
-        push2_python.constants.BUTTON_LOWER_ROW_6,
-        push2_python.constants.BUTTON_LOWER_ROW_7,
-        push2_python.constants.BUTTON_LOWER_ROW_8
-    ]
-    pyramid_track_button_names_b = [
-        push2_python.constants.BUTTON_1_32T,
-        push2_python.constants.BUTTON_1_32,
-        push2_python.constants.BUTTON_1_16T,
-        push2_python.constants.BUTTON_1_16,
-        push2_python.constants.BUTTON_1_8T,
-        push2_python.constants.BUTTON_1_8,
-        push2_python.constants.BUTTON_1_4T,
-        push2_python.constants.BUTTON_1_4
-    ]
-    pyramid_track_selection_button_a = False
-    pyramid_track_selection_button_a_pressing_time = 0
-    selected_pyramid_track = 0
-
     def __init__(self):
         if os.path.exists('settings.json'):
             settings = json.load(open('settings.json'))
@@ -84,11 +61,13 @@ class PyshaApp(object):
         self.init_modes(settings)
         self.toggle_melodic_rhythmic_modes()
         self.toggle_settings_mode()
+        self.active_modes.append(self.pyramidi_mode)
 
     def init_modes(self, settings):
         self.melodic_mode = MelodicMode(self, settings=settings)
         self.rhyhtmic_mode = RhythmicMode(self, settings=settings)
         self.settings_mode = SettingsMode(self, settings=settings)
+        self.pyramidi_mode = PyramidiMode(self, settings=settings)
 
     def get_all_modes(self):
         return [getattr(self, element) for element in vars(self) if isinstance(getattr(self, element), PyshaMode)]
@@ -243,32 +222,22 @@ class PyshaApp(object):
         for mode in self.active_modes:
             mode.update_buttons()
 
+        # Noe button, to toggle melodic/rhythmic mode
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_NOTE, 'white')
+        
+        # Mute button, to toggle display on/off
         if self.use_push2_display:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_MUTE, 'white')
         else:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_MUTE, 'red')
 
+        # Settings button, to toggle settings mode
         if self.is_mode_active(self.settings_mode):
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, OFF_BTN_COLOR)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, 'white', animation='pulsing')
         else:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, 'white')
 
-        for count, name in enumerate(self.pyramid_track_button_names_a):
-            if self.selected_pyramid_track % 8 == count:
-                self.push.buttons.set_button_color(name, 'green')
-            else:
-                self.push.buttons.set_button_color(name, 'orange')
-
-        for count, name in enumerate(self.pyramid_track_button_names_b):
-            if self.pyramid_track_selection_button_a:
-                if self.selected_pyramid_track // 8 == count:
-                    self.push.buttons.set_button_color(name, 'green', animation='pulsing')
-                else:
-                    self.push.buttons.set_button_color(name, 'orange', animation='pulsing')
-            else:
-                self.push.buttons.set_button_color(name, 'black')
 
     def generate_display_frame(self):
         # Prepare cairo canvas
@@ -362,51 +331,18 @@ class PyshaApp(object):
         app.update_push2_pads()
 
     def on_button_pressed(self, button_name):
-
         if button_name == push2_python.constants.BUTTON_NOTE:
             self.toggle_melodic_rhythmic_modes()
             self.pads_need_update = True
             self.buttons_need_update = True
-
         elif button_name == push2_python.constants.BUTTON_SETUP:
             self.toggle_settings_mode()
             self.buttons_need_update = True
-
         elif button_name == push2_python.constants.BUTTON_MUTE:
             self.use_push2_display = not self.use_push2_display
             if not self.use_push2_display:
                 self.push.display.send_to_display(self.push.display.prepare_frame(self.push.display.make_black_frame()))
             self.buttons_need_update = True
-
-        elif button_name in self.pyramid_track_button_names_a:
-            self.pyramid_track_selection_button_a = button_name
-            self.pyramid_track_selection_button_a_pressing_time = time.time()
-            self.buttons_need_update = True
-
-        elif button_name in self.pyramid_track_button_names_b:
-            if self.pyramid_track_selection_button_a:
-                self.selected_pyramid_track = self.pyramid_track_button_names_a.index(
-                    self.pyramid_track_selection_button_a) + self.pyramid_track_button_names_b.index(button_name) * 8
-                self.buttons_need_update = True
-                self.send_select_track_to_pyramid(self.selected_pyramid_track)
-                self.pyramid_track_selection_button_a = False
-                self.pyramid_track_selection_button_a_pressing_time = 0
-
-    def on_button_released(self, button_name):
-        if button_name in self.pyramid_track_button_names_a:
-            if self.pyramid_track_selection_button_a:
-                if time.time() - self.pyramid_track_selection_button_a_pressing_time < 0.200:
-                    # Only switch to track if it was a quick press
-                    self.selected_pyramid_track = self.pyramid_track_button_names_a.index(button_name)
-                    self.send_select_track_to_pyramid(self.selected_pyramid_track)
-                self.pyramid_track_selection_button_a = False
-                self.pyramid_track_selection_button_a_pressing_time = 0
-                self.buttons_need_update = True
-
-    def send_select_track_to_pyramid(self, track_idx):
-        # Follows pyramidi specification (Pyramid configured to receive on ch 16)
-        msg = mido.Message('control_change', control=0, value=track_idx + 1)
-        self.send_midi(msg, force_channel=15)
 
 
 # Bind push action handlers with class methods
@@ -443,7 +379,6 @@ def on_button_pressed(push, name):
 
 @push2_python.on_button_released()
 def on_button_released(push, name):
-    app.on_button_released(name)
     for mode in app.active_modes:
         mode.on_button_released(name)
 
