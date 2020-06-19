@@ -259,6 +259,7 @@ class PyshaApp(object):
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, 'red')
 
         if self.is_mode_active(self.settings_mode):
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, OFF_BTN_COLOR)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, 'white', animation='pulsing')
         else:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, 'white')
@@ -359,7 +360,13 @@ class PyshaApp(object):
 
         # Configure custom colors
         # TODO: custom color for RGB buttons does not seem to work nicely
-        app.push.set_color_palette_entry(1, [OFF_BTN_COLOR, OFF_BTN_COLOR], rgb=[32, 32, 32], bw=32)
+        try:
+            app.push.set_color_palette_entry(1, [OFF_BTN_COLOR, OFF_BTN_COLOR], rgb=[32, 32, 32], bw=32)
+        except AssertionError:
+            # Color is already defined, remove it first from palette and re-define it
+            # TODO: this should be improved with fiexs in push2-python library
+            app.push.color_palette = push2_python.constants.DEFAULT_COLOR_PALETTE
+            app.push.set_color_palette_entry(1, [OFF_BTN_COLOR, OFF_BTN_COLOR], rgb=[32, 32, 32], bw=32)
         app.push.reapply_color_palette()
 
         # Initialize all buttons to dark gray color, initialize all pads to off
