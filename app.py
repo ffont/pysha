@@ -8,9 +8,16 @@ import json
 import os
 import platform
 
-from definitions import PAD_STATE_ON, PAD_STATE_OFF, DELAYED_ACTIONS_APPLY_TIME
+from definitions import DELAYED_ACTIONS_APPLY_TIME, OFF_BTN_COLOR
 from melodic_mode import MelodicMode
 from rhythmic_mode import RhythmicMode
+from settings_mode import SettingsMode
+
+
+# TODO: Global controls
+# - note button = switch melodic/rhythmic modes
+# - settings button = toggle settings panels
+# - mute button = toggle display on/off
 
 
 class PyshaApp(object):
@@ -37,9 +44,7 @@ class PyshaApp(object):
     current_frame_rate_measurement_second = 0
 
     # other state vars
-    modes = []
     active_modes = []
-    encoders_state = {}
     pads_need_update = True
     buttons_need_update = True
 
@@ -81,28 +86,47 @@ class PyshaApp(object):
         self.init_midi_in(device_name=settings.get('default_midi_in_device_name', None))
         self.init_midi_out(device_name=settings.get('default_midi_out_device_name', None))
         self.init_push()
-        self.init_state()
 
         self.init_modes()
         self.melodic_mode.use_poly_at = settings.get('use_poly_at', True)
         self.melodic_mode.set_root_midi_note(settings.get('root_midi_note', 64))
-        self.set_active_mode(self.melodic_mode)
+        
+        self.toggle_melodic_rhythmic_modes()
+        self.toggle_settings_mode()
 
     def init_modes(self):
         self.melodic_mode = MelodicMode(self)
         self.rhyhtmic_mode = RhythmicMode(self)
-        self.modes = [self.melodic_mode, self.rhyhtmic_mode]
+        self.settings_mode = SettingsMode(self)
 
     def is_mode_active(self, mode):
         return mode in self.active_modes
 
-    def set_active_mode(self, new_active_mode=None):
-        # For now we only support one active mode at a time, this function deactivates existing active modes (will be 1), and activates the next one
-        for mode in self.active_modes:
-            mode.deactivate()
-        if new_active_mode is not None:
-            self.active_modes = [new_active_mode]
-            new_active_mode.activate()
+    def toggle_settings_mode(self):
+        if self.is_mode_active(self.settings_mode):
+            self.active_modes = [mode for mode in self.active_modes if mode != self.settings_mode]
+            self.settings_mode.deactivate()
+        else:
+            self.active_modes.append(self.settings_mode)
+            self.settings_mode.activate()
+
+    def toggle_melodic_rhythmic_modes(self):
+        if self.is_mode_active(self.melodic_mode):
+            # Switch to rhythmic mode
+            self.active_modes = [mode for mode in self.active_modes if mode != self.melodic_mode]
+            self.active_modes += [self.rhyhtmic_mode]
+            self.melodic_mode.deactivate()
+            self.rhyhtmic_mode.activate()
+        elif self.is_mode_active(self.rhyhtmic_mode):
+            # Switch to melodic mdoe
+            self.active_modes = [mode for mode in self.active_modes if mode != self.rhyhtmic_mode]
+            self.active_modes += [self.melodic_mode]
+            self.rhyhtmic_mode.deactivate()
+            self.melodic_mode.activate()
+        else:
+            # If none of melodic or rhythmic modes were active, enable melodic by default
+            self.active_modes += [self.melodic_mode]
+            self.melodic_mode.activate()
 
     def save_current_settings_to_file(self):
         json.dump({
@@ -194,7 +218,6 @@ class PyshaApp(object):
             self.midi_out.send(msg)
 
     def midi_in_handler(self, msg):
-
         if hasattr(msg, 'channel'):  # This will rule out sysex and other "strange" messages that don't have channel info
             if self.midi_in_channel == -1 or msg.channel == self.midi_in_channel:   # If midi input channel is set to -1 (all) or a specific channel
 
@@ -221,15 +244,6 @@ class PyshaApp(object):
             # A work around is make the reconnection time bigger, but a better solution should probably be found.
             self.push.set_push2_reconnect_call_interval(2)
 
-    def init_state(self):
-        current_time = time.time()
-        self.last_time_pads_updated = current_time
-        self.last_time_buttons_updated = current_time
-        for encoder_name in self.push.encoders.available_names:
-            self.encoders_state[encoder_name] = {
-                'last_message_received': current_time,
-            }
-
     def update_push2_pads(self):
         for mode in self.active_modes:
             mode.update_pads()
@@ -239,17 +253,15 @@ class PyshaApp(object):
             mode.update_buttons()
 
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_NOTE, 'white')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, 'white')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, 'white')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, 'white')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, 'white')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, 'white')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, 'white')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, 'green')
         if self.use_push2_display:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, 'white')
         else:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, 'red')
+
+        if self.is_mode_active(self.settings_mode):
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, 'white', animation='pulsing')
+        else:
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, 'white')
 
         for count, name in enumerate(self.pyramid_track_button_names_a):
             if self.selected_pyramid_track % 8 == count:
@@ -267,103 +279,14 @@ class PyshaApp(object):
                 self.push.buttons.set_button_color(name, 'black')
 
     def generate_display_frame(self):
-
-        def show_title(x, text, color=[1, 1, 1]):
-            text = str(text)
-            ctx.set_source_rgb(*color)
-            ctx.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-            font_size = h//12
-            ctx.set_font_size(font_size)
-            ctx.move_to(x + 3, 20)
-            ctx.show_text(text)
-
-        def show_value(x, text, color=[1, 1, 1]):
-            text = str(text)
-            ctx.set_source_rgb(*color)
-            ctx.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-            font_size = h//8
-            ctx.set_font_size(font_size)
-            ctx.move_to(x + 3, 45)
-            ctx.show_text(text)
-
         # Prepare cairo canvas
         w, h = push2_python.constants.DISPLAY_LINE_PIXELS, push2_python.constants.DISPLAY_N_LINES
         surface = cairo.ImageSurface(cairo.FORMAT_RGB16_565, w, h)
         ctx = cairo.Context(surface)
-
-        # Divide display in 8 parts to show different settings
-        part_w = w // 8
-        part_h = h
-        for i in range(0, 8):
-            part_x = i * part_w
-            part_y = 0
-
-            ctx.set_source_rgb(0, 0, 0)  # Draw black background
-            ctx.rectangle(part_x - 3, part_y, w, h)  # do x -3 to add some margin between parts
-            ctx.fill()
-
-            color = [1.0, 1.0, 1.0]
-
-            if i == 0:  # MIDI in device
-                if self.midi_in_tmp_device_idx is not None:
-                    color = [1.0, 0.64, 0.0]  # Orange font
-                    if self.midi_in_tmp_device_idx < 0:
-                        name = "None"
-                    else:
-                        name = "{0} {1}".format(self.midi_in_tmp_device_idx + 1, self.available_midi_in_device_names[self.midi_in_tmp_device_idx])
-                else:
-                    if self.midi_in is not None:
-                        name = "{0} {1}".format(self.available_midi_in_device_names.index(self.midi_in.name) + 1, self.midi_in.name)
-                    else:
-                        color = [0.5, 0.5, 0.5]  # Gray font
-                        name = "None"
-                show_title(part_x, 'IN DEVICE')
-                show_value(part_x, name, color)
-
-            elif i == 1:  # MIDI in channel
-                if self.midi_in is None:
-                    color = [0.5, 0.5, 0.5]  # Gray font
-                show_title(part_x, 'IN CH')
-                show_value(part_x, self.midi_in_channel + 1 if self.midi_in_channel > -1 else "All", color)
-
-            elif i == 2:  # MIDI out device
-                if self.midi_out_tmp_device_idx is not None:
-                    color = [1.0, 0.64, 0.0]  # Orange font
-                    if self.midi_out_tmp_device_idx < 0:
-                        name = "None"
-                    else:
-                        name = "{0} {1}".format(self.midi_out_tmp_device_idx + 1, self.available_midi_out_device_names[self.midi_out_tmp_device_idx])
-                else:
-                    if self.midi_out is not None:
-                        name = "{0} {1}".format(self.available_midi_out_device_names.index(self.midi_out.name) + 1, self.midi_out.name)
-                    else:
-                        color = [0.5, 0.5, 0.5]  # Gray font
-                        name = "None"
-                show_title(part_x, 'OUT DEVICE')
-                show_value(part_x, name, color)
-
-            elif i == 3:  # MIDI out channel
-                if self.midi_out is None:
-                    color = [0.5, 0.5, 0.5]  # Gray font
-                show_title(part_x, 'OUT CH')
-                show_value(part_x, self.midi_out_channel + 1, color)
-
-            elif i == 4:  # Root note
-                if not self.is_mode_active(self.melodic_mode):
-                    color = [0.5, 0.5, 0.5]  # Gray font
-                show_title(part_x, 'ROOT NOTE')
-                show_value(part_x, "{0} ({1})".format(self.melodic_mode.note_number_to_name(self.melodic_mode.root_midi_note), self.melodic_mode.root_midi_note), color)
-
-            elif i == 5:  # Poly AT/channel AT
-                show_title(part_x, 'AFTERTOUCH')
-                show_value(part_x, 'polyAT' if self.melodic_mode.use_poly_at else 'channel', color)
-
-            elif i == 6:  # Save button
-                show_title(part_x, 'SAVE')
-            elif i == 7:  # FPS indicator
-                show_title(part_x, 'FPS')
-                show_value(part_x, self.actual_frame_rate, color)
-
+        # Call all active modes to write to context
+        for mode in self.active_modes:
+            mode.update_display(ctx, w, h)
+        # Convert cairo data to numpy array to send to push
         buf = surface.get_data()
         return numpy.ndarray(shape=(h, w), dtype=numpy.uint16, buffer=buf).transpose()
 
@@ -372,13 +295,13 @@ class PyshaApp(object):
 
         if self.midi_in_tmp_device_idx is not None:
             # Means we are in the process of changing the MIDI in device
-            if current_time - self.encoders_state[push2_python.constants.ENCODER_TRACK1_ENCODER]['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
+            if current_time - self.settings_mode.encoders_state[push2_python.constants.ENCODER_TRACK1_ENCODER]['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
                 self.set_midi_in_device_by_index(self.midi_in_tmp_device_idx)
                 self.midi_in_tmp_device_idx = None
 
         if self.midi_out_tmp_device_idx is not None:
             # Means we are in the process of changing the MIDI in device
-            if current_time - self.encoders_state[push2_python.constants.ENCODER_TRACK3_ENCODER]['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
+            if current_time - self.settings_mode.encoders_state[push2_python.constants.ENCODER_TRACK3_ENCODER]['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
                 self.set_midi_out_device_by_index(self.midi_out_tmp_device_idx)
                 self.midi_out_tmp_device_idx = None
 
@@ -436,13 +359,12 @@ class PyshaApp(object):
 
         # Configure custom colors
         # TODO: custom color for RGB buttons does not seem to work nicely
-        app.push.set_color_palette_entry(1, ['my_dark_gray', 'my_dark_gray'], rgb=[32, 32, 32], bw=32)
+        app.push.set_color_palette_entry(1, [OFF_BTN_COLOR, OFF_BTN_COLOR], rgb=[32, 32, 32], bw=32)
         app.push.reapply_color_palette()
 
         # Initialize all buttons to dark gray color, initialize all pads to off
-        app.push.buttons.set_all_buttons_color(color='my_dark_gray')
+        app.push.buttons.set_all_buttons_color(color=OFF_BTN_COLOR)
         app.push.pads.set_all_pads_to_color('black')
-        input()
         
         # Configure polyAT and AT
         app.push.pads.set_channel_aftertouch_range(range_start=401, range_end=800)
@@ -451,116 +373,22 @@ class PyshaApp(object):
         app.update_push2_buttons()
         app.update_push2_pads()
 
-    def on_encoder_rotated(self, encoder_name, increment):
-
-        self.encoders_state[encoder_name]['last_message_received'] = time.time()
-
-        if encoder_name == push2_python.constants.ENCODER_TRACK1_ENCODER:
-            if self.midi_in_tmp_device_idx is None:
-                if self.midi_in is not None:
-                    self.midi_in_tmp_device_idx = self.available_midi_in_device_names.index(self.midi_in.name)
-                else:
-                    self.midi_in_tmp_device_idx = -1
-            self.midi_in_tmp_device_idx += increment
-            if self.midi_in_tmp_device_idx >= len(self.available_midi_in_device_names):
-                self.midi_in_tmp_device_idx = len(self.available_midi_in_device_names) - 1
-            elif self.midi_in_tmp_device_idx < -1:
-                self.midi_in_tmp_device_idx = -1  # Will use -1 for "None"
-
-        elif encoder_name == push2_python.constants.ENCODER_TRACK2_ENCODER:
-            self.set_midi_in_channel(self.midi_in_channel + increment, wrap=False)
-
-        elif encoder_name == push2_python.constants.ENCODER_TRACK3_ENCODER:
-            if self.midi_out_tmp_device_idx is None:
-                if self.midi_out is not None:
-                    self.midi_out_tmp_device_idx = self.available_midi_out_device_names.index(self.midi_out.name)
-                else:
-                    self.midi_out_tmp_device_idx = -1
-            self.midi_out_tmp_device_idx += increment
-            if self.midi_out_tmp_device_idx >= len(self.available_midi_out_device_names):
-                self.midi_out_tmp_device_idx = len(self.available_midi_out_device_names) - 1
-            elif self.midi_out_tmp_device_idx < -1:
-                self.midi_out_tmp_device_idx = -1  # Will use -1 for "None"
-
-        elif encoder_name == push2_python.constants.ENCODER_TRACK4_ENCODER:
-            self.set_midi_out_channel(self.midi_out_channel + increment, wrap=False)
-
-        elif encoder_name == push2_python.constants.ENCODER_TRACK5_ENCODER:
-            self.melodic_mode.set_root_midi_note(self.melodic_mode.root_midi_note + increment)
-            self.pads_need_update = True  # Using async update method because we don't really need immediate response here
-
-        elif encoder_name == push2_python.constants.ENCODER_TRACK6_ENCODER:
-            if increment >= 3:  # Only respond to "big" increments
-                if not self.melodic_mode.use_poly_at:
-                    self.melodic_mode.use_poly_at = True
-                    self.push.pads.set_polyphonic_aftertouch()
-            elif increment <= -3:
-                if self.melodic_mode.use_poly_at:
-                    self.melodic_mode.use_poly_at = False
-                    self.push.pads.set_channel_aftertouch()
-
     def on_button_pressed(self, button_name):
 
-        if button_name == push2_python.constants.BUTTON_UPPER_ROW_1:
-            if self.midi_in_tmp_device_idx is None:
-                if self.midi_in is not None:
-                    self.midi_in_tmp_device_idx = self.available_midi_in_device_names.index(self.midi_in.name)
-                else:
-                    self.midi_in_tmp_device_idx = -1
-            self.midi_in_tmp_device_idx += 1
-            # Make index position wrap
-            if self.midi_in_tmp_device_idx >= len(self.available_midi_in_device_names):
-                self.midi_in_tmp_device_idx = -1  # Will use -1 for "None"
-            elif self.midi_in_tmp_device_idx < -1:
-                self.midi_in_tmp_device_idx = len(self.available_midi_in_device_names) - 1
-
-        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_2:
-            self.set_midi_in_channel(self.midi_in_channel + 1, wrap=True)
-
-        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_3:
-            if self.midi_out_tmp_device_idx is None:
-                if self.midi_out is not None:
-                    self.midi_out_tmp_device_idx = self.available_midi_out_device_names.index(self.midi_out.name)
-                else:
-                    self.midi_out_tmp_device_idx = -1
-            self.midi_out_tmp_device_idx += 1
-            # Make index position wrap
-            if self.midi_out_tmp_device_idx >= len(self.available_midi_out_device_names):
-                self.midi_out_tmp_device_idx = -1  # Will use -1 for "None"
-            elif self.midi_out_tmp_device_idx < -1:
-                self.midi_out_tmp_device_idx = len(self.available_midi_out_device_names) - 1
-
-        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_4:
-            self.set_midi_out_channel(self.midi_out_channel + 1, wrap=True)
-
-        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_5:
-            self.melodic_mode.set_root_midi_note(self.melodic_mode.root_midi_note + 1)
+        if button_name == push2_python.constants.BUTTON_NOTE:
+            self.toggle_melodic_rhythmic_modes()
             self.pads_need_update = True
+            self.buttons_need_update = True
 
-        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_6:
-            self.melodic_mode.use_poly_at = not self.melodic_mode.use_poly_at
-            if self.melodic_mode.use_poly_at:
-                self.push.pads.set_polyphonic_aftertouch()
-            else:
-                self.push.pads.set_channel_aftertouch()
-
-        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_7:
-            # Save current settings
-            app.save_current_settings_to_file()
+        elif button_name == push2_python.constants.BUTTON_SETUP:
+            self.toggle_settings_mode()
+            self.buttons_need_update = True
 
         elif button_name == push2_python.constants.BUTTON_UPPER_ROW_8:
             # Toogle use display
             self.use_push2_display = not self.use_push2_display
             if not self.use_push2_display:
                 self.push.display.send_to_display(self.push.display.prepare_frame(self.push.display.make_black_frame()))
-            self.buttons_need_update = True
-
-        elif button_name == push2_python.constants.BUTTON_NOTE:
-            if self.is_mode_active(self.melodic_mode):
-                self.set_active_mode(self.rhyhtmic_mode)
-            else:
-                self.set_active_mode(self.melodic_mode)
-            self.pads_need_update = True
             self.buttons_need_update = True
 
         elif button_name in self.pyramid_track_button_names_a:
@@ -594,13 +422,13 @@ class PyshaApp(object):
         self.send_midi(msg, force_channel=15)
 
 
-# Set up action handlers to react to encoder touches and rotation
+# Bind push action handlers with class methods
 @push2_python.on_encoder_rotated()
 def on_encoder_rotated(push, encoder_name, increment):
-    app.on_encoder_rotated(encoder_name, increment)
+    for mode in app.active_modes:
+        mode.on_encoder_rotated(encoder_name, increment)
 
 
-# Set up action handlers to react to pads being pressed and released
 @push2_python.on_pad_pressed()
 def on_pad_pressed(push, pad_n, pad_ij, velocity):
     for mode in app.active_modes:
@@ -649,7 +477,7 @@ def on_sustain_pedal(push, sustain_on):
     for mode in app.active_modes:
         mode.on_sustain_pedal(sustain_on)
 
-
+# Run app main loop
 if __name__ == "__main__":
     app = PyshaApp()
     app.run_loop()

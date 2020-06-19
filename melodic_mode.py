@@ -1,7 +1,7 @@
 import mido
-import push2_python
+import push2_python.constants
 
-from definitions import PyshaMode
+from definitions import PyshaMode, OFF_BTN_COLOR
 
 
 class MelodicMode(PyshaMode):
@@ -55,9 +55,9 @@ class MelodicMode(PyshaMode):
         self.update_buttons()
 
     def deactivate(self):
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'black')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'black')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'black')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, OFF_BTN_COLOR)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, OFF_BTN_COLOR)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
 
     def update_buttons(self):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
@@ -65,7 +65,7 @@ class MelodicMode(PyshaMode):
         if self.fixed_velocity_mode:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'white')
         else:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'dark_gray')
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
 
     def update_pads(self):
         color_matrix = []

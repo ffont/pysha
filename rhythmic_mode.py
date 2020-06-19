@@ -1,6 +1,7 @@
-import push2_python
+import push2_python.constants
 
 from melodic_mode import MelodicMode
+from definitions import OFF_BTN_COLOR
 
 
 class RhythmicMode(MelodicMode):
@@ -20,13 +21,13 @@ class RhythmicMode(MelodicMode):
         return self.rhythmic_notes_matrix[pad_ij[0]][pad_ij[1]]
 
     def deactivate(self):
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'black')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
 
     def update_buttons(self):
         if self.fixed_velocity_mode:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'white')
         else:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'dark_gray')
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
 
     def update_pads(self):
         color_matrix = []
