@@ -2,7 +2,7 @@ import push2_python.constants
 import time
 
 from display_utils import show_title, show_value
-from definitions import PyshaMode, OFF_BTN_COLOR
+from definitions import PyshaMode, OFF_BTN_COLOR, DELAYED_ACTIONS_APPLY_TIME
 
 
 class SettingsMode(PyshaMode):
@@ -29,7 +29,7 @@ class SettingsMode(PyshaMode):
 
     encoders_state = {}
 
-    def initialize(self):
+    def initialize(self, settings=None):
         current_time = time.time()
         for encoder_name in self.push.encoders.available_names:
             self.encoders_state[encoder_name] = {
@@ -47,6 +47,19 @@ class SettingsMode(PyshaMode):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, OFF_BTN_COLOR)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, OFF_BTN_COLOR)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, OFF_BTN_COLOR)
+
+    def check_for_delayed_actions(self):
+        current_time = time.time()
+        if self.app.midi_in_tmp_device_idx is not None:
+            # Means we are in the process of changing the MIDI in device
+            if current_time - self.encoders_state[push2_python.constants.ENCODER_TRACK1_ENCODER]['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
+                self.app.set_midi_in_device_by_index(self.app.midi_in_tmp_device_idx)
+                self.app.midi_in_tmp_device_idx = None
+        if self.app.midi_out_tmp_device_idx is not None:
+            # Means we are in the process of changing the MIDI in device
+            if current_time - self.encoders_state[push2_python.constants.ENCODER_TRACK3_ENCODER]['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
+                self.app.set_midi_out_device_by_index(self.app.midi_out_tmp_device_idx)
+                self.app.midi_out_tmp_device_idx = None
 
     def update_buttons(self):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, 'white')

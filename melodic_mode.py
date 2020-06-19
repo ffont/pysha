@@ -12,6 +12,17 @@ class MelodicMode(PyshaMode):
     fixed_velocity_mode = False
     use_poly_at = False
 
+    def initialize(self, settings=None):
+        if settings is not None:
+            self.use_poly_at = settings.get('use_poly_at', True)
+            self.set_root_midi_note(settings.get('root_midi_note', 64))
+
+    def get_settings_to_save(self):
+        return {
+            'use_poly_at': self.use_poly_at,
+            'root_midi_note': self.root_midi_note,
+        }
+
     def add_note_being_played(self, midi_note, source):
         self.notes_being_played.append({'note': midi_note, 'source': source})
 
@@ -58,6 +69,17 @@ class MelodicMode(PyshaMode):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, OFF_BTN_COLOR)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, OFF_BTN_COLOR)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
+
+    def on_midi_in(self, msg):
+        # Update the list of notes being currently played so push2 pads can be updated accordingly
+        if msg.type == "note_on":
+            if msg.velocity == 0:
+                self.remove_note_being_played(msg.note, self.app.midi_in.name)
+            else:
+                self.add_note_being_played(msg.note, self.app.midi_in.name)
+        elif msg.type == "note_off":
+            self.remove_note_being_played(msg.note, self.app.midi_in.name)
+        self.app.pads_need_update = True 
 
     def update_buttons(self):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')

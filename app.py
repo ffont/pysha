@@ -8,7 +8,7 @@ import json
 import os
 import platform
 
-from definitions import DELAYED_ACTIONS_APPLY_TIME, OFF_BTN_COLOR
+from definitions import DELAYED_ACTIONS_APPLY_TIME, OFF_BTN_COLOR, PyshaMode
 from melodic_mode import MelodicMode
 from rhythmic_mode import RhythmicMode
 from settings_mode import SettingsMode
@@ -87,17 +87,17 @@ class PyshaApp(object):
         self.init_midi_out(device_name=settings.get('default_midi_out_device_name', None))
         self.init_push()
 
-        self.init_modes()
-        self.melodic_mode.use_poly_at = settings.get('use_poly_at', True)
-        self.melodic_mode.set_root_midi_note(settings.get('root_midi_note', 64))
-        
+        self.init_modes(settings)
         self.toggle_melodic_rhythmic_modes()
         self.toggle_settings_mode()
 
-    def init_modes(self):
-        self.melodic_mode = MelodicMode(self)
-        self.rhyhtmic_mode = RhythmicMode(self)
-        self.settings_mode = SettingsMode(self)
+    def init_modes(self, settings):
+        self.melodic_mode = MelodicMode(self, settings=settings)
+        self.rhyhtmic_mode = RhythmicMode(self, settings=settings)
+        self.settings_mode = SettingsMode(self, settings=settings)
+
+    def get_all_modes(self):
+        return [getattr(self, element) for element in vars(self) if isinstance(getattr(self, element), PyshaMode)]
 
     def is_mode_active(self, mode):
         return mode in self.active_modes
@@ -129,16 +129,19 @@ class PyshaApp(object):
             self.melodic_mode.activate()
 
     def save_current_settings_to_file(self):
-        json.dump({
+        settings = {
             'midi_in_default_channel': self.midi_in_channel,
             'midi_out_default_channel': self.midi_out_channel,
             'default_midi_in_device_name': self.midi_in.name if self.midi_in is not None else None,
             'default_midi_out_device_name': self.midi_out.name if self.midi_out is not None else None,
             'use_push2_display': self.use_push2_display,
             'target_frame_rate': self.target_frame_rate,
-            'use_poly_at': self.melodic_mode.use_poly_at,
-            'root_midi_note': self.melodic_mode.root_midi_note
-        }, open('settings.json', 'w'))
+        }
+        for mode in self.get_all_modes():
+            mode_settings = mode.get_settings_to_save()
+            if mode_settings:
+                settings.update(mode_settings)
+        json.dump(settings, open('settings.json', 'w'))
 
     def init_midi_in(self, device_name=None):
         print('Configuring MIDI in...')
@@ -220,19 +223,13 @@ class PyshaApp(object):
     def midi_in_handler(self, msg):
         if hasattr(msg, 'channel'):  # This will rule out sysex and other "strange" messages that don't have channel info
             if self.midi_in_channel == -1 or msg.channel == self.midi_in_channel:   # If midi input channel is set to -1 (all) or a specific channel
-
+                
                 # Forward message to the MIDI out
-                self.send_midi(msg)
+                self.send_midi(msg)  
 
-                # Update the list of notes being currently played so push2 pads can be updated accordingly
-                if msg.type == "note_on":
-                    if msg.velocity == 0:
-                        self.melodic_mode.remove_note_being_played(msg.note, self.midi_in.name)
-                    else:
-                        self.melodic_mode.add_note_being_played(msg.note, self.midi_in.name)
-                elif msg.type == "note_off":
-                    self.melodic_mode.remove_note_being_played(msg.note, self.midi_in.name)
-                self.pads_need_update = True  # Using the async update method because we don't really need immediate response here
+                # Forward the midi message to the active modes
+                for mode in self.active_modes:
+                    mode.on_midi_in(msg)
 
     def init_push(self):
         print('Configuring Push...')
@@ -292,22 +289,12 @@ class PyshaApp(object):
         return numpy.ndarray(shape=(h, w), dtype=numpy.uint16, buffer=buf).transpose()
 
     def check_for_delayed_actions(self):
-        current_time = time.time()
-
-        if self.midi_in_tmp_device_idx is not None:
-            # Means we are in the process of changing the MIDI in device
-            if current_time - self.settings_mode.encoders_state[push2_python.constants.ENCODER_TRACK1_ENCODER]['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
-                self.set_midi_in_device_by_index(self.midi_in_tmp_device_idx)
-                self.midi_in_tmp_device_idx = None
-
-        if self.midi_out_tmp_device_idx is not None:
-            # Means we are in the process of changing the MIDI in device
-            if current_time - self.settings_mode.encoders_state[push2_python.constants.ENCODER_TRACK3_ENCODER]['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
-                self.set_midi_out_device_by_index(self.midi_out_tmp_device_idx)
-                self.midi_out_tmp_device_idx = None
 
         if not self.push.midi_is_configured():  # If MIDI not configured, make sure we try sending messages so it gets configured
             self.push.configure_midi()
+        
+        for mode in self.active_modes:
+            mode.check_for_delayed_actions()
 
         if self.pads_need_update:
             self.update_push2_pads()

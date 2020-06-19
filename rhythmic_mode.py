@@ -17,6 +17,9 @@ class RhythmicMode(MelodicMode):
         [36, 37, 38, 39, 68, 69, 70, 71]
     ]
 
+    def get_settings_to_save(self):
+        return {}
+
     def pad_ij_to_midi_note(self, pad_ij):
         return self.rhythmic_notes_matrix[pad_ij[0]][pad_ij[1]]
 

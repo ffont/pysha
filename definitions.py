@@ -7,23 +7,37 @@ class PyshaMode(object):
 
     name = ''
 
-    def __init__(self, app):
+    def __init__(self, app, settings=None):
         self.app = app
-        self.initialize()
+        self.initialize(settings=settings)
 
     @property
     def push(self):
         return self.app.push
 
-    # Method run only once when the mode object is created
-    def initialize(self):
+    # Method run only once when the mode object is created, may receive settings dictionary from main app
+    def initialize(self, settings=None):
         pass
 
-    # Methhods that are run before the mode is activated and when it is deactivated
+    # Method to return a dictionary of properties to store in a settings file, and that will be passed to
+    # initialize method when object created
+    def get_settings_to_save(self):
+        return {}
+
+    # Methods that are run before the mode is activated and when it is deactivated
     def activate(self):
         pass
 
     def deactivate(self):
+        pass
+
+    # Method called at every iteration in the main loop to see if any actions need to be performed at the end of the iteration
+    # This is used to avoid some actions unncessesarily being repeated many times
+    def check_for_delayed_actions(self):
+        pass
+
+    # Method called when MIDI messages arrive from Pysha MIDI input
+    def on_midi_in(self, msg):
         pass
 
     # Push2 update methods
