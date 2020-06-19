@@ -27,10 +27,7 @@ class RhythmicMode(MelodicMode):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
 
     def update_buttons(self):
-        if self.fixed_velocity_mode:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'white')
-        else:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
+        self.update_accent_button()
 
     def update_pads(self):
         color_matrix = []
@@ -61,5 +58,5 @@ class RhythmicMode(MelodicMode):
     def on_button_pressed(self, button_name):
         if button_name == push2_python.constants.BUTTON_ACCENT:
             self.fixed_velocity_mode = not self.fixed_velocity_mode
-            self.buttons_need_update = True
+            self.app.buttons_need_update = True
             self.app.pads_need_update = True

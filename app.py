@@ -233,7 +233,6 @@ class PyshaApp(object):
 
         # Settings button, to toggle settings mode
         if self.is_mode_active(self.settings_mode):
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, OFF_BTN_COLOR)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, 'white', animation='pulsing')
         else:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, 'white')

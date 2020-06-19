@@ -2,7 +2,7 @@ import mido
 import push2_python
 import time
 
-from definitions import PyshaMode
+from definitions import PyshaMode, OFF_BTN_COLOR
 
 
 class PyramidiMode(PyshaMode):

@@ -81,13 +81,17 @@ class MelodicMode(PyshaMode):
             self.remove_note_being_played(msg.note, self.app.midi_in.name)
         self.app.pads_need_update = True 
 
+    def update_accent_button(self):
+        # Accent button has its own method so it can be reused in the rhythmic mode which inherits from melodic mode
+        if self.fixed_velocity_mode:
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'white', animation='pulsing')
+        else:
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'white')
+
     def update_buttons(self):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'white')
-        if self.fixed_velocity_mode:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'white')
-        else:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
+        self.update_accent_button()
 
     def update_pads(self):
         color_matrix = []
@@ -157,5 +161,5 @@ class MelodicMode(PyshaMode):
 
         elif button_name == push2_python.constants.BUTTON_ACCENT:
             self.fixed_velocity_mode = not self.fixed_velocity_mode
-            self.buttons_need_update = True
+            self.app.buttons_need_update = True
             self.app.pads_need_update = True
