@@ -14,12 +14,6 @@ from rhythmic_mode import RhythmicMode
 from settings_mode import SettingsMode
 
 
-# TODO: Global controls
-# - note button = switch melodic/rhythmic modes
-# - settings button = toggle settings panels
-# - mute button = toggle display on/off
-
-
 class PyshaApp(object):
 
     # midi
@@ -251,9 +245,9 @@ class PyshaApp(object):
 
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_NOTE, 'white')
         if self.use_push2_display:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, 'white')
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_MUTE, 'white')
         else:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, 'red')
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_MUTE, 'red')
 
         if self.is_mode_active(self.settings_mode):
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, OFF_BTN_COLOR)
@@ -378,8 +372,7 @@ class PyshaApp(object):
             self.toggle_settings_mode()
             self.buttons_need_update = True
 
-        elif button_name == push2_python.constants.BUTTON_UPPER_ROW_8:
-            # Toogle use display
+        elif button_name == push2_python.constants.BUTTON_MUTE:
             self.use_push2_display = not self.use_push2_display
             if not self.use_push2_display:
                 self.push.display.send_to_display(self.push.display.prepare_frame(self.push.display.make_black_frame()))
