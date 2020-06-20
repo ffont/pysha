@@ -1,4 +1,4 @@
-VERSION = '0.1dev'
+VERSION = '0.1'
 
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
 FONT_COLOR_DELAYED_ACTIONS = [1.0, 0.64, 0.0]

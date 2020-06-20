@@ -211,7 +211,7 @@ class SettingsMode(PyshaMode):
 
                 elif i ==1: # Version info
                     show_title(ctx, part_x, h, 'VERSION')
-                    show_value(ctx, part_x, h, VERSION, color)
+                    show_value(ctx, part_x, h, 'Pysha ' + VERSION, color)
 
                 elif i == 2:  # FPS indicator
                     show_title(ctx, part_x, h, 'FPS')

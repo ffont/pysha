@@ -9,7 +9,23 @@ python app.py
 
 This utility is based on [push2-python](https://github.com/ffont/push2-python). `push2-python` which requires [pyusb](https://github.com/pyusb/pyusb) which is based in [libusb](https://libusb.info/). You'll most probably need to manually install `libusb` for your operative system if `pip install -r requirements.txt` does not do it for you. Moreover, to draw on Push2's screen, we use [`pycairo`](https://github.com/pygobject/pycairo) Python package. You'll most probably also need to install [`cairo`](https://www.cairographics.org/) if `pip install -r requirements.txt` does not do it for you (see [this page](https://pycairo.readthedocs.io/en/latest/getting_started.html) for info on that).
 
-WARNING: current implementation is a quick hack. I should find some time to organise the code nicely, etc, etc.
+
+## Features
+
+I designed Pysha (and I continue to update it) with the only purpose to serve my own specific needs. In my setup, I run Pysha on a Rapsberry Pi and connected to Push2. Push2 is used as my main source of MIDI input, and the generated MIDI is routed to a Squarp Pyramid sequencer. From there, Pyramid connects to all the other machines in the setup. These are the features that Pysha has currently implemented:
+
+* Play melodies and chords in a chromatic scale mode
+* Use classic 4x4 (and up to 8x8!) pad grid in the rhythm layout mode
+* Choose between channel aftertouch and polyphonic aftertouch
+* Use *accent* mode for fixed 127 velocity playing
+* Interactively adjust aftertouch sensitivity curves
+* Merge MIDI in from a MIDI input (using a MIDI intergace with the Rapsberry Pi) and also send it to the main MIDI out
+* Interactively configure MIDI in/out settings
+* Select Pyramid tracks and show track number information on screen
+* Show track instrument information and sync colors (with preloaded information about what wach Pyramid track is routed to)
+* Temporarily disable screen rendering for slow Raspberry Pi's (like mine!)
+* Save current settings so these are automatically loaded on next run
+* Raspberry Pi configuration instructions to load Pysha on startup!
 
 
 ## Instructions for have this running on a RaspberryPi
