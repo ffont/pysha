@@ -1,18 +1,18 @@
-import push2_python
-import mido
-import time
-import random
-import cairo
-import numpy
 import json
 import os
 import platform
+import time
 
-from definitions import DELAYED_ACTIONS_APPLY_TIME, OFF_BTN_COLOR, PyshaMode
+import cairo
+import mido
+import numpy
+import push2_python
+
+from definitions import OFF_BTN_COLOR, PyshaMode
 from melodic_mode import MelodicMode
+from pyramidi_mode import PyramidiMode
 from rhythmic_mode import RhythmicMode
 from settings_mode import SettingsMode
-from pyramidi_mode import PyramidiMode
 
 
 class PyshaApp(object):
@@ -122,7 +122,7 @@ class PyshaApp(object):
 
         if device_name is not None:
             if self.midi_in is not None:
-                    self.midi_in.callback = None  # Disable current callback (if any)
+                self.midi_in.callback = None  # Disable current callback (if any)
             try:
                 self.midi_in = mido.open_input(device_name)
                 self.midi_in.callback = self.midi_in_handler
@@ -148,7 +148,7 @@ class PyshaApp(object):
             try:
                 self.midi_out = mido.open_output(device_name)
                 print('Will send MIDI to "{0}"'.format(device_name))
-            except IOError as e:
+            except IOError:
                 print('Could not connect to MIDI output port "{0}"\nAvailable device names:'.format(device_name))
                 for name in self.available_midi_out_device_names:
                     print(' - {0}'.format(name))
@@ -236,7 +236,6 @@ class PyshaApp(object):
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, 'white', animation='pulsing')
         else:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, 'white')
-
 
     def generate_display_frame(self):
         # Prepare cairo canvas
@@ -346,55 +345,55 @@ class PyshaApp(object):
 
 # Bind push action handlers with class methods
 @push2_python.on_encoder_rotated()
-def on_encoder_rotated(push, encoder_name, increment):
+def on_encoder_rotated(_, encoder_name, increment):
     for mode in app.active_modes:
         mode.on_encoder_rotated(encoder_name, increment)
 
 
 @push2_python.on_pad_pressed()
-def on_pad_pressed(push, pad_n, pad_ij, velocity):
+def on_pad_pressed(_, pad_n, pad_ij, velocity):
     for mode in app.active_modes:
         mode.on_pad_pressed(pad_n, pad_ij, velocity)
 
 
 @push2_python.on_pad_released()
-def on_pad_released(push, pad_n, pad_ij, velocity):
+def on_pad_released(_, pad_n, pad_ij, velocity):
     for mode in app.active_modes:
         mode.on_pad_released(pad_n, pad_ij, velocity)
 
 
 @push2_python.on_pad_aftertouch()
-def on_pad_aftertouch(push, pad_n, pad_ij, velocity):
+def on_pad_aftertouch(_, pad_n, pad_ij, velocity):
     for mode in app.active_modes:
         mode.on_pad_aftertouch(pad_n, pad_ij, velocity)
 
 
 @push2_python.on_button_pressed()
-def on_button_pressed(push, name):
+def on_button_pressed(_, name):
     app.on_button_pressed(name)
     for mode in app.active_modes:
         mode.on_button_pressed(name)
 
 
 @push2_python.on_button_released()
-def on_button_released(push, name):
+def on_button_released(_, name):
     for mode in app.active_modes:
         mode.on_button_released(name)
 
 
 @push2_python.on_touchstrip()
-def on_touchstrip(push, value):
+def on_touchstrip(_, value):
     for mode in app.active_modes:
         mode.on_touchstrip(value)
 
 
 @push2_python.on_midi_connected()
-def on_midi_connected(push):
+def on_midi_connected(_):
     app.on_midi_push_connection_established()
 
 
 @push2_python.on_sustain_pedal()
-def on_sustain_pedal(push, sustain_on):
+def on_sustain_pedal(_, sustain_on):
     for mode in app.active_modes:
         mode.on_sustain_pedal(sustain_on)
 

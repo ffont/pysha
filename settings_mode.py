@@ -74,7 +74,7 @@ class SettingsMode(PyshaMode):
 
         # Divide display in 8 parts to show different settings
         part_w = w // 8
-        part_h = h
+        #part_h = h
         for i in range(0, 8):
             part_x = i * part_w
             part_y = 0
