@@ -13,7 +13,7 @@ from melodic_mode import MelodicMode
 from pyramidi_mode import PyramidiMode
 from rhythmic_mode import RhythmicMode
 from settings_mode import SettingsMode
-
+from main_controls_mode import MainControlsMode
 
 class PyshaApp(object):
 
@@ -59,15 +59,17 @@ class PyshaApp(object):
         self.init_push()
 
         self.init_modes(settings)
+        self.active_modes.append(self.main_controls_mode)
+        self.active_modes.append(self.pyramidi_mode)
         self.toggle_melodic_rhythmic_modes()
         self.toggle_settings_mode()
-        self.active_modes.append(self.pyramidi_mode)
 
     def init_modes(self, settings):
         self.melodic_mode = MelodicMode(self, settings=settings)
         self.rhyhtmic_mode = RhythmicMode(self, settings=settings)
         self.settings_mode = SettingsMode(self, settings=settings)
         self.pyramidi_mode = PyramidiMode(self, settings=settings)
+        self.main_controls_mode = MainControlsMode(self, settings=settings)
 
     def get_all_modes(self):
         return [getattr(self, element) for element in vars(self) if isinstance(getattr(self, element), PyshaMode)]
@@ -222,38 +224,28 @@ class PyshaApp(object):
         for mode in self.active_modes:
             mode.update_buttons()
 
-        # Noe button, to toggle melodic/rhythmic mode
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_NOTE, 'white')
-        
-        # Mute button, to toggle display on/off
+    def update_push2_display(self):
         if self.use_push2_display:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_MUTE, 'white')
-        else:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_MUTE, 'red')
-
-        # Settings button, to toggle settings mode
-        if self.is_mode_active(self.settings_mode):
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, 'white', animation='pulsing')
-        else:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_SETUP, 'white')
-
-    def generate_display_frame(self):
-        # Prepare cairo canvas
-        w, h = push2_python.constants.DISPLAY_LINE_PIXELS, push2_python.constants.DISPLAY_N_LINES
-        surface = cairo.ImageSurface(cairo.FORMAT_RGB16_565, w, h)
-        ctx = cairo.Context(surface)
-        # Call all active modes to write to context
-        for mode in self.active_modes:
-            mode.update_display(ctx, w, h)
-        # Convert cairo data to numpy array to send to push
-        buf = surface.get_data()
-        return numpy.ndarray(shape=(h, w), dtype=numpy.uint16, buffer=buf).transpose()
+            # Prepare cairo canvas
+            w, h = push2_python.constants.DISPLAY_LINE_PIXELS, push2_python.constants.DISPLAY_N_LINES
+            surface = cairo.ImageSurface(cairo.FORMAT_RGB16_565, w, h)
+            ctx = cairo.Context(surface)
+            
+            # Call all active modes to write to context
+            for mode in self.active_modes:
+                mode.update_display(ctx, w, h)
+            
+            # Convert cairo data to numpy array and send to push
+            buf = surface.get_data()
+            frame = numpy.ndarray(shape=(h, w), dtype=numpy.uint16, buffer=buf).transpose()
+            self.push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB565)
 
     def check_for_delayed_actions(self):
-
-        if not self.push.midi_is_configured():  # If MIDI not configured, make sure we try sending messages so it gets configured
+        # If MIDI not configured, make sure we try sending messages so it gets configured
+        if not self.push.midi_is_configured():  
             self.push.configure_midi()
         
+        # Call dalyed actions in active modes
         for mode in self.active_modes:
             mode.check_for_delayed_actions()
 
@@ -264,11 +256,6 @@ class PyshaApp(object):
         if self.buttons_need_update:
             self.update_push2_buttons()
             self.buttons_need_update = False
-
-    def update_push2_display(self):
-        if self.use_push2_display:
-            frame = self.generate_display_frame()
-            self.push.display.display_frame(frame, input_format=push2_python.constants.FRAME_FORMAT_RGB565)
 
     def run_loop(self):
         print('Pysha is runnnig...')
@@ -328,20 +315,6 @@ class PyshaApp(object):
         app.update_push2_buttons()
         app.update_push2_pads()
 
-    def on_button_pressed(self, button_name):
-        if button_name == push2_python.constants.BUTTON_NOTE:
-            self.toggle_melodic_rhythmic_modes()
-            self.pads_need_update = True
-            self.buttons_need_update = True
-        elif button_name == push2_python.constants.BUTTON_SETUP:
-            self.toggle_settings_mode()
-            self.buttons_need_update = True
-        elif button_name == push2_python.constants.BUTTON_MUTE:
-            self.use_push2_display = not self.use_push2_display
-            if not self.use_push2_display:
-                self.push.display.send_to_display(self.push.display.prepare_frame(self.push.display.make_black_frame()))
-            self.buttons_need_update = True
-
 
 # Bind push action handlers with class methods
 @push2_python.on_encoder_rotated()
@@ -370,7 +343,6 @@ def on_pad_aftertouch(_, pad_n, pad_ij, velocity):
 
 @push2_python.on_button_pressed()
 def on_button_pressed(_, name):
-    app.on_button_pressed(name)
     for mode in app.active_modes:
         mode.on_button_pressed(name)
 
