@@ -62,8 +62,7 @@ class PyshaApp(object):
         self.active_modes.append(self.main_controls_mode)
         self.active_modes.append(self.pyramidi_mode)
         self.toggle_melodic_rhythmic_modes()
-        self.toggle_and_rotate_settings_mode()
-
+        
     def init_modes(self, settings):
         self.melodic_mode = MelodicMode(self, settings=settings)
         self.rhyhtmic_mode = RhythmicMode(self, settings=settings)

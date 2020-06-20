@@ -171,7 +171,10 @@ class MelodicMode(PyshaMode):
                 if self.is_black_key_midi_note(corresponding_midi_note):
                     cell_color = 'black'
                 if self.is_midi_note_root_octave(corresponding_midi_note):
-                    cell_color = 'yellow'
+                    try:
+                        cell_color = self.app.pyramidi_mode.get_current_track_color()
+                    except AttributeError:
+                        cell_color = 'yellow'
                 if self.is_midi_note_being_played(corresponding_midi_note):
                     cell_color = 'green'
 
