@@ -24,7 +24,7 @@ class RhythmicMode(MelodicMode):
         return self.rhythmic_notes_matrix[pad_ij[0]][pad_ij[1]]
 
     def deactivate(self):
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'black')
 
     def update_buttons(self):
         self.update_accent_button()
@@ -37,10 +37,7 @@ class RhythmicMode(MelodicMode):
                 corresponding_midi_note = self.pad_ij_to_midi_note([i, j])
                 cell_color = 'black'
                 if i >= 4 and j < 4:
-                    if not self.fixed_velocity_mode:
-                        cell_color = 'yellow'
-                    else:
-                        cell_color = 'blue'
+                    cell_color = 'yellow'
                 elif i >= 4 and j >= 4:
                     cell_color = 'turquoise'
                 elif i < 4 and j < 4:

@@ -43,7 +43,7 @@ class PyramidiMode(PyshaMode):
 
     def deactivate(self):
         for button_name in self.pyramid_track_button_names_a + self.pyramid_track_button_names_b:
-            self.push.buttons.set_button_color(button_name, OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(button_name, 'black')
 
     def update_buttons(self):
         for count, name in enumerate(self.pyramid_track_button_names_a):

@@ -306,8 +306,8 @@ class PyshaApp(object):
             app.push.set_color_palette_entry(1, [OFF_BTN_COLOR, OFF_BTN_COLOR], rgb=[32, 32, 32], bw=32)
         app.push.reapply_color_palette()
 
-        # Initialize all buttons to dark gray color, initialize all pads to off
-        app.push.buttons.set_all_buttons_color(color=OFF_BTN_COLOR)
+        # Initialize all buttons to black, initialize all pads to off
+        app.push.buttons.set_all_buttons_color(color='black')
         app.push.pads.set_all_pads_to_color('black')
         
         app.update_push2_buttons()

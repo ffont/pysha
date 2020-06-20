@@ -127,9 +127,9 @@ class MelodicMode(PyshaMode):
         self.update_buttons()
 
     def deactivate(self):
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, OFF_BTN_COLOR)
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, OFF_BTN_COLOR)
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'black')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'black')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'black')
 
     def check_for_delayed_actions(self):
         if self.last_time_at_params_edited is not None and time.time() - self.last_time_at_params_edited > DELAYED_ACTIONS_APPLY_TIME:
@@ -154,7 +154,7 @@ class MelodicMode(PyshaMode):
         if self.fixed_velocity_mode:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'white', animation='pulsing')
         else:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'white')
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
 
     def update_buttons(self):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
@@ -171,10 +171,7 @@ class MelodicMode(PyshaMode):
                 if self.is_black_key_midi_note(corresponding_midi_note):
                     cell_color = 'black'
                 if self.is_midi_note_root_octave(corresponding_midi_note):
-                    if not self.fixed_velocity_mode:
-                        cell_color = 'yellow'
-                    else:
-                        cell_color = 'blue'
+                    cell_color = 'yellow'
                 if self.is_midi_note_being_played(corresponding_midi_note):
                     cell_color = 'green'
 
