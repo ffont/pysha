@@ -310,10 +310,6 @@ class PyshaApp(object):
         app.push.buttons.set_all_buttons_color(color=OFF_BTN_COLOR)
         app.push.pads.set_all_pads_to_color('black')
         
-        # Configure polyAT and AT
-        app.push.pads.set_channel_aftertouch_range(range_start=401, range_end=800)
-        #app.push.pads.set_velocity_curve(velocities=[int(i * 127/40) if i < 40 else 127 for i in range(0,128)])
-        
         app.update_push2_buttons()
         app.update_push2_pads()
 

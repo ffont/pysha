@@ -1,5 +1,6 @@
 import mido
 import push2_python.constants
+import time
 
 from definitions import PyshaMode, OFF_BTN_COLOR
 
@@ -7,21 +8,39 @@ from definitions import PyshaMode, OFF_BTN_COLOR
 class MelodicMode(PyshaMode):
 
     notes_being_played = []
-    root_midi_note = 0
+    root_midi_note = 0  # default redefined in initialize
     scale_pattern = [True, False, True, False, True, True, False, True, False, True, False, True]
     fixed_velocity_mode = False
-    use_poly_at = False
+    use_poly_at = False  # default redefined in initialize
+    channel_at_range_start = 401  # default redefined in initialize
+    channel_at_range_end = 800 # default redefined in initialize
+    poly_at_max_range = 40 # default redefined in initialize
+    poly_at_curve_bending = 50  # default redefined in initialize
+    latest_channel_at_value = (0, 0)
+    latest_poly_at_value = (0, 0)
 
     def initialize(self, settings=None):
         if settings is not None:
             self.use_poly_at = settings.get('use_poly_at', True)
             self.set_root_midi_note(settings.get('root_midi_note', 64))
+            self.channel_at_range_start = settings.get('channel_at_range_start', 401)
+            self.channel_at_range_end = settings.get('channel_at_range_end', 800)
+            self.poly_at_max_range = settings.get('poly_at_max_range', 40)
+            self.poly_at_curve_bending = settings.get('poly_at_curve_bending', 50)
 
     def get_settings_to_save(self):
         return {
             'use_poly_at': self.use_poly_at,
             'root_midi_note': self.root_midi_note,
+            'channel_at_range_start': self.channel_at_range_start,
+            'channel_at_range_end': self.channel_at_range_end,
+            'poly_at_max_range': self.poly_at_max_range,
+            'poly_at_curve_bending': self.poly_at_curve_bending,
         }
+
+    def get_poly_at_curve(self):
+        pow_curve = [pow(e, 3*self.poly_at_curve_bending/100) for e in [i/self.poly_at_max_range for i in range(0, self.poly_at_max_range)]]
+        return [int(127 * pow_curve[i]) if i < self.poly_at_max_range else 127 for i in range(0, 128)]
 
     def add_note_being_played(self, midi_note, source):
         self.notes_being_played.append({'note': midi_note, 'source': source})
@@ -63,6 +82,10 @@ class MelodicMode(PyshaMode):
             self.push.pads.set_polyphonic_aftertouch()
         else:
             self.push.pads.set_channel_aftertouch()
+
+        # Configure polyAT and AT
+        self.push.pads.set_channel_aftertouch_range(range_start=self.channel_at_range_start, range_end=self.channel_at_range_end)
+        self.push.pads.set_velocity_curve(velocities=self.get_poly_at_curve())
         self.update_buttons()
 
     def deactivate(self):
@@ -134,11 +157,13 @@ class MelodicMode(PyshaMode):
     def on_pad_aftertouch(self, pad_n, pad_ij, velocity):
         if pad_n is not None:
             # polyAT mode
+            self.latest_poly_at_value = (time.time(), velocity)
             midi_note = self.pad_ij_to_midi_note(pad_ij)
             if midi_note is not None:
                 msg = mido.Message('polytouch', note=midi_note, value=velocity)
         else:
             # channel AT mode
+            self.latest_channel_at_value = (time.time(), velocity)
             msg = mido.Message('aftertouch', value=velocity)
         self.app.send_midi(msg)
 

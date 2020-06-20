@@ -1,7 +1,7 @@
 import push2_python.constants
 import time
 
-from display_utils import show_title, show_value
+from display_utils import show_title, show_value, draw_text_at
 from definitions import PyshaMode, OFF_BTN_COLOR, DELAYED_ACTIONS_APPLY_TIME, VERSION
 
 
@@ -111,7 +111,9 @@ class SettingsMode(PyshaMode):
 
         # Divide display in 8 parts to show different settings
         part_w = w // 8
-        #part_h = h
+        part_h = h
+
+        # Draw labels and values
         for i in range(0, 8):
             part_x = i * part_w
             part_y = 0
@@ -133,6 +135,23 @@ class SettingsMode(PyshaMode):
                 elif i == 1:  # Poly AT/channel AT
                     show_title(ctx, part_x, h, 'AFTERTOUCH')
                     show_value(ctx, part_x, h, 'polyAT' if self.app.melodic_mode.use_poly_at else 'channel', color)
+
+                elif i == 2:  # Channel AT range start
+                    show_title(ctx, part_x, h, 'cAT START')
+                    show_value(ctx, part_x, h, self.app.melodic_mode.channel_at_range_start, color)
+
+                elif i == 3:  # Channel AT range end
+                    show_title(ctx, part_x, h, 'cAT END')
+                    show_value(ctx, part_x, h, self.app.melodic_mode.channel_at_range_end, color)
+
+                elif i == 4:  # Poly AT range
+                    show_title(ctx, part_x, h, 'pAT RANGE')
+                    show_value(ctx, part_x, h, self.app.melodic_mode.poly_at_max_range, color)
+
+                elif i == 5:  # Poly AT curve
+                    show_title(ctx, part_x, h, 'pAT CURVE')
+                    show_value(ctx, part_x, h, self.app.melodic_mode.poly_at_curve_bending, color)
+
 
             elif self.current_page == 1:  # MIDI settings
                 if i == 0:  # MIDI in device
@@ -191,6 +210,35 @@ class SettingsMode(PyshaMode):
                     show_title(ctx, part_x, h, 'FPS')
                     show_value(ctx, part_x, h, self.app.actual_frame_rate, color)
 
+        # After drawing all labels and values, draw other stuff if required
+        if self.current_page == 0:  # Performance settings
+
+            # Draw polyAT velocity curve
+            ctx.set_source_rgb(0.6, 0.6, 0.6)
+            ctx.set_line_width(1)
+            data = self.app.melodic_mode.get_poly_at_curve()
+            n = len(data)
+            curve_x = 4 * part_w + 3  # Start x point of curve
+            curve_y = part_h - 10  # Start y point of curve
+            curve_height = 50
+            curve_length = part_w * 4 - 6
+            ctx.move_to(curve_x, curve_y)
+            for i, value in enumerate(data):
+                x = curve_x + i * curve_length/n
+                y = curve_y - curve_height * value/127
+                ctx.line_to(x, y)
+            ctx.line_to(x, curve_y)
+            ctx.fill()
+
+            current_time = time.time()
+            if current_time - self.app.melodic_mode.latest_channel_at_value[0] < 3 and not self.app.melodic_mode.use_poly_at:
+                # Lastest channel AT value received less than 3 seconds ago
+                draw_text_at(ctx, 3, part_h - 3, f'Latest cAT: {self.app.melodic_mode.latest_channel_at_value[1]}', font_size=20)
+            if current_time - self.app.melodic_mode.latest_poly_at_value[0] < 3 and self.app.melodic_mode.use_poly_at:
+                # Lastest channel AT value received less than 3 seconds ago
+                draw_text_at(ctx, 3, part_h - 3, f'Latest pAT: {self.app.melodic_mode.latest_poly_at_value[1]}', font_size=20)
+
+
     def on_encoder_rotated(self, encoder_name, increment):
 
         self.encoders_state[encoder_name]['last_message_received'] = time.time()
@@ -209,6 +257,34 @@ class SettingsMode(PyshaMode):
                     if self.app.melodic_mode.use_poly_at:
                         self.app.melodic_mode.use_poly_at = False
                         self.app.push.pads.set_channel_aftertouch()
+
+            elif encoder_name == push2_python.constants.ENCODER_TRACK3_ENCODER:
+                self.app.melodic_mode.channel_at_range_start += increment
+                if self.app.melodic_mode.channel_at_range_start < 401:
+                    self.app.melodic_mode.channel_at_range_start = 401
+                elif self.app.melodic_mode.channel_at_range_start >= self.app.melodic_mode.channel_at_range_end:
+                    self.app.melodic_mode.channel_at_range_start = self.app.melodic_mode.channel_at_range_end - 1
+
+            elif encoder_name == push2_python.constants.ENCODER_TRACK4_ENCODER:
+                self.app.melodic_mode.channel_at_range_end += increment
+                if self.app.melodic_mode.channel_at_range_end <= self.app.melodic_mode.channel_at_range_start:
+                    self.app.melodic_mode.channel_at_range_end = self.app.melodic_mode.channel_at_range_start + 1
+                elif self.app.melodic_mode.channel_at_range_end >= 2000:
+                    self.app.melodic_mode.channel_at_range_end = 2000
+
+            elif encoder_name == push2_python.constants.ENCODER_TRACK5_ENCODER:
+                self.app.melodic_mode.poly_at_max_range += increment
+                if self.app.melodic_mode.poly_at_max_range <= 0:
+                    self.app.melodic_mode.poly_at_max_range = 0
+                elif self.app.melodic_mode.poly_at_max_range > 127:
+                    self.app.melodic_mode.poly_at_max_range = 127
+
+            elif encoder_name == push2_python.constants.ENCODER_TRACK6_ENCODER:
+                self.app.melodic_mode.poly_at_curve_bending += increment
+                if self.app.melodic_mode.poly_at_curve_bending <= 0:
+                    self.app.melodic_mode.poly_at_curve_bending = 0
+                elif self.app.melodic_mode.poly_at_curve_bending > 100:
+                    self.app.melodic_mode.poly_at_curve_bending = 100
 
         elif self.current_page == 1:  # MIDI settings
             if encoder_name == push2_python.constants.ENCODER_TRACK1_ENCODER:
