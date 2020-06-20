@@ -2,7 +2,7 @@ import mido
 import push2_python.constants
 import time
 
-from definitions import PyshaMode, OFF_BTN_COLOR
+from definitions import PyshaMode, OFF_BTN_COLOR, DELAYED_ACTIONS_APPLY_TIME
 
 
 class MelodicMode(PyshaMode):
@@ -18,6 +18,7 @@ class MelodicMode(PyshaMode):
     poly_at_curve_bending = 50  # default redefined in initialize
     latest_channel_at_value = (0, 0)
     latest_poly_at_value = (0, 0)
+    last_time_at_params_edited = None
 
     def initialize(self, settings=None):
         if settings is not None:
@@ -37,6 +38,42 @@ class MelodicMode(PyshaMode):
             'poly_at_max_range': self.poly_at_max_range,
             'poly_at_curve_bending': self.poly_at_curve_bending,
         }
+
+    def set_channel_at_range_start(self, value):
+        # Parameter in range [401, channel_at_range_end - 1]
+        if value < 401:
+            value = 401
+        elif value >= self.channel_at_range_end:
+            value = self.channel_at_range_end - 1
+        self.channel_at_range_start = value
+        self.last_time_at_params_edited = time.time()
+
+    def set_channel_at_range_end(self, value):
+        # Parameter in range [channel_at_range_start + 1, 2000]
+        if value <= self.channel_at_range_start:
+            value = self.channel_at_range_start + 1
+        elif value > 2000:
+            value = 2000
+        self.channel_at_range_end = value
+        self.last_time_at_params_edited = time.time()
+
+    def set_poly_at_max_range(self, value):
+        # Parameter in range [0, 127]
+        if value < 0:
+            value = 0
+        elif value > 127:
+            value = 127
+        self.poly_at_max_range = value
+        self.last_time_at_params_edited = time.time()
+
+    def set_poly_at_curve_bending(self, value):
+        # Parameter in range [0, 100]
+        if value < 0:
+            value = 0
+        elif value > 100:
+            value = 100
+        self.poly_at_curve_bending = value
+        self.last_time_at_params_edited = time.time()
 
     def get_poly_at_curve(self):
         pow_curve = [pow(e, 3*self.poly_at_curve_bending/100) for e in [i/self.poly_at_max_range for i in range(0, self.poly_at_max_range)]]
@@ -86,12 +123,20 @@ class MelodicMode(PyshaMode):
         # Configure polyAT and AT
         self.push.pads.set_channel_aftertouch_range(range_start=self.channel_at_range_start, range_end=self.channel_at_range_end)
         self.push.pads.set_velocity_curve(velocities=self.get_poly_at_curve())
+
         self.update_buttons()
 
     def deactivate(self):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, OFF_BTN_COLOR)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, OFF_BTN_COLOR)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
+
+    def check_for_delayed_actions(self):
+        if self.last_time_at_params_edited is not None and time.time() - self.last_time_at_params_edited > DELAYED_ACTIONS_APPLY_TIME:
+            # Update channel and poly AT parameters
+            self.push.pads.set_channel_aftertouch_range(range_start=self.channel_at_range_start, range_end=self.channel_at_range_end)
+            self.push.pads.set_velocity_curve(velocities=self.get_poly_at_curve())
+            self.last_time_at_params_edited = None
 
     def on_midi_in(self, msg):
         # Update the list of notes being currently played so push2 pads can be updated accordingly

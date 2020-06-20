@@ -2,7 +2,7 @@ import push2_python.constants
 import time
 
 from display_utils import show_title, show_value, draw_text_at
-from definitions import PyshaMode, OFF_BTN_COLOR, DELAYED_ACTIONS_APPLY_TIME, VERSION
+from definitions import PyshaMode, OFF_BTN_COLOR, DELAYED_ACTIONS_APPLY_TIME, VERSION, FONT_COLOR_DISABLED, FONT_COLOR_DELAYED_ACTIONS
 
 
 class SettingsMode(PyshaMode):
@@ -127,7 +127,7 @@ class SettingsMode(PyshaMode):
             if self.current_page == 0:  # Performance settings
                 if i == 0:  # Root note
                     if not self.app.is_mode_active(self.app.melodic_mode):
-                        color = [0.5, 0.5, 0.5]  # Gray font
+                        color = FONT_COLOR_DISABLED
                     show_title(ctx, part_x, h, 'ROOT NOTE')
                     show_value(ctx, part_x, h, "{0} ({1})".format(self.app.melodic_mode.note_number_to_name(
                         self.app.melodic_mode.root_midi_note), self.app.melodic_mode.root_midi_note), color)
@@ -137,26 +137,33 @@ class SettingsMode(PyshaMode):
                     show_value(ctx, part_x, h, 'polyAT' if self.app.melodic_mode.use_poly_at else 'channel', color)
 
                 elif i == 2:  # Channel AT range start
+                    if self.app.melodic_mode.last_time_at_params_edited is not None:
+                        color = FONT_COLOR_DELAYED_ACTIONS
                     show_title(ctx, part_x, h, 'cAT START')
                     show_value(ctx, part_x, h, self.app.melodic_mode.channel_at_range_start, color)
 
                 elif i == 3:  # Channel AT range end
+                    if self.app.melodic_mode.last_time_at_params_edited is not None:
+                        color = FONT_COLOR_DELAYED_ACTIONS
                     show_title(ctx, part_x, h, 'cAT END')
                     show_value(ctx, part_x, h, self.app.melodic_mode.channel_at_range_end, color)
 
                 elif i == 4:  # Poly AT range
+                    if self.app.melodic_mode.last_time_at_params_edited is not None:
+                        color = FONT_COLOR_DELAYED_ACTIONS
                     show_title(ctx, part_x, h, 'pAT RANGE')
                     show_value(ctx, part_x, h, self.app.melodic_mode.poly_at_max_range, color)
 
                 elif i == 5:  # Poly AT curve
+                    if self.app.melodic_mode.last_time_at_params_edited is not None:
+                        color = FONT_COLOR_DELAYED_ACTIONS
                     show_title(ctx, part_x, h, 'pAT CURVE')
                     show_value(ctx, part_x, h, self.app.melodic_mode.poly_at_curve_bending, color)
-
 
             elif self.current_page == 1:  # MIDI settings
                 if i == 0:  # MIDI in device
                     if self.app.midi_in_tmp_device_idx is not None:
-                        color = [1.0, 0.64, 0.0]  # Orange font
+                        color = FONT_COLOR_DELAYED_ACTIONS
                         if self.app.midi_in_tmp_device_idx < 0:
                             name = "None"
                         else:
@@ -165,20 +172,20 @@ class SettingsMode(PyshaMode):
                         if self.app.midi_in is not None:
                             name = "{0} {1}".format(self.app.available_midi_in_device_names.index(self.app.midi_in.name) + 1, self.app.midi_in.name)
                         else:
-                            color = [0.5, 0.5, 0.5]  # Gray font
+                            color = FONT_COLOR_DISABLED
                             name = "None"
                     show_title(ctx, part_x, h, 'IN DEVICE')
                     show_value(ctx, part_x, h, name, color)
 
                 elif i == 1:  # MIDI in channel
                     if self.app.midi_in is None:
-                        color = [0.5, 0.5, 0.5]  # Gray font
+                        color = FONT_COLOR_DISABLED
                     show_title(ctx, part_x, h, 'IN CH')
                     show_value(ctx, part_x, h, self.app.midi_in_channel + 1 if self.app.midi_in_channel > -1 else "All", color)
 
                 elif i == 2:  # MIDI out device
                     if self.app.midi_out_tmp_device_idx is not None:
-                        color = [1.0, 0.64, 0.0]  # Orange font
+                        color = FONT_COLOR_DELAYED_ACTIONS
                         if self.app.midi_out_tmp_device_idx < 0:
                             name = "None"
                         else:
@@ -187,14 +194,14 @@ class SettingsMode(PyshaMode):
                         if self.app.midi_out is not None:
                             name = "{0} {1}".format(self.app.available_midi_out_device_names.index(self.app.midi_out.name) + 1, self.app.midi_out.name)
                         else:
-                            color = [0.5, 0.5, 0.5]  # Gray font
+                            color = FONT_COLOR_DISABLED
                             name = "None"
                     show_title(ctx, part_x, h, 'OUT DEVICE')
                     show_value(ctx, part_x, h, name, color)
 
                 elif i == 3:  # MIDI out channel
                     if self.app.midi_out is None:
-                        color = [0.5, 0.5, 0.5]  # Gray font
+                        color = FONT_COLOR_DISABLED
                     show_title(ctx, part_x, h, 'OUT CH')
                     show_value(ctx, part_x, h, self.app.midi_out_channel + 1, color)
 
@@ -259,32 +266,16 @@ class SettingsMode(PyshaMode):
                         self.app.push.pads.set_channel_aftertouch()
 
             elif encoder_name == push2_python.constants.ENCODER_TRACK3_ENCODER:
-                self.app.melodic_mode.channel_at_range_start += increment
-                if self.app.melodic_mode.channel_at_range_start < 401:
-                    self.app.melodic_mode.channel_at_range_start = 401
-                elif self.app.melodic_mode.channel_at_range_start >= self.app.melodic_mode.channel_at_range_end:
-                    self.app.melodic_mode.channel_at_range_start = self.app.melodic_mode.channel_at_range_end - 1
+                self.app.melodic_mode.set_channel_at_range_start(self.app.melodic_mode.channel_at_range_start + increment)
 
             elif encoder_name == push2_python.constants.ENCODER_TRACK4_ENCODER:
-                self.app.melodic_mode.channel_at_range_end += increment
-                if self.app.melodic_mode.channel_at_range_end <= self.app.melodic_mode.channel_at_range_start:
-                    self.app.melodic_mode.channel_at_range_end = self.app.melodic_mode.channel_at_range_start + 1
-                elif self.app.melodic_mode.channel_at_range_end >= 2000:
-                    self.app.melodic_mode.channel_at_range_end = 2000
-
+                self.app.melodic_mode.set_channel_at_range_end(self.app.melodic_mode.channel_at_range_end + increment)
+                
             elif encoder_name == push2_python.constants.ENCODER_TRACK5_ENCODER:
-                self.app.melodic_mode.poly_at_max_range += increment
-                if self.app.melodic_mode.poly_at_max_range <= 0:
-                    self.app.melodic_mode.poly_at_max_range = 0
-                elif self.app.melodic_mode.poly_at_max_range > 127:
-                    self.app.melodic_mode.poly_at_max_range = 127
+                self.app.melodic_mode.set_poly_at_max_range(self.app.melodic_mode.poly_at_max_range + increment)
 
             elif encoder_name == push2_python.constants.ENCODER_TRACK6_ENCODER:
-                self.app.melodic_mode.poly_at_curve_bending += increment
-                if self.app.melodic_mode.poly_at_curve_bending <= 0:
-                    self.app.melodic_mode.poly_at_curve_bending = 0
-                elif self.app.melodic_mode.poly_at_curve_bending > 100:
-                    self.app.melodic_mode.poly_at_curve_bending = 100
+                self.app.melodic_mode.set_poly_at_curve_bending(self.app.melodic_mode.poly_at_curve_bending + increment)
 
         elif self.current_page == 1:  # MIDI settings
             if encoder_name == push2_python.constants.ENCODER_TRACK1_ENCODER:

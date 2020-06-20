@@ -1,6 +1,8 @@
 VERSION = '0.1dev'
 
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
+FONT_COLOR_DELAYED_ACTIONS = [1.0, 0.64, 0.0]
+FONT_COLOR_DISABLED = [0.5, 0.5, 0.5]
 OFF_BTN_COLOR = 'my_dark_gray'
 
 class PyshaMode(object):
