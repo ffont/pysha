@@ -35,7 +35,7 @@ class MainControlsMode(PyshaMode):
             self.app.pads_need_update = True
             self.app.buttons_need_update = True
         elif button_name == push2_python.constants.BUTTON_SETUP:
-            self.app.toggle_settings_mode()
+            self.app.toggle_and_rotate_settings_mode()
             self.app.buttons_need_update = True
         elif button_name == push2_python.constants.BUTTON_MUTE:
             self.app.use_push2_display = not self.app.use_push2_display

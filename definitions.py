@@ -1,3 +1,5 @@
+VERSION = '0.1dev'
+
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
 OFF_BTN_COLOR = 'my_dark_gray'
 
