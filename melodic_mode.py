@@ -85,6 +85,9 @@ class MelodicMode(PyshaMode):
     def remove_note_being_played(self, midi_note, source):
         self.notes_being_played = [note for note in self.notes_being_played if note['note'] != midi_note or note['source'] != source]
 
+    def remove_all_notes_being_played(self):
+        self.notes_being_played = []
+
     def pad_ij_to_midi_note(self, pad_ij):
         return self.root_midi_note + ((7 - pad_ij[0]) * 5 + pad_ij[1])
 

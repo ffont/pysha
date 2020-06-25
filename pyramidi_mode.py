@@ -91,6 +91,12 @@ class PyramidiMode(PyshaMode):
         elif self.tracks_info[self.selected_pyramid_track]['default_layout'] == LAYOUT_RHYTHMIC:
             self.app.set_rhythmic_mode()
 
+    def clean_currently_notes_being_played(self):
+        if self.app.is_mode_active(self.app.melodic_mode):
+            self.app.melodic_mode.remove_all_notes_being_played()
+        elif self.app.is_mode_active(self.app.rhyhtmic_mode):
+            self.app.rhyhtmic_mode.remove_all_notes_being_played()
+
     def send_select_track_to_pyramid(self, track_idx):
         # Follows pyramidi specification (Pyramid configured to receive on ch 16)
         msg = mido.Message('control_change', control=0, value=track_idx + 1)
@@ -169,6 +175,7 @@ class PyramidiMode(PyshaMode):
                 self.app.pads_need_update = True
                 self.send_select_track_to_pyramid(self.selected_pyramid_track)
                 self.load_current_default_layout()
+                self.clean_currently_notes_being_played()
                 self.pyramid_track_selection_button_a = False
                 self.pyramid_track_selection_button_a_pressing_time = 0
 
@@ -180,6 +187,7 @@ class PyramidiMode(PyshaMode):
                     self.selected_pyramid_track = self.pyramid_track_button_names_a.index(button_name)
                     self.send_select_track_to_pyramid(self.selected_pyramid_track)
                     self.load_current_default_layout()
+                    self.clean_currently_notes_being_played()
                 self.pyramid_track_selection_button_a = False
                 self.pyramid_track_selection_button_a_pressing_time = 0
                 self.app.buttons_need_update = True
