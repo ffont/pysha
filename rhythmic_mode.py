@@ -37,13 +37,14 @@ class RhythmicMode(MelodicMode):
                 corresponding_midi_note = self.pad_ij_to_midi_note([i, j])
                 cell_color = 'black'
                 if i >= 4 and j < 4:
-                    cell_color = 'yellow'
+                    # This is the main 4x4 grid
+                    cell_color = self.app.pyramidi_mode.get_current_track_color()
                 elif i >= 4 and j >= 4:
-                    cell_color = 'turquoise'
+                    cell_color = 'light_gray'
                 elif i < 4 and j < 4:
-                    cell_color = 'orange'
+                    cell_color = 'light_gray'
                 elif i < 4 and j >= 4:
-                    cell_color = 'pink'
+                    cell_color = 'light_gray'
                 if self.is_midi_note_being_played(corresponding_midi_note):
                     cell_color = 'green'
 
