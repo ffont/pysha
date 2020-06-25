@@ -2,7 +2,7 @@ import mido
 import push2_python
 import time
 
-from definitions import PyshaMode, OFF_BTN_COLOR
+from definitions import PyshaMode, OFF_BTN_COLOR, LAYOUT_MELODIC, LAYOUT_RHYTHMIC
 from display_utils import draw_text_at
 
 
@@ -44,6 +44,7 @@ class PyramidiMode(PyshaMode):
                 'instrument_short_name': '-',
                 'color': 'my_dark_gray',
                 'color_rgb': [26/255, 26/255, 26/255],
+                'default_layout': LAYOUT_MELODIC,
             }
             if i % 8 == 0:
                 data['instrument_name'] = 'Deckard\'s Dream'
@@ -70,6 +71,7 @@ class PyramidiMode(PyshaMode):
                 data['instrument_short_name'] = 'BBPADS'
                 data['color'] = 'red'
                 data['color_rgb'] = [255/255, 0/255, 0/255]
+                data['default_layout'] = LAYOUT_RHYTHMIC
             elif i % 8 == 5:
                 data['instrument_name'] = 'Black Box (Notes)'
                 data['instrument_short_name'] = 'BBNOTES'
@@ -82,6 +84,12 @@ class PyramidiMode(PyshaMode):
 
     def get_current_track_color_rgb(self):
         return self.tracks_info[self.selected_pyramid_track]['color_rgb']
+
+    def load_current_default_layout(self):
+        if self.tracks_info[self.selected_pyramid_track]['default_layout'] == LAYOUT_MELODIC:
+            self.app.set_melodic_mode()
+        elif self.tracks_info[self.selected_pyramid_track]['default_layout'] == LAYOUT_RHYTHMIC:
+            self.app.set_rhythmic_mode()
 
     def send_select_track_to_pyramid(self, track_idx):
         # Follows pyramidi specification (Pyramid configured to receive on ch 16)
@@ -160,6 +168,7 @@ class PyramidiMode(PyshaMode):
                 self.app.buttons_need_update = True
                 self.app.pads_need_update = True
                 self.send_select_track_to_pyramid(self.selected_pyramid_track)
+                self.load_current_default_layout()
                 self.pyramid_track_selection_button_a = False
                 self.pyramid_track_selection_button_a_pressing_time = 0
 
@@ -170,6 +179,7 @@ class PyramidiMode(PyshaMode):
                     # Only switch to track if it was a quick press
                     self.selected_pyramid_track = self.pyramid_track_button_names_a.index(button_name)
                     self.send_select_track_to_pyramid(self.selected_pyramid_track)
+                    self.load_current_default_layout()
                 self.pyramid_track_selection_button_a = False
                 self.pyramid_track_selection_button_a_pressing_time = 0
                 self.app.buttons_need_update = True

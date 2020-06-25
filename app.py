@@ -104,6 +104,14 @@ class PyshaApp(object):
             self.active_modes += [self.melodic_mode]
             self.melodic_mode.activate()
 
+    def set_melodic_mode(self):
+        if not self.is_mode_active(self.melodic_mode):
+            self.toggle_melodic_rhythmic_modes()
+
+    def set_rhythmic_mode(self):
+        if not self.is_mode_active(self.rhyhtmic_mode):
+            self.toggle_melodic_rhythmic_modes()
+
     def save_current_settings_to_file(self):
         settings = {
             'midi_in_default_channel': self.midi_in_channel,

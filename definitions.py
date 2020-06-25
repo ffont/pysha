@@ -5,6 +5,9 @@ FONT_COLOR_DELAYED_ACTIONS = [1.0, 0.64, 0.0]
 FONT_COLOR_DISABLED = [0.5, 0.5, 0.5]
 OFF_BTN_COLOR = 'my_dark_gray'
 
+LAYOUT_MELODIC = 'lmelodic'
+LAYOUT_RHYTHMIC = 'lrhytmic'
+
 class PyshaMode(object):
     """
     """
