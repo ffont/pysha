@@ -92,7 +92,7 @@ class SettingsMode(PyshaMode):
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, 'white')
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, 'white')
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, 'white')
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, 'white')
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, OFF_BTN_COLOR)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, OFF_BTN_COLOR)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, OFF_BTN_COLOR)
@@ -204,6 +204,10 @@ class SettingsMode(PyshaMode):
                         color = FONT_COLOR_DISABLED
                     show_title(ctx, part_x, h, 'OUT CH')
                     show_value(ctx, part_x, h, self.app.midi_out_channel + 1, color)
+
+                elif i == 4:  # Re-send MIDI connection established (to push, not MIDI in/out device)
+                    show_title(ctx, part_x, h, 'Reset MIDI')
+
 
             elif self.current_page == 2:  # About
                 if i == 0:  # Save button
@@ -357,6 +361,9 @@ class SettingsMode(PyshaMode):
 
             elif button_name == push2_python.constants.BUTTON_UPPER_ROW_4:
                 self.app.set_midi_out_channel(self.app.midi_out_channel + 1, wrap=True)
+
+            elif button_name == push2_python.constants.BUTTON_UPPER_ROW_5:
+                self.app.on_midi_push_connection_established()
 
         elif self.current_page == 2:  # About
             if button_name == push2_python.constants.BUTTON_UPPER_ROW_1:
