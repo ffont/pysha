@@ -385,23 +385,6 @@ class SettingsMode(PyshaMode):
                 run_sw_update()
 
 
-def popen_and_call(on_exit, popen_args):
-    """Runs the given args in a subprocess.Popen, and then calls the function
-    on_exit when the subprocess completes.
-    on_exit is a callable object, and popen_args is a list/tuple of args that 
-    would give to subprocess.Popen.
-    Source: https://stackoverflow.com/questions/2581817/python-subprocess-callback-when-cmd-exits
-    """
-    def run_in_thread(on_exit, popen_args):
-        proc = subprocess.Popen(*popen_args)
-        proc.wait()
-        on_exit()
-        return
-    thread = threading.Thread(target=run_in_thread, args=(on_exit, popen_args))
-    thread.start()
-    return thread
-
-
 def restart_program():
     """Restarts the current program, with file objects and descriptors cleanup
        Source: https://stackoverflow.com/questions/11329917/restart-python-script-from-within-itself
@@ -419,4 +402,8 @@ def restart_program():
 def run_sw_update():
     """Runs "git pull" in the current directory to retrieve latest code version and then
     restarts the process"""
-    popen_and_call(restart_program, ['git', 'pull'])
+    print('Running SW update...')
+    print('- pulling from repository')
+    os.system('git pull')
+    print('- restarting process')
+    restart_program()
