@@ -30,7 +30,7 @@ I designed Pysha (and I continue to update it) with the only purpose to serve my
 
 ## Instructions for have this running on a RaspberryPi
 
-These are instructions to have the script running on a RapsberryPi and load at startup. I'm using this with a RaspberryPi2 and Raspbian 2020-02-13. These instructions might not be accurate, but are hopefully useful. It worked for me!
+These are instructions to have the script running on a Rapsberry Pi and load at startup. I'm using this with a Raspberry Pi 2 and Raspbian 2020-02-13. It works a bit slow but it works. I also tested on a Raspberry Pi 4 and it is much faster and reliable.
 
 1. Install system dependencies
 ```
@@ -39,39 +39,47 @@ sudo apt-get update && sudo apt-get install -y libusb-1.0-0-dev libcairo2-dev py
 
 2. Clone the app repository
 ```
-git clone https://github.com/ffont/push2-standalone-controller.git
+git clone https://github.com/ffont/pysha.git
 ```
 
 3. Install Python dependencies
 ```
-cd push2-standalone-controller
+cd pysha
 pip3 install -r requirements.txt
 ```
 
 4. Configure permissions for using libusb without sudo (untested with these specific commands, but should work)
 
-```
-sudo echo SUBSYSTEM=="usb", ATTR{idVendor}=="2982", ATTR{idProduct}=="1967", GROUP="audio" > /etc/udev/rules.d/50-push2.rules 
-sudo udevadm control --reload-rules
-sudo udevadm trigger
-```
+Create a file in `/etc/udev/rules.d/50-push2.rules`...
+
+    sudo nano /etc/udev/rules.d/50-push2.rules
+
+...with these contents:
+
+    add file contents: SUBSYSTEM=="usb", ATTR{idVendor}=="2982", ATTR{idProduct}=="1967", GROUP="audio"
+
+Then run:
+
+    sudo udevadm control --reload-rules
+    sudo udevadm trigger
+
 
 5. Configure Python script to run at startup:
 
-Create file in `/lib/systemd/system/push2_standalone_controller.service`...
+Create file in `/lib/systemd/system/pysha.service`...
 
-    sudo nano /lib/systemd/system/push2_standalone_controller.service
+    sudo nano /lib/systemd/system/pysha.service
 
 ...with these contents:
 
 ```
 [Unit]
-Description=Push2 Standalone Controller
+Description=Pysha
 After=network-online.target
 
 [Service]
-WorkingDirectory=/home/pi/push2-standalone-controller
-ExecStart=/usr/bin/python3 /home/pi/push2-standalone-controller/app.py                                                
+WorkingDirectory=/home/pi/pysha
+ExecStart=/usr/bin/python3 /home/pi/pysha/app.py                                                
 StandardOutput=syslog
 User=pi
 
@@ -81,14 +89,14 @@ WantedBy=multi-user.target
 
 Set permissions to file:
 
-    sudo chmod 644 /lib/systemd/system/push2_standalone_controller.service
+    sudo chmod 644 /lib/systemd/system/pysha.service
 
 
 Enable the service (and do the linger thing which really I'm not sure if it is necessary nor what it does)
 
     loginctl enable-linger pi
-    sudo systemctl enable push2_standalone_controller.service
-    sudo systemctl status push2_standalone_controller.service
+    sudo systemctl enable pysha.service
+    sudo systemctl status pysha.service
 
 After that, the app should at startup. Logs got o `syslog` (check them running `tail -300f /var/log/syslog`)
 
