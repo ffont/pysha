@@ -18,6 +18,7 @@ class MelodicMode(PyshaMode):
     poly_at_curve_bending = 50  # default redefined in initialize
     latest_channel_at_value = (0, 0)
     latest_poly_at_value = (0, 0)
+    latest_velocity_value = (0, 0)
     last_time_at_params_edited = None
 
     def initialize(self, settings=None):
@@ -189,6 +190,7 @@ class MelodicMode(PyshaMode):
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
         if midi_note is not None:
+            self.latest_velocity_value = (time.time(), velocity)
             self.add_note_being_played(midi_note, 'push')
             msg = mido.Message('note_on', note=midi_note, velocity=velocity if not self.fixed_velocity_mode else 127)
             self.app.send_midi(msg)

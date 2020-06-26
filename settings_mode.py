@@ -258,6 +258,9 @@ class SettingsMode(PyshaMode):
             if current_time - self.app.melodic_mode.latest_poly_at_value[0] < 3 and self.app.melodic_mode.use_poly_at:
                 # Lastest channel AT value received less than 3 seconds ago
                 draw_text_at(ctx, 3, part_h - 3, f'Latest pAT: {self.app.melodic_mode.latest_poly_at_value[1]}', font_size=20)
+            if current_time - self.app.melodic_mode.latest_velocity_value[0] < 3:
+                # Lastest note on velocity value received less than 3 seconds ago
+                draw_text_at(ctx, 3, part_h - 26, f'Latest velocity: {self.app.melodic_mode.latest_velocity_value[1]}', font_size=20)
 
 
     def on_encoder_rotated(self, encoder_name, increment):
