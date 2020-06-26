@@ -1,5 +1,10 @@
 import push2_python.constants
 import time
+import os
+import sys
+import psutil
+import threading
+import subprocess
 
 from display_utils import show_title, show_value, draw_text_at
 from definitions import PyshaMode, OFF_BTN_COLOR, DELAYED_ACTIONS_APPLY_TIME, VERSION, FONT_COLOR_DISABLED, FONT_COLOR_DELAYED_ACTIONS
@@ -30,6 +35,7 @@ class SettingsMode(PyshaMode):
     current_page = 0
     n_pages = 3
     encoders_state = {}
+    is_running_sw_update = False
 
     def move_to_next_page(self):
         self.app.buttons_need_update = True
@@ -100,7 +106,7 @@ class SettingsMode(PyshaMode):
         elif self.current_page == 2:  # About
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, 'green')
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, 'red', animation='pulsing')
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, OFF_BTN_COLOR)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, OFF_BTN_COLOR)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, OFF_BTN_COLOR)
@@ -206,8 +212,7 @@ class SettingsMode(PyshaMode):
                     show_value(ctx, part_x, h, self.app.midi_out_channel + 1, color)
 
                 elif i == 4:  # Re-send MIDI connection established (to push, not MIDI in/out device)
-                    show_title(ctx, part_x, h, 'Reset MIDI')
-
+                    show_title(ctx, part_x, h, 'RESET MIDI')
 
             elif self.current_page == 2:  # About
                 if i == 0:  # Save button
@@ -217,7 +222,12 @@ class SettingsMode(PyshaMode):
                     show_title(ctx, part_x, h, 'VERSION')
                     show_value(ctx, part_x, h, 'Pysha ' + VERSION, color)
 
-                elif i == 2:  # FPS indicator
+                elif i == 2:  # Software update
+                    show_title(ctx, part_x, h, 'SW UPDATE')
+                    if self.is_running_sw_update:
+                        show_value(ctx, part_x, h, 'Running... ', color)
+                
+                elif i == 3:  # FPS indicator
                     show_title(ctx, part_x, h, 'FPS')
                     show_value(ctx, part_x, h, self.app.actual_frame_rate, color)
 
@@ -369,3 +379,44 @@ class SettingsMode(PyshaMode):
             if button_name == push2_python.constants.BUTTON_UPPER_ROW_1:
                 # Save current settings
                 self.app.save_current_settings_to_file()
+            elif button_name == push2_python.constants.BUTTON_UPPER_ROW_3:
+                # Run software update code
+                self.is_running_sw_update = True
+                run_sw_update()
+
+
+def popen_and_call(on_exit, popen_args):
+    """Runs the given args in a subprocess.Popen, and then calls the function
+    on_exit when the subprocess completes.
+    on_exit is a callable object, and popen_args is a list/tuple of args that 
+    would give to subprocess.Popen.
+    Source: https://stackoverflow.com/questions/2581817/python-subprocess-callback-when-cmd-exits
+    """
+    def run_in_thread(on_exit, popen_args):
+        proc = subprocess.Popen(*popen_args)
+        proc.wait()
+        on_exit()
+        return
+    thread = threading.Thread(target=run_in_thread, args=(on_exit, popen_args))
+    thread.start()
+    return thread
+
+
+def restart_program():
+    """Restarts the current program, with file objects and descriptors cleanup
+       Source: https://stackoverflow.com/questions/11329917/restart-python-script-from-within-itself
+    """
+    try:
+        p = psutil.Process(os.getpid())
+        for handler in p.get_open_files() + p.connections():
+            os.close(handler.fd)
+    except Exception as e:
+        print(e)
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
+
+
+def run_sw_update():
+    """Runs "git pull" in the current directory to retrieve latest code version and then
+    restarts the process"""
+    popen_and_call(restart_program, ['git', 'pull'])
