@@ -3,7 +3,7 @@ import mido
 import push2_python
 import time
 
-from definitions import PyshaMode, OFF_BTN_COLOR, LAYOUT_MELODIC, LAYOUT_RHYTHMIC
+from definitions import PyshaMode, OFF_BTN_COLOR, LAYOUT_MELODIC, LAYOUT_RHYTHMIC, PYRAMIDI_CHANNEL
 from display_utils import draw_text_at
 
 
@@ -34,7 +34,7 @@ class PyramidiMode(PyshaMode):
     pyramid_track_selection_button_a_pressing_time = 0
     selected_pyramid_track = 0
     pyramid_track_selection_quick_press_time = 0.400
-    pyramidi_channel = 15
+    pyramidi_channel = PYRAMIDI_CHANNEL
 
     def initialize(self, settings=None):
         # TODO: tracks info could be loaed from some json file, including extra stuff like main MIDI CCs, etc
