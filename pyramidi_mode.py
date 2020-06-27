@@ -1,3 +1,4 @@
+import definitions
 import mido
 import push2_python
 import time
@@ -42,48 +43,41 @@ class PyramidiMode(PyshaMode):
                 'track_name': '{0}{1}'.format((i % 16) + 1, ['A', 'B', 'C', 'D'][i//16]),
                 'instrument_name': '-',
                 'instrument_short_name': '-',
-                'color': 'my_dark_gray',
-                'color_rgb': [26/255, 26/255, 26/255],
+                'color': definitions.GRAY_DARK,
                 'default_layout': LAYOUT_MELODIC,
             }
             if i % 8 == 0:
                 data['instrument_name'] = 'Deckard\'s Dream'
                 data['instrument_short_name'] = 'DDRM'
-                data['color'] = 'orange'
-                data['color_rgb'] = [255/255, 153/255, 0/255]
+                data['color'] = definitions.ORANGE
             elif i % 8 == 1:
                 data['instrument_name'] = 'Minitaur'
                 data['instrument_short_name'] = 'MINITAUR'
-                data['color'] = 'yellow'
-                data['color_rgb'] = [253/255, 208/255, 35/255]
+                data['color'] = definitions.YELLOW
             elif i % 8 == 2:
                 data['instrument_name'] = 'Dominion'
                 data['instrument_short_name'] = 'DOMINON'
-                data['color'] = 'turquoise'
-                data['color_rgb'] = [0/255, 116/255, 252/255]
+                data['color'] = definitions.TURQUOISE
             elif i % 8 == 3:
                 data['instrument_name'] = 'Kijimi'
                 data['instrument_short_name'] = 'KIJIMI'
-                data['color'] = 'green'
-                data['color_rgb'] = [0/255, 255/255, 0/255]
+                data['color'] = definitions.LIME
             elif i % 8 == 4:
                 data['instrument_name'] = 'Black Box (Pads)'
                 data['instrument_short_name'] = 'BBPADS'
-                data['color'] = 'red'
-                data['color_rgb'] = [255/255, 0/255, 0/255]
+                data['color'] = definitions.RED
                 data['default_layout'] = LAYOUT_RHYTHMIC
             elif i % 8 == 5:
                 data['instrument_name'] = 'Black Box (Notes)'
                 data['instrument_short_name'] = 'BBNOTES'
-                data['color'] = 'pink'
-                data['color_rgb'] = [255/255, 8/255, 74/255]
+                data['color'] = definitions.PINK
             self.tracks_info.append(data)
 
     def get_current_track_color(self):
         return self.tracks_info[self.selected_pyramid_track]['color']
 
     def get_current_track_color_rgb(self):
-        return self.tracks_info[self.selected_pyramid_track]['color_rgb']
+        return definitions.get_color_rgb_float(self.get_current_track_color())
 
     def load_current_default_layout(self):
         if self.tracks_info[self.selected_pyramid_track]['default_layout'] == LAYOUT_MELODIC:
@@ -135,11 +129,11 @@ class PyramidiMode(PyshaMode):
         for i in range(0, 8):
             part_x = i * part_w
             if self.selected_pyramid_track % 8 == i:
-                rectangle_color = self.tracks_info[i]['color_rgb']
+                rectangle_color = definitions.get_color_rgb_float(self.tracks_info[i]['color'])
                 font_color = [1, 1, 1]
             else:
                 rectangle_color = [0, 0, 0]
-                font_color = self.tracks_info[i]['color_rgb']
+                font_color = definitions.get_color_rgb_float(self.tracks_info[i]['color'])
             rectangle_height = 20
             ctx.set_source_rgb(*rectangle_color)
             ctx.rectangle(part_x, part_h - rectangle_height, w, part_h)
@@ -148,7 +142,7 @@ class PyramidiMode(PyshaMode):
             draw_text_at(ctx, part_x + 3, part_h - 4, instrument_short_name, font_size=15, color=font_color) 
 
         # Draw main track info
-        font_color = [1, 1, 1] #self.get_current_track_color_rgb()
+        font_color = [1, 1, 1]
         rectangle_color = [0, 0, 0]
         rectangle_height_width = (h - 20 - 20)/1.5
         ctx.set_source_rgb(*rectangle_color)

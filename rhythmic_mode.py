@@ -1,7 +1,7 @@
+import definitions
 import push2_python.constants
 
 from melodic_mode import MelodicMode
-from definitions import OFF_BTN_COLOR
 
 
 class RhythmicMode(MelodicMode):
@@ -24,7 +24,7 @@ class RhythmicMode(MelodicMode):
         return self.rhythmic_notes_matrix[pad_ij[0]][pad_ij[1]]
 
     def deactivate(self):
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'black')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, definitions.BLACK)
 
     def update_buttons(self):
         self.update_accent_button()
@@ -35,18 +35,18 @@ class RhythmicMode(MelodicMode):
             row_colors = []
             for j in range(0, 8):
                 corresponding_midi_note = self.pad_ij_to_midi_note([i, j])
-                cell_color = 'black'
+                cell_color = definitions.BLACK
                 if i >= 4 and j < 4:
                     # This is the main 4x4 grid
                     cell_color = self.app.pyramidi_mode.get_current_track_color()
                 elif i >= 4 and j >= 4:
-                    cell_color = 'light_gray'
+                    cell_color = definitions.GRAY_LIGHT
                 elif i < 4 and j < 4:
-                    cell_color = 'light_gray'
+                    cell_color = definitions.GRAY_LIGHT
                 elif i < 4 and j >= 4:
-                    cell_color = 'light_gray'
+                    cell_color = definitions.GRAY_LIGHT
                 if self.is_midi_note_being_played(corresponding_midi_note):
-                    cell_color = 'green'
+                    cell_color = definitions.NOTE_ON_COLOR
 
                 row_colors.append(cell_color)
             color_matrix.append(row_colors)

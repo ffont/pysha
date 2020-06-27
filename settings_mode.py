@@ -1,3 +1,4 @@
+import definitions
 import push2_python.constants
 import time
 import os
@@ -7,10 +8,9 @@ import threading
 import subprocess
 
 from display_utils import show_title, show_value, draw_text_at
-from definitions import PyshaMode, OFF_BTN_COLOR, DELAYED_ACTIONS_APPLY_TIME, VERSION, FONT_COLOR_DISABLED, FONT_COLOR_DELAYED_ACTIONS
 
 
-class SettingsMode(PyshaMode):
+class SettingsMode(definitions.PyshaMode):
 
     # Pad settings
     # - Root note
@@ -28,7 +28,7 @@ class SettingsMode(PyshaMode):
     # - Rerun MIDI initial configuration?
 
     # About panel
-    # - Version info
+    # - definitions.VERSION info
     # - Save current settings
     #  - FPS
 
@@ -63,55 +63,55 @@ class SettingsMode(PyshaMode):
         current_time = time.time()
         if self.app.midi_in_tmp_device_idx is not None:
             # Means we are in the process of changing the MIDI in device
-            if current_time - self.encoders_state[push2_python.constants.ENCODER_TRACK1_ENCODER]['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
+            if current_time - self.encoders_state[push2_python.constants.ENCODER_TRACK1_ENCODER]['last_message_received'] > definitions.DELAYED_ACTIONS_APPLY_TIME:
                 self.app.set_midi_in_device_by_index(self.app.midi_in_tmp_device_idx)
                 self.app.midi_in_tmp_device_idx = None
         if self.app.midi_out_tmp_device_idx is not None:
             # Means we are in the process of changing the MIDI in device
-            if current_time - self.encoders_state[push2_python.constants.ENCODER_TRACK3_ENCODER]['last_message_received'] > DELAYED_ACTIONS_APPLY_TIME:
+            if current_time - self.encoders_state[push2_python.constants.ENCODER_TRACK3_ENCODER]['last_message_received'] > definitions.DELAYED_ACTIONS_APPLY_TIME:
                 self.app.set_midi_out_device_by_index(self.app.midi_out_tmp_device_idx)
                 self.app.midi_out_tmp_device_idx = None
 
     def set_all_upper_row_buttons_off(self):
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, OFF_BTN_COLOR)
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, OFF_BTN_COLOR)
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, OFF_BTN_COLOR)
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, OFF_BTN_COLOR)
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, OFF_BTN_COLOR)
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, OFF_BTN_COLOR)
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, OFF_BTN_COLOR)
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, OFF_BTN_COLOR)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, definitions.OFF_BTN_COLOR)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, definitions.OFF_BTN_COLOR)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, definitions.OFF_BTN_COLOR)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, definitions.OFF_BTN_COLOR)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, definitions.OFF_BTN_COLOR)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, definitions.OFF_BTN_COLOR)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, definitions.OFF_BTN_COLOR)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, definitions.OFF_BTN_COLOR)
 
     def update_buttons(self):
         if self.current_page == 0:  # Performance settings
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, 'white')
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, 'white')
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, definitions.WHITE)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, definitions.WHITE)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, definitions.OFF_BTN_COLOR)
 
         elif self.current_page == 1: # MIDI settings
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, 'white')
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, 'white')
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, 'white')
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, 'white')
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, 'white')
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, definitions.WHITE)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, definitions.WHITE)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, definitions.WHITE)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, definitions.WHITE)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, definitions.WHITE)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, definitions.OFF_BTN_COLOR)
 
         elif self.current_page == 2:  # About
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, 'green')
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, 'red', animation='pulsing')
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, OFF_BTN_COLOR)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_1, definitions.GREEN)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_2, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, definitions.RED, animation='pulsing')
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, definitions.OFF_BTN_COLOR)
         
     def update_display(self, ctx, w, h):
 
@@ -133,7 +133,7 @@ class SettingsMode(PyshaMode):
             if self.current_page == 0:  # Performance settings
                 if i == 0:  # Root note
                     if not self.app.is_mode_active(self.app.melodic_mode):
-                        color = FONT_COLOR_DISABLED
+                        color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DISABLED)
                     show_title(ctx, part_x, h, 'ROOT NOTE')
                     show_value(ctx, part_x, h, "{0} ({1})".format(self.app.melodic_mode.note_number_to_name(
                         self.app.melodic_mode.root_midi_note), self.app.melodic_mode.root_midi_note), color)
@@ -144,32 +144,32 @@ class SettingsMode(PyshaMode):
 
                 elif i == 2:  # Channel AT range start
                     if self.app.melodic_mode.last_time_at_params_edited is not None:
-                        color = FONT_COLOR_DELAYED_ACTIONS
+                        color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DELAYED_ACTIONS)
                     show_title(ctx, part_x, h, 'cAT START')
                     show_value(ctx, part_x, h, self.app.melodic_mode.channel_at_range_start, color)
 
                 elif i == 3:  # Channel AT range end
                     if self.app.melodic_mode.last_time_at_params_edited is not None:
-                        color = FONT_COLOR_DELAYED_ACTIONS
+                        color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DELAYED_ACTIONS)
                     show_title(ctx, part_x, h, 'cAT END')
                     show_value(ctx, part_x, h, self.app.melodic_mode.channel_at_range_end, color)
 
                 elif i == 4:  # Poly AT range
                     if self.app.melodic_mode.last_time_at_params_edited is not None:
-                        color = FONT_COLOR_DELAYED_ACTIONS
+                        color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DELAYED_ACTIONS)
                     show_title(ctx, part_x, h, 'pAT RANGE')
                     show_value(ctx, part_x, h, self.app.melodic_mode.poly_at_max_range, color)
 
                 elif i == 5:  # Poly AT curve
                     if self.app.melodic_mode.last_time_at_params_edited is not None:
-                        color = FONT_COLOR_DELAYED_ACTIONS
+                        color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DELAYED_ACTIONS)
                     show_title(ctx, part_x, h, 'pAT CURVE')
                     show_value(ctx, part_x, h, self.app.melodic_mode.poly_at_curve_bending, color)
 
             elif self.current_page == 1:  # MIDI settings
                 if i == 0:  # MIDI in device
                     if self.app.midi_in_tmp_device_idx is not None:
-                        color = FONT_COLOR_DELAYED_ACTIONS
+                        color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DELAYED_ACTIONS)
                         if self.app.midi_in_tmp_device_idx < 0:
                             name = "None"
                         else:
@@ -178,20 +178,20 @@ class SettingsMode(PyshaMode):
                         if self.app.midi_in is not None:
                             name = "{0} {1}".format(self.app.available_midi_in_device_names.index(self.app.midi_in.name) + 1, self.app.midi_in.name)
                         else:
-                            color = FONT_COLOR_DISABLED
+                            color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DISABLED)
                             name = "None"
                     show_title(ctx, part_x, h, 'IN DEVICE')
                     show_value(ctx, part_x, h, name, color)
 
                 elif i == 1:  # MIDI in channel
                     if self.app.midi_in is None:
-                        color = FONT_COLOR_DISABLED
+                        color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DISABLED)
                     show_title(ctx, part_x, h, 'IN CH')
                     show_value(ctx, part_x, h, self.app.midi_in_channel + 1 if self.app.midi_in_channel > -1 else "All", color)
 
                 elif i == 2:  # MIDI out device
                     if self.app.midi_out_tmp_device_idx is not None:
-                        color = FONT_COLOR_DELAYED_ACTIONS
+                        color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DELAYED_ACTIONS)
                         if self.app.midi_out_tmp_device_idx < 0:
                             name = "None"
                         else:
@@ -200,14 +200,14 @@ class SettingsMode(PyshaMode):
                         if self.app.midi_out is not None:
                             name = "{0} {1}".format(self.app.available_midi_out_device_names.index(self.app.midi_out.name) + 1, self.app.midi_out.name)
                         else:
-                            color = FONT_COLOR_DISABLED
+                            color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DISABLED)
                             name = "None"
                     show_title(ctx, part_x, h, 'OUT DEVICE')
                     show_value(ctx, part_x, h, name, color)
 
                 elif i == 3:  # MIDI out channel
                     if self.app.midi_out is None:
-                        color = FONT_COLOR_DISABLED
+                        color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DISABLED)
                     show_title(ctx, part_x, h, 'OUT CH')
                     show_value(ctx, part_x, h, self.app.midi_out_channel + 1, color)
 
@@ -218,9 +218,9 @@ class SettingsMode(PyshaMode):
                 if i == 0:  # Save button
                     show_title(ctx, part_x, h, 'SAVE')
 
-                elif i ==1: # Version info
+                elif i ==1: # definitions.VERSION info
                     show_title(ctx, part_x, h, 'VERSION')
-                    show_value(ctx, part_x, h, 'Pysha ' + VERSION, color)
+                    show_value(ctx, part_x, h, 'Pysha ' + definitions.VERSION, color)
 
                 elif i == 2:  # Software update
                     show_title(ctx, part_x, h, 'SW UPDATE')
@@ -403,7 +403,7 @@ def restart_program():
 
 
 def run_sw_update():
-    """Runs "git pull" in the current directory to retrieve latest code version and then
+    """Runs "git pull" in the current directory to retrieve latest code definitions.VERSION and then
     restarts the process"""
     print('Running SW update...')
     print('- pulling from repository')

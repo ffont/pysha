@@ -1,12 +1,55 @@
 VERSION = '0.2'
 
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
-FONT_COLOR_DELAYED_ACTIONS = [1.0, 0.64, 0.0]
-FONT_COLOR_DISABLED = [0.5, 0.5, 0.5]
-OFF_BTN_COLOR = 'my_dark_gray'
-
 LAYOUT_MELODIC = 'lmelodic'
 LAYOUT_RHYTHMIC = 'lrhytmic'
+
+# Colors
+
+BLACK_RGB = [0, 0, 0]
+GRAY_DARK_RGB = [30, 30, 30]
+GRAY_LIGHT_RGB = [180, 180, 180]
+WHITE_RGB = [255, 255, 255]
+YELLOW_RGB = [255, 241, 0]
+ORANGE_RGB = [255, 140, 0]
+RED_RGB = [232, 17, 35]
+PINK_RGB = [236, 0, 140]
+PURPLE_RGB = [104, 33, 122]
+BLUE_RGB = [0, 24, 143]
+CYAN_RGB = [0, 188, 242]
+TURQUOISE_RGB = [0, 178, 148]
+GREEN_RGB = [0, 158, 73]
+LIME_RGB = [186, 216, 10]
+
+BLACK = 'black'
+GRAY_DARK = 'gray_dark'
+GRAY_LIGHT = 'gray_light'
+WHITE = 'white'
+YELLOW = 'yellow'
+ORANGE = 'orange'
+RED = 'red'
+PINK = 'pink'
+PURPLE = 'purple'
+BLUE = 'blue'
+CYAN = 'cyan'
+TURQUOISE = 'turquoise'
+GREEN = 'green'
+LIME = 'lime'
+
+COLORS_NAMES = [BLACK, GRAY_DARK, GRAY_LIGHT, WHITE, YELLOW, ORANGE, RED, PINK, PURPLE, BLUE, CYAN, TURQUOISE, GREEN, LIME]
+
+def get_color_rgb(color_name):
+    return globals().get('{0}_RGB'.format(color_name.upper()), [0, 0, 0])
+
+def get_color_rgb_float(color_name):
+    return [x/255 for x in get_color_rgb(color_name)]
+
+FONT_COLOR_DELAYED_ACTIONS = ORANGE
+FONT_COLOR_DISABLED = GRAY_LIGHT
+OFF_BTN_COLOR = GRAY_DARK
+NOTE_ON_COLOR = GREEN
+
+
 
 class PyshaMode(object):
     """

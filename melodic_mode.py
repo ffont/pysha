@@ -1,11 +1,10 @@
+import definitions
 import mido
 import push2_python.constants
 import time
 
-from definitions import PyshaMode, OFF_BTN_COLOR, DELAYED_ACTIONS_APPLY_TIME
 
-
-class MelodicMode(PyshaMode):
+class MelodicMode(definitions.PyshaMode):
 
     notes_being_played = []
     root_midi_note = 0  # default redefined in initialize
@@ -131,12 +130,12 @@ class MelodicMode(PyshaMode):
         self.update_buttons()
 
     def deactivate(self):
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'black')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'black')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'black')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, definitions.BLACK)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, definitions.BLACK)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, definitions.BLACK)
 
     def check_for_delayed_actions(self):
-        if self.last_time_at_params_edited is not None and time.time() - self.last_time_at_params_edited > DELAYED_ACTIONS_APPLY_TIME:
+        if self.last_time_at_params_edited is not None and time.time() - self.last_time_at_params_edited > definitions.DELAYED_ACTIONS_APPLY_TIME:
             # Update channel and poly AT parameters
             self.push.pads.set_channel_aftertouch_range(range_start=self.channel_at_range_start, range_end=self.channel_at_range_end)
             self.push.pads.set_velocity_curve(velocities=self.get_poly_at_curve())
@@ -156,13 +155,13 @@ class MelodicMode(PyshaMode):
     def update_accent_button(self):
         # Accent button has its own method so it can be reused in the rhythmic mode which inherits from melodic mode
         if self.fixed_velocity_mode:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, 'white', animation='pulsing')
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, definitions.WHITE, animation='pulsing')
         else:
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, definitions.OFF_BTN_COLOR)
 
     def update_buttons(self):
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, 'white')
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, 'white')
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, definitions.WHITE)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, definitions.WHITE)
         self.update_accent_button()
 
     def update_pads(self):
@@ -171,16 +170,16 @@ class MelodicMode(PyshaMode):
             row_colors = []
             for j in range(0, 8):
                 corresponding_midi_note = self.pad_ij_to_midi_note([i, j])
-                cell_color = 'white'
+                cell_color = definitions.WHITE
                 if self.is_black_key_midi_note(corresponding_midi_note):
-                    cell_color = 'black'
+                    cell_color = definitions.BLACK
                 if self.is_midi_note_root_octave(corresponding_midi_note):
                     try:
                         cell_color = self.app.pyramidi_mode.get_current_track_color()
                     except AttributeError:
-                        cell_color = 'yellow'
+                        cell_color = definitions.YELLOW
                 if self.is_midi_note_being_played(corresponding_midi_note):
-                    cell_color = 'green'
+                    cell_color = definitions.NOTE_ON_COLOR
 
                 row_colors.append(cell_color)
             color_matrix.append(row_colors)
