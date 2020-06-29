@@ -180,6 +180,7 @@ class PyramidiMode(PyshaMode):
                 data['color'] = definitions.PINK
             self.tracks_info.append(data)
 
+        # Create MIDI CC mappings for synths with definitions
         for synth_name, data in synth_midi_control_cc_data.items():
             self.synth_midi_control_ccs[synth_name] = []
             for section in data:
@@ -187,9 +188,18 @@ class PyramidiMode(PyshaMode):
                 for name, cc_number in section['controls']:
                     control = MIDICCControl(cc_number, name, section_name, self.get_current_track_color_rgb, self.app.send_midi)
                     self.synth_midi_control_ccs[synth_name].append(control)
+
+        # Create MIDI CC mappings for synths without definitions
+        for synth_name in list(set([track['instrument_short_name'] for track in self.tracks_info])):
+            if synth_name not in self.synth_midi_control_ccs:
+                self.synth_midi_control_ccs[synth_name] = []
+                for i in range(0, 128):
+                    section_s = i // 16
+                    section_e = section_s + 16
+                    control = MIDICCControl(i, 'CC {0}'.format(i), '{0} to {1}'.format(section_s, section_e), self.get_current_track_color_rgb, self.app.send_midi)
+                    self.synth_midi_control_ccs[synth_name].append(control)
         
         self.select_pyramid_track(self.selected_pyramid_track)
-
 
     def get_current_track_instrument_short_name(self):
         return self.tracks_info[self.selected_pyramid_track]['instrument_short_name']
@@ -304,6 +314,7 @@ class PyramidiMode(PyshaMode):
             self.pyramid_track_selection_button_a = button_name
             self.pyramid_track_selection_button_a_pressing_time = time.time()
             self.app.buttons_need_update = True
+            return True
 
         elif button_name in self.pyramid_track_button_names_b:
             if self.pyramid_track_selection_button_a:
@@ -314,11 +325,13 @@ class PyramidiMode(PyshaMode):
                 self.app.pads_need_update = True
                 self.pyramid_track_selection_button_a = False
                 self.pyramid_track_selection_button_a_pressing_time = 0
+                return True
             else:
                 # No track selection a button being pressed...
                 self.select_pyramid_track(self.selected_pyramid_track % 8 + 8 * self.pyramid_track_button_names_b.index(button_name))
                 self.app.buttons_need_update = True
                 self.app.pads_need_update = True
+                return True
 
 
     def on_button_released(self, button_name):
@@ -331,6 +344,7 @@ class PyramidiMode(PyshaMode):
                 self.pyramid_track_selection_button_a_pressing_time = 0
                 self.app.buttons_need_update = True
                 self.app.pads_need_update = True
+                return True
 
 
     def on_encoder_rotated(self, encoder_name, increment):
@@ -346,3 +360,4 @@ class PyramidiMode(PyshaMode):
         ].index(encoder_name)
         if self.active_midi_control_ccs:
             self.active_midi_control_ccs[encoder_num].update_value(increment)
+        return True  # Always return True because encoder should not be used in any other mode if this is first active

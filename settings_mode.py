@@ -327,12 +327,15 @@ class SettingsMode(definitions.PyshaMode):
         elif self.current_page == 2:  # About
             pass
 
+        return True  # Always return True because encoder should not be used in any other mode if this is first active
+
     def on_button_pressed(self, button_name):
 
         if self.current_page == 0:  # Performance settings
             if button_name == push2_python.constants.BUTTON_UPPER_ROW_1:
                 self.app.melodic_mode.set_root_midi_note(self.app.melodic_mode.root_midi_note + 1)
                 self.app.pads_need_update = True
+                return True
 
             elif button_name == push2_python.constants.BUTTON_UPPER_ROW_2:
                 self.app.melodic_mode.use_poly_at = not self.app.melodic_mode.use_poly_at
@@ -340,6 +343,7 @@ class SettingsMode(definitions.PyshaMode):
                     self.app.push.pads.set_polyphonic_aftertouch()
                 else:
                     self.app.push.pads.set_channel_aftertouch()
+                return True
 
         elif self.current_page == 1:  # MIDI settings
             if button_name == push2_python.constants.BUTTON_UPPER_ROW_1:
@@ -354,9 +358,11 @@ class SettingsMode(definitions.PyshaMode):
                     self.app.midi_in_tmp_device_idx = -1  # Will use -1 for "None"
                 elif self.app.midi_in_tmp_device_idx < -1:
                     self.app.midi_in_tmp_device_idx = len(self.app.available_midi_in_device_names) - 1
+                return True
 
             elif button_name == push2_python.constants.BUTTON_UPPER_ROW_2:
                 self.app.set_midi_in_channel(self.app.midi_in_channel + 1, wrap=True)
+                return True
 
             elif button_name == push2_python.constants.BUTTON_UPPER_ROW_3:
                 if self.app.midi_out_tmp_device_idx is None:
@@ -370,21 +376,27 @@ class SettingsMode(definitions.PyshaMode):
                     self.app.midi_out_tmp_device_idx = -1  # Will use -1 for "None"
                 elif self.app.midi_out_tmp_device_idx < -1:
                     self.app.midi_out_tmp_device_idx = len(self.app.available_midi_out_device_names) - 1
+                return True
 
             elif button_name == push2_python.constants.BUTTON_UPPER_ROW_4:
                 self.app.set_midi_out_channel(self.app.midi_out_channel + 1, wrap=True)
+                return True
 
             elif button_name == push2_python.constants.BUTTON_UPPER_ROW_5:
                 self.app.on_midi_push_connection_established()
+                return True
 
         elif self.current_page == 2:  # About
             if button_name == push2_python.constants.BUTTON_UPPER_ROW_1:
                 # Save current settings
                 self.app.save_current_settings_to_file()
+                return True
+
             elif button_name == push2_python.constants.BUTTON_UPPER_ROW_3:
                 # Run software update code
                 self.is_running_sw_update = True
                 run_sw_update()
+                return True
 
 
 def restart_program():

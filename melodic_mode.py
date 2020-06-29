@@ -195,6 +195,7 @@ class MelodicMode(definitions.PyshaMode):
             msg = mido.Message('note_on', note=midi_note, velocity=velocity if not self.fixed_velocity_mode else 127)
             self.app.send_midi(msg)
             self.update_pads()  # Directly calling update pads method because we want user to feel feedback as quick as possible
+            return True
 
     def on_pad_released(self, pad_n, pad_ij, velocity):
         midi_note = self.pad_ij_to_midi_note(pad_ij)
@@ -203,6 +204,7 @@ class MelodicMode(definitions.PyshaMode):
             msg = mido.Message('note_off', note=midi_note, velocity=velocity)
             self.app.send_midi(msg)
             self.update_pads()  # Directly calling update pads method because we want user to feel feedback as quick as possible
+            return True
 
     def on_pad_aftertouch(self, pad_n, pad_ij, velocity):
         if pad_n is not None:
@@ -216,25 +218,31 @@ class MelodicMode(definitions.PyshaMode):
             self.latest_channel_at_value = (time.time(), velocity)
             msg = mido.Message('aftertouch', value=velocity)
         self.app.send_midi(msg)
+        return True
 
     def on_touchstrip(self, value):
         msg = mido.Message('pitchwheel', pitch=value)
         self.app.send_midi(msg)
+        return True
 
     def on_sustain_pedal(self, sustain_on):
         msg = mido.Message('control_change', control=64, value=127 if sustain_on else 0)
         self.app.send_midi(msg)
+        return True
 
     def on_button_pressed(self, button_name):
         if button_name == push2_python.constants.BUTTON_OCTAVE_UP:
             self.set_root_midi_note(self.root_midi_note + 12)
             self.app.pads_need_update = True
+            return True
 
         elif button_name == push2_python.constants.BUTTON_OCTAVE_DOWN:
             self.set_root_midi_note(self.root_midi_note - 12)
             self.app.pads_need_update = True
+            return True
 
         elif button_name == push2_python.constants.BUTTON_ACCENT:
             self.fixed_velocity_mode = not self.fixed_velocity_mode
             self.app.buttons_need_update = True
             self.app.pads_need_update = True
+            return True

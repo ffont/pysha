@@ -104,7 +104,7 @@ class PyshaMode(object):
     def update_display(self, ctx, w, h):
         pass
 
-    # Push2 action callbacks
+    # Push2 action callbacks (these methods should return True if some action was carried out, otherwise return None)
     def on_encoder_rotated(self, encoder_name, increment):
         pass
 
@@ -113,6 +113,7 @@ class PyshaMode(object):
 
     def on_button_released(self, button_name):
         pass
+
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
         pass

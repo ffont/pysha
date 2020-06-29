@@ -58,3 +58,4 @@ class RhythmicMode(MelodicMode):
             self.fixed_velocity_mode = not self.fixed_velocity_mode
             self.app.buttons_need_update = True
             self.app.pads_need_update = True
+            return True

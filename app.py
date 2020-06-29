@@ -323,8 +323,10 @@ class PyshaApp(object):
 @push2_python.on_encoder_rotated()
 def on_encoder_rotated(_, encoder_name, increment):
     try:
-        for mode in app.active_modes:
-            mode.on_encoder_rotated(encoder_name, increment)
+        for mode in app.active_modes[::-1]:
+            action_performed = mode.on_encoder_rotated(encoder_name, increment)
+            if action_performed:
+                break  # If mode took action, stop event propagation
     except NameError:
        print('app object not yet ready!')
 
@@ -332,8 +334,10 @@ def on_encoder_rotated(_, encoder_name, increment):
 @push2_python.on_pad_pressed()
 def on_pad_pressed(_, pad_n, pad_ij, velocity):
     try:
-        for mode in app.active_modes:
-            mode.on_pad_pressed(pad_n, pad_ij, velocity)
+        for mode in app.active_modes[::-1]:
+            action_performed = mode.on_pad_pressed(pad_n, pad_ij, velocity)
+            if action_performed:
+                break  # If mode took action, stop event propagation
     except NameError:
        print('app object not yet ready!')
 
@@ -341,8 +345,10 @@ def on_pad_pressed(_, pad_n, pad_ij, velocity):
 @push2_python.on_pad_released()
 def on_pad_released(_, pad_n, pad_ij, velocity):
     try:
-        for mode in app.active_modes:
-            mode.on_pad_released(pad_n, pad_ij, velocity)
+        for mode in app.active_modes[::-1]:
+            action_performed = mode.on_pad_released(pad_n, pad_ij, velocity)
+            if action_performed:
+                break  # If mode took action, stop event propagation
     except NameError:
        print('app object not yet ready!')
 
@@ -350,8 +356,10 @@ def on_pad_released(_, pad_n, pad_ij, velocity):
 @push2_python.on_pad_aftertouch()
 def on_pad_aftertouch(_, pad_n, pad_ij, velocity):
     try:
-        for mode in app.active_modes:
-            mode.on_pad_aftertouch(pad_n, pad_ij, velocity)
+        for mode in app.active_modes[::-1]:
+            action_performed = mode.on_pad_aftertouch(pad_n, pad_ij, velocity)
+            if action_performed:
+                break  # If mode took action, stop event propagation
     except NameError:
        print('app object not yet ready!')
 
@@ -359,8 +367,10 @@ def on_pad_aftertouch(_, pad_n, pad_ij, velocity):
 @push2_python.on_button_pressed()
 def on_button_pressed(_, name):
     try:
-        for mode in app.active_modes:
-            mode.on_button_pressed(name)
+        for mode in app.active_modes[::-1]:
+            action_performed = mode.on_button_pressed(name)
+            if action_performed:
+                break  # If mode took action, stop event propagation
     except NameError:
        print('app object not yet ready!')
 
@@ -368,8 +378,10 @@ def on_button_pressed(_, name):
 @push2_python.on_button_released()
 def on_button_released(_, name):
     try:
-        for mode in app.active_modes:
-            mode.on_button_released(name)
+        for mode in app.active_modes[::-1]:
+            action_performed = mode.on_button_released(name)
+            if action_performed:
+                break  # If mode took action, stop event propagation
     except NameError:
        print('app object not yet ready!')
 
@@ -377,8 +389,21 @@ def on_button_released(_, name):
 @push2_python.on_touchstrip()
 def on_touchstrip(_, value):
     try:
-        for mode in app.active_modes:
-            mode.on_touchstrip(value)
+        for mode in app.active_modes[::-1]:
+            action_performed = mode.on_touchstrip(value)
+            if action_performed:
+                break  # If mode took action, stop event propagation
+    except NameError:
+       print('app object not yet ready!')
+
+
+@push2_python.on_sustain_pedal()
+def on_sustain_pedal(_, sustain_on):
+    try:
+        for mode in app.active_modes[::-1]:
+            action_performed = mode.on_sustain_pedal(sustain_on)
+            if action_performed:
+                break  # If mode took action, stop event propagation
     except NameError:
        print('app object not yet ready!')
 
@@ -390,13 +415,6 @@ def on_midi_connected(_):
     except NameError:
        print('app object not yet ready!') 
 
-@push2_python.on_sustain_pedal()
-def on_sustain_pedal(_, sustain_on):
-    try:
-        for mode in app.active_modes:
-            mode.on_sustain_pedal(sustain_on)
-    except NameError:
-       print('app object not yet ready!')
 
 # Run app main loop
 if __name__ == "__main__":
