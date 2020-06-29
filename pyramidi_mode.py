@@ -229,7 +229,7 @@ class PyramidiMode(PyshaMode):
 
     def deactivate(self):
         for button_name in self.pyramid_track_button_names_a + self.pyramid_track_button_names_b:
-            self.push.buttons.set_button_color(button_name, 'black')
+            self.push.buttons.set_button_color(button_name, definitions.BLACK)
 
     def update_buttons(self):
         for count, name in enumerate(self.pyramid_track_button_names_a):
@@ -238,14 +238,21 @@ class PyramidiMode(PyshaMode):
 
         for count, name in enumerate(self.pyramid_track_button_names_b):
             if self.pyramid_track_selection_button_a:
+                color = self.tracks_info[self.pyramid_track_button_names_a.index(self.pyramid_track_selection_button_a)]['color']
                 equivalent_track_num = self.pyramid_track_button_names_a.index(self.pyramid_track_selection_button_a) + count * 8
                 if self.selected_pyramid_track == equivalent_track_num:
-                    self.push.buttons.set_button_color(name, 'green', animation='pulsing')
+                    self.push.buttons.set_button_color(name, definitions.WHITE)
+                    self.push.buttons.set_button_color(name, color, animation=definitions.DEFAULT_ANIMATION)
                 else:
-                    color = self.tracks_info[self.pyramid_track_button_names_a.index(self.pyramid_track_selection_button_a)]['color']
                     self.push.buttons.set_button_color(name, color)
             else:
-                self.push.buttons.set_button_color(name, 'black')
+                color = self.get_current_track_color()
+                equivalent_track_num = (self.selected_pyramid_track % 8) + count * 8
+                if self.selected_pyramid_track == equivalent_track_num:
+                    self.push.buttons.set_button_color(name, definitions.WHITE)
+                    self.push.buttons.set_button_color(name, color, animation=definitions.DEFAULT_ANIMATION)
+                else:
+                    self.push.buttons.set_button_color(name, color)
 
     def update_display(self, ctx, w, h):
 
@@ -257,7 +264,10 @@ class PyramidiMode(PyshaMode):
             # Draw midi contorl ccs
             for i in range(0, min(len(self.active_midi_control_ccs), 8)):
                 part_x = i * part_w
-                self.active_midi_control_ccs[i].draw(ctx, part_x, part_h)
+                try:
+                    self.active_midi_control_ccs[i].draw(ctx, part_x, part_h)
+                except IndexError:
+                    continue
         else:
             # Draw track info
             font_color = [1, 1, 1]
@@ -297,12 +307,19 @@ class PyramidiMode(PyshaMode):
 
         elif button_name in self.pyramid_track_button_names_b:
             if self.pyramid_track_selection_button_a:
+                # While pressing one of the track selection a buttons
                 self.select_pyramid_track(self.pyramid_track_button_names_a.index(
                     self.pyramid_track_selection_button_a) + self.pyramid_track_button_names_b.index(button_name) * 8)
                 self.app.buttons_need_update = True
                 self.app.pads_need_update = True
                 self.pyramid_track_selection_button_a = False
                 self.pyramid_track_selection_button_a_pressing_time = 0
+            else:
+                # No track selection a button being pressed...
+                self.select_pyramid_track(self.selected_pyramid_track % 8 + 8 * self.pyramid_track_button_names_b.index(button_name))
+                self.app.buttons_need_update = True
+                self.app.pads_need_update = True
+
 
     def on_button_released(self, button_name):
         if button_name in self.pyramid_track_button_names_a:
@@ -314,6 +331,7 @@ class PyramidiMode(PyshaMode):
                 self.pyramid_track_selection_button_a_pressing_time = 0
                 self.app.buttons_need_update = True
                 self.app.pads_need_update = True
+
 
     def on_encoder_rotated(self, encoder_name, increment):
         encoder_num = [

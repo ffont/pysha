@@ -59,17 +59,20 @@ class PyshaApp(object):
         self.init_push()
 
         self.init_modes(settings)
-        self.active_modes.append(self.main_controls_mode)
-        self.active_modes.append(self.pyramidi_mode)
-        self.toggle_melodic_rhythmic_modes()
         
     def init_modes(self, settings):
+        self.main_controls_mode = MainControlsMode(self, settings=settings)
+        self.active_modes.append(self.main_controls_mode)
+
         self.melodic_mode = MelodicMode(self, settings=settings)
         self.rhyhtmic_mode = RhythmicMode(self, settings=settings)
-        self.settings_mode = SettingsMode(self, settings=settings)
-        self.pyramidi_mode = PyramidiMode(self, settings=settings)
-        self.main_controls_mode = MainControlsMode(self, settings=settings)
+        self.set_melodic_mode()
 
+        self.pyramidi_mode = PyramidiMode(self, settings=settings)
+        self.active_modes.append(self.pyramidi_mode)
+
+        self.settings_mode = SettingsMode(self, settings=settings)
+        
     def get_all_modes(self):
         return [getattr(self, element) for element in vars(self) if isinstance(getattr(self, element), definitions.PyshaMode)]
 
@@ -305,7 +308,7 @@ class PyshaApp(object):
         # Configure custom color palette
         app.push.color_palette = {}
         for count, color_name in enumerate(definitions.COLORS_NAMES):
-            app.push.set_color_palette_entry(count, [color_name, color_name], rgb=definitions.get_color_rgb(color_name))
+            app.push.set_color_palette_entry(count, [color_name, color_name], rgb=definitions.get_color_rgb(color_name), allow_overwrite=True)
         app.push.reapply_color_palette()
 
         # Initialize all buttons to black, initialize all pads to off

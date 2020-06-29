@@ -1,3 +1,5 @@
+import push2_python
+
 VERSION = '0.2'
 
 PYRAMIDI_CHANNEL = 15
@@ -50,6 +52,7 @@ FONT_COLOR_DISABLED = GRAY_LIGHT
 OFF_BTN_COLOR = GRAY_DARK
 NOTE_ON_COLOR = GREEN
 
+DEFAULT_ANIMATION = push2_python.constants.ANIMATION_PULSING_QUARTER
 
 
 class PyshaMode(object):

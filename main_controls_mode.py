@@ -28,7 +28,8 @@ class MainControlsMode(definitions.PyshaMode):
 
         # Settings button, to toggle settings mode
         if self.app.is_mode_active(self.app.settings_mode):
-            self.push.buttons.set_button_color(SETTINGS_BUTTON, definitions.WHITE, animation='pulsing')
+            self.push.buttons.set_button_color(SETTINGS_BUTTON, definitions.BLACK)
+            self.push.buttons.set_button_color(SETTINGS_BUTTON, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
         else:
             self.push.buttons.set_button_color(SETTINGS_BUTTON, definitions.OFF_BTN_COLOR)
 
