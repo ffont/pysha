@@ -23,6 +23,7 @@ class SettingsMode(definitions.PyshaMode):
     # - Midi channel IN
     # - Midi device OUT
     # - Midi channel OUT
+    # - Pyramidi channel
     # - Rerun MIDI initial configuration
 
     # About panel
@@ -97,7 +98,8 @@ class SettingsMode(definitions.PyshaMode):
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_3, definitions.WHITE)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_4, definitions.WHITE)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_5, definitions.WHITE)
-            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, definitions.OFF_BTN_COLOR)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, definitions.BLACK)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_6, definitions.GREEN, animation=definitions.DEFAULT_ANIMATION)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_7, definitions.OFF_BTN_COLOR)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_UPPER_ROW_8, definitions.OFF_BTN_COLOR)
 
@@ -210,7 +212,11 @@ class SettingsMode(definitions.PyshaMode):
                     show_title(ctx, part_x, h, 'OUT CH')
                     show_value(ctx, part_x, h, self.app.midi_out_channel + 1, color)
 
-                elif i == 4:  # Re-send MIDI connection established (to push, not MIDI in/out device)
+                elif i == 4:  # Pyramidi out channel
+                    show_title(ctx, part_x, h, 'PYRAMIDI CH')
+                    show_value(ctx, part_x, h, self.app.pyramidi_mode.pyramidi_channel + 1, color)
+                
+                elif i == 5:  # Re-send MIDI connection established (to push, not MIDI in/out device)
                     show_title(ctx, part_x, h, 'RESET MIDI')
 
             elif self.current_page == 2:  # About
@@ -323,6 +329,9 @@ class SettingsMode(definitions.PyshaMode):
 
             elif encoder_name == push2_python.constants.ENCODER_TRACK4_ENCODER:
                 self.app.set_midi_out_channel(self.app.midi_out_channel + increment, wrap=False)
+
+            elif encoder_name == push2_python.constants.ENCODER_TRACK5_ENCODER:
+                self.app.pyramidi_mode.set_pyramidi_channel(self.app.pyramidi_mode.pyramidi_channel + increment, wrap=False)
 
         elif self.current_page == 2:  # About
             pass

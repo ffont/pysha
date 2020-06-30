@@ -4,7 +4,7 @@ import push2_python
 import time
 import math
 
-from definitions import PyshaMode, OFF_BTN_COLOR, LAYOUT_MELODIC, LAYOUT_RHYTHMIC, PYRAMIDI_CHANNEL
+from definitions import PyshaMode, OFF_BTN_COLOR, LAYOUT_MELODIC, LAYOUT_RHYTHMIC
 from display_utils import show_text
 
 
@@ -35,7 +35,7 @@ class PyramidiMode(PyshaMode):
     pyramid_track_selection_button_a_pressing_time = 0
     selected_pyramid_track = 0
     pyramid_track_selection_quick_press_time = 0.400
-    pyramidi_channel = PYRAMIDI_CHANNEL
+    pyramidi_channel = 15
 
 
     def initialize(self, settings=None):
@@ -74,6 +74,21 @@ class PyramidiMode(PyshaMode):
                 data['instrument_short_name'] = 'BBNOTES'
                 data['color'] = definitions.PINK
             self.tracks_info.append(data)
+
+            if settings is not None:
+                self.pyramidi_channel = settings.get('pyramidi_channel', self.pyramidi_channel)
+
+    def get_settings_to_save(self):
+        return {
+            'pyramidi_channel': self.pyramidi_channel,
+        }
+
+    def set_pyramidi_channel(self, channel, wrap=False):
+        self.pyramidi_channel = channel
+        if self.pyramidi_channel < 0:
+            self.pyramidi_channel = 0 if not wrap else 15
+        elif self.pyramidi_channel > 15:
+            self.pyramidi_channel = 15 if not wrap else 0
 
     def get_all_distinct_instrument_short_names(self):
         return list(set([track['instrument_short_name'] for track in self.tracks_info]))
