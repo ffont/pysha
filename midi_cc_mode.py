@@ -146,8 +146,6 @@ class MIDICCMode(PyshaMode):
     current_selected_section_and_page = {}
 
     def initialize(self, settings=None):
-        
-        get_color_func = self.app.pyramidi_mode.get_current_track_color
 
         # Create MIDI CC mappings for synths with definitions
         for synth_name, data in synth_midi_control_cc_data.items():
@@ -155,37 +153,48 @@ class MIDICCMode(PyshaMode):
             for section in data:
                 section_name = section['section']
                 for name, cc_number in section['controls']:
-                    control = MIDICCControl(cc_number, name, section_name, get_color_func, self.app.send_midi)
+                    control = MIDICCControl(cc_number, name, section_name, self.get_current_track_color_helper, self.app.send_midi)
                     self.synth_midi_control_ccs[synth_name].append(control)
 
         # Create MIDI CC mappings for synths without definitions
-        for synth_name in self.app.pyramidi_mode.get_all_distinct_instrument_short_names():
+        for synth_name in self.get_all_distinct_instrument_short_names_helper():
             if synth_name not in self.synth_midi_control_ccs:
                 self.synth_midi_control_ccs[synth_name] = []
                 for i in range(0, 128):
                     section_s = (i // 16) * 16
                     section_e = section_s + 16
-                    control = MIDICCControl(i, 'CC {0}'.format(i), '{0} to {1}'.format(section_s, section_e), get_color_func, self.app.send_midi)
+                    control = MIDICCControl(i, 'CC {0}'.format(i), '{0} to {1}'.format(section_s, section_e), self.get_current_track_color_helper, self.app.send_midi)
                     self.synth_midi_control_ccs[synth_name].append(control)
 
         # Fill in current page and section variables
         for synth_name in self.synth_midi_control_ccs:
             self.current_selected_section_and_page[synth_name] = (self.synth_midi_control_ccs[synth_name][0].section, 0)
 
+
+    def get_all_distinct_instrument_short_names_helper(self):
+        return self.app.pyramidi_mode.get_all_distinct_instrument_short_names()
+
+    def get_current_track_color_helper(self):
+        return self.app.pyramidi_mode.get_current_track_color()
+
+    def get_current_track_instrument_short_name_helper(self):
+        return self.get_current_track_instrument_short_name_helper()
+        
+
     def get_current_track_midi_cc_sections(self):
         section_names = []
-        for control in self.synth_midi_control_ccs.get(self.app.pyramidi_mode.get_current_track_instrument_short_name(), []):
+        for control in self.synth_midi_control_ccs.get(self.get_current_track_instrument_short_name_helper(), []):
             section_name = control.section
             if section_name not in section_names:
                 section_names.append(section_name)
         return section_names
 
     def get_currently_selected_midi_cc_section_and_page(self):
-        return self.current_selected_section_and_page[self.app.pyramidi_mode.get_current_track_instrument_short_name()]
+        return self.current_selected_section_and_page[self.get_current_track_instrument_short_name_helper()]
 
     def get_midi_cc_controls_for_current_track_and_section(self):
         section, _ = self.get_currently_selected_midi_cc_section_and_page()
-        return [control for control in self.synth_midi_control_ccs.get(self.app.pyramidi_mode.get_current_track_instrument_short_name(), []) if control.section == section]
+        return [control for control in self.synth_midi_control_ccs.get(self.get_current_track_instrument_short_name_helper(), []) if control.section == section]
 
     def get_midi_cc_controls_for_current_track_section_and_page(self):
         all_section_controls = self.get_midi_cc_controls_for_current_track_and_section()
@@ -202,7 +211,7 @@ class MIDICCMode(PyshaMode):
             result[0] = new_section
         if new_page is not None:
             result[1] = new_page
-        self.current_selected_section_and_page[self.app.pyramidi_mode.get_current_track_instrument_short_name()] = result
+        self.current_selected_section_and_page[self.get_current_track_instrument_short_name_helper()] = result
         self.active_midi_control_ccs = self.get_midi_cc_controls_for_current_track_section_and_page()
         self.app.buttons_need_update = True
 
