@@ -4,28 +4,7 @@
     "color": "orange",
     "midi_cc": [
         {
-            "section": "GLOBAL",
-            "controls": [
-                [
-                    "BRILL",
-                    109
-                ],
-                [
-                    "RESSO",
-                    110
-                ],
-                [
-                    "FEET1",
-                    102
-                ],
-                [
-                    "FEET2",
-                    103
-                ]
-            ]
-        },
-        {
-            "section": "VCO I",
+            "section": "CH I",
             "controls": [
                 [
                     "SPEED",
@@ -38,11 +17,103 @@
                 [
                     "PW",
                     42
+                ],
+                [
+                    "SQR",
+                    43
+                ],
+                [
+                    "SAW",
+                    44
+                ],
+                [
+                    "NOISE",
+                    45
+                ],
+                [
+                    "HPF",
+                    46
+                ],
+                [
+                    "RESh",
+                    47
+                ],
+                [
+                    "LPF",
+                    48
+                ],
+                [
+                    "RESl",
+                    49
+                ],
+                [
+                    "VCF IL",
+                    50
+                ],
+                [
+                    "VCF AL",
+                    51
+                ],
+                [
+                    "VCF A",
+                    52
+                ],
+                [
+                    "VCF D",
+                    53
+                ],
+                [
+                    "VCF R",
+                    54
+                ],
+                [
+                    "VCF LE",
+                    55
+                ],
+                [
+                    "SIN LE",
+                    56
+                ],
+                [
+                    "VCA A",
+                    57
+                ],
+                [
+                    "VCA D",
+                    58
+                ],
+                [
+                    "VCA S",
+                    59
+                ],
+                [
+                    "VCA R",
+                    60
+                ],
+                [
+                    "LEVEL",
+                    61
+                ],
+                [
+                    "IT BR",
+                    62
+                ],
+                [
+                    "IT LE",
+                    63
+                ],
+                [
+                    "AT BR",
+                    65
+                ],
+                [
+                    "AT LE",
+                    66
                 ]
             ]
         },
         {
-            "section": "VCO II",
+            "section": "CH II",
             "controls": [
                 [
                     "SPEED",
@@ -55,6 +126,203 @@
                 [
                     "PW",
                     69
+                ],
+                [
+                    "SQR",
+                    70
+                ],
+                [
+                    "SAW",
+                    71
+                ],
+                [
+                    "NOISE",
+                    72
+                ],
+                [
+                    "HPF",
+                    73
+                ],
+                [
+                    "RESh",
+                    119
+                ],
+                [
+                    "LPF",
+                    75
+                ],
+                [
+                    "RESl",
+                    76
+                ],
+                [
+                    "VCF IL",
+                    77
+                ],
+                [
+                    "VCF AL",
+                    78
+                ],
+                [
+                    "VCF A",
+                    79
+                ],
+                [
+                    "VCF D",
+                    80
+                ],
+                [
+                    "VCF R",
+                    81
+                ],
+                [
+                    "VCF LE",
+                    82
+                ],
+                [
+                    "SIN LE",
+                    83
+                ],
+                [
+                    "VCA A",
+                    84
+                ],
+                [
+                    "VCA D",
+                    85
+                ],
+                [
+                    "VCA S",
+                    86
+                ],
+                [
+                    "VCA R",
+                    87
+                ],
+                [
+                    "LEVEL",
+                    88
+                ],
+                [
+                    "IT BR",
+                    89
+                ],
+                [
+                    "IT LE",
+                    90
+                ],
+                [
+                    "AT BR",
+                    91
+                ],
+                [
+                    "AT LE",
+                    92
+                ]
+            ]
+        },
+        {
+            "section": "PERF",
+            "controls": [
+                [
+                    "COARSE",
+                    93
+                ],
+                [
+                    "FINE",
+                    94
+                ],
+                [
+                    "DETUNE",
+                    95
+                ],
+                [
+                    "FEET 1",
+                    102
+                ],
+                [
+                    "FEET 2",
+                    103
+                ],
+                [
+                    "FUNCTION",
+                    104
+                ],
+                [
+                    "SPEED",
+                    105
+                ],
+                [
+                    "VCO",
+                    106
+                ],
+                [
+                    "VCF",
+                    107
+                ],
+                [
+                    "VCA",
+                    108
+                ],
+                [
+                    "MIX",
+                    8
+                ],
+                [
+                    "BRILL",
+                    109
+                ],
+                [
+                    "RESSO",
+                    110
+                ],
+                [
+                    "INITIAL",
+                    111
+                ],
+                [
+                    "SPEED",
+                    112
+                ],
+                [
+                    "VCO",
+                    113
+                ],
+                [
+                    "VCF",
+                    114
+                ],
+                [
+                    "BR LOW",
+                    115
+                ],
+                [
+                    "BR HIGH",
+                    116
+                ],
+                [
+                    "LEV LOW",
+                    117
+                ],
+                [
+                    "LEV HIGH",
+                    118
+                ],
+                [
+                    "GLD MODE",
+                    39
+                ],
+                [
+                    "GLD TIME",
+                    5
+                ],
+                [
+                    "SUS MODE",
+                    9
+                ],
+                [
+                    "SUS TIME",
+                    11
                 ]
             ]
         }
