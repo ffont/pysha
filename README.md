@@ -22,7 +22,7 @@ I designed Pysha (and I continue to update it) with the only purpose to serve my
 * Merge MIDI in from a MIDI input (using a MIDI intergace with the Rapsberry Pi) and also send it to the main MIDI out
 * Interactively configure MIDI in/out settings
 * Select Pyramid tracks and show track number information on screen
-* Show track instrument information and sync colors (with preloaded information about what wach Pyramid track is routed to)
+* Show track instrument information and sync colors (with preloaded information about what each Pyramid track is routed to)
 * Send MIDI control CC data using the encoders, use synth definition files (much like Pyramid's) to show show controls and control names in a meaningful way
 * Temporarily disable screen rendering for slow Raspberry Pi's (like mine!)
 * Save current settings so these are automatically loaded on next run

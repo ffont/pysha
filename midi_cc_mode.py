@@ -170,28 +170,14 @@ class MIDICCMode(PyshaMode):
         for synth_name in self.synth_midi_control_ccs:
             self.current_selected_section_and_page[synth_name] = (self.synth_midi_control_ccs[synth_name][0].section, 0)
 
-
     def get_all_distinct_instrument_short_names_helper(self):
-        try:
-            return self.app.track_selection_mode.get_all_distinct_instrument_short_names()
-        except AttributeError:
-            # If track_selection_mode is not enabled, return empty list as only the first instrument in self.synth_midi_control_cc_data will be used
-            return []
+        return self.app.track_selection_mode.get_all_distinct_instrument_short_names()
 
     def get_current_track_color_helper(self):
-        try:
-            return self.app.track_selection_mode.get_current_track_color()
-        except AttributeError:
-            # If track_selection_mode is not enabled, return generic color
-            return definitions.WHITE
+        return self.app.track_selection_mode.get_current_track_color()
 
     def get_current_track_instrument_short_name_helper(self):
-        try:
-            return self.app.track_selection_mode.get_current_track_instrument_short_name()
-        except AttributeError:
-            # If track_selection_mode is not enabled, return first instrument name from self.synth_midi_control_cc_data
-            return list(synth_midi_control_cc_data.keys())[0]
-        
+        return self.app.track_selection_mode.get_current_track_instrument_short_name()
 
     def get_current_track_midi_cc_sections(self):
         section_names = []
