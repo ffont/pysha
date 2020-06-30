@@ -173,23 +173,23 @@ class MIDICCMode(PyshaMode):
 
     def get_all_distinct_instrument_short_names_helper(self):
         try:
-            return self.app.pyramidi_mode.get_all_distinct_instrument_short_names()
+            return self.app.track_selection_mode.get_all_distinct_instrument_short_names()
         except AttributeError:
-            # If pyramidi_mode is not enabled, return empty list as only the first instrument in self.synth_midi_control_cc_data will be used
+            # If track_selection_mode is not enabled, return empty list as only the first instrument in self.synth_midi_control_cc_data will be used
             return []
 
     def get_current_track_color_helper(self):
         try:
-            return self.app.pyramidi_mode.get_current_track_color()
+            return self.app.track_selection_mode.get_current_track_color()
         except AttributeError:
-            # If pyramidi_mode is not enabled, return generic color
+            # If track_selection_mode is not enabled, return generic color
             return definitions.WHITE
 
     def get_current_track_instrument_short_name_helper(self):
         try:
-            return self.app.pyramidi_mode.get_current_track_instrument_short_name()
+            return self.app.track_selection_mode.get_current_track_instrument_short_name()
         except AttributeError:
-            # If pyramidi_mode is not enabled, return first instrument name from self.synth_midi_control_cc_data
+            # If track_selection_mode is not enabled, return first instrument name from self.synth_midi_control_cc_data
             return list(synth_midi_control_cc_data.keys())[0]
         
 

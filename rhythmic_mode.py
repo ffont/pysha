@@ -38,7 +38,7 @@ class RhythmicMode(MelodicMode):
                 cell_color = definitions.BLACK
                 if i >= 4 and j < 4:
                     # This is the main 4x4 grid
-                    cell_color = self.app.pyramidi_mode.get_current_track_color()
+                    cell_color = self.app.track_selection_mode.get_current_track_color()
                 elif i >= 4 and j >= 4:
                     cell_color = definitions.GRAY_LIGHT
                 elif i < 4 and j < 4:

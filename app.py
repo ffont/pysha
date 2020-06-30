@@ -10,7 +10,7 @@ import numpy
 import push2_python
 
 from melodic_mode import MelodicMode
-from pyramidi_mode import PyramidiMode
+from track_selection_mode import TrackSelectionMode
 from rhythmic_mode import RhythmicMode
 from settings_mode import SettingsMode
 from main_controls_mode import MainControlsMode
@@ -69,10 +69,10 @@ class PyshaApp(object):
         self.rhyhtmic_mode = RhythmicMode(self, settings=settings)
         self.set_melodic_mode()
 
-        self.pyramidi_mode = PyramidiMode(self, settings=settings)
-        self.midi_cc_mode = MIDICCMode(self, settings=settings)  # Should be initialized after pyramidi mode
-        self.active_modes += [self.pyramidi_mode, self.midi_cc_mode]
-        self.pyramidi_mode.select_pyramid_track(self.pyramidi_mode.selected_pyramid_track)
+        self.track_selection_mode = TrackSelectionMode(self, settings=settings)
+        self.midi_cc_mode = MIDICCMode(self, settings=settings)  # Should be initialized after track selection mode so it gets info about tracks
+        self.active_modes += [self.track_selection_mode, self.midi_cc_mode]
+        self.track_selection_mode.select_track(self.track_selection_mode.selected_track)
 
         self.settings_mode = SettingsMode(self, settings=settings)
         

@@ -8,10 +8,10 @@ from definitions import PyshaMode, OFF_BTN_COLOR, LAYOUT_MELODIC, LAYOUT_RHYTHMI
 from display_utils import show_text
 
 
-class PyramidiMode(PyshaMode):
+class TrackSelectionMode(PyshaMode):
 
     tracks_info = []
-    pyramid_track_button_names_a = [
+    track_button_names_a = [
         push2_python.constants.BUTTON_LOWER_ROW_1,
         push2_python.constants.BUTTON_LOWER_ROW_2,
         push2_python.constants.BUTTON_LOWER_ROW_3,
@@ -21,7 +21,7 @@ class PyramidiMode(PyshaMode):
         push2_python.constants.BUTTON_LOWER_ROW_7,
         push2_python.constants.BUTTON_LOWER_ROW_8
     ]
-    pyramid_track_button_names_b = [
+    track_button_names_b = [
         push2_python.constants.BUTTON_1_32T,
         push2_python.constants.BUTTON_1_32,
         push2_python.constants.BUTTON_1_16T,
@@ -31,10 +31,10 @@ class PyramidiMode(PyshaMode):
         push2_python.constants.BUTTON_1_4T,
         push2_python.constants.BUTTON_1_4
     ]
-    pyramid_track_selection_button_a = False
-    pyramid_track_selection_button_a_pressing_time = 0
-    selected_pyramid_track = 0
-    pyramid_track_selection_quick_press_time = 0.400
+    track_selection_button_a = False
+    track_selection_button_a_pressing_time = 0
+    selected_track = 0
+    track_selection_quick_press_time = 0.400
     pyramidi_channel = 15
 
 
@@ -94,18 +94,18 @@ class PyramidiMode(PyshaMode):
         return list(set([track['instrument_short_name'] for track in self.tracks_info]))
 
     def get_current_track_instrument_short_name(self):
-        return self.tracks_info[self.selected_pyramid_track]['instrument_short_name']
+        return self.tracks_info[self.selected_track]['instrument_short_name']
 
     def get_current_track_color(self):
-        return self.tracks_info[self.selected_pyramid_track]['color']
+        return self.tracks_info[self.selected_track]['color']
 
     def get_current_track_color_rgb(self):
         return definitions.get_color_rgb_float(self.get_current_track_color())
         
     def load_current_default_layout(self):
-        if self.tracks_info[self.selected_pyramid_track]['default_layout'] == LAYOUT_MELODIC:
+        if self.tracks_info[self.selected_track]['default_layout'] == LAYOUT_MELODIC:
             self.app.set_melodic_mode()
-        elif self.tracks_info[self.selected_pyramid_track]['default_layout'] == LAYOUT_RHYTHMIC:
+        elif self.tracks_info[self.selected_track]['default_layout'] == LAYOUT_RHYTHMIC:
             self.app.set_rhythmic_mode()
 
     def clean_currently_notes_being_played(self):
@@ -119,9 +119,9 @@ class PyramidiMode(PyshaMode):
         msg = mido.Message('control_change', control=0, value=track_idx + 1)
         self.app.send_midi(msg, force_channel=self.pyramidi_channel)
 
-    def select_pyramid_track(self, track_idx):
-        self.selected_pyramid_track = track_idx
-        self.send_select_track_to_pyramid(self.selected_pyramid_track)
+    def select_track(self, track_idx):
+        self.selected_track = track_idx
+        self.send_select_track_to_pyramid(self.selected_track)
         self.load_current_default_layout()
         self.clean_currently_notes_being_played()
         try:
@@ -134,27 +134,27 @@ class PyramidiMode(PyshaMode):
         self.update_buttons()
 
     def deactivate(self):
-        for button_name in self.pyramid_track_button_names_a + self.pyramid_track_button_names_b:
+        for button_name in self.track_button_names_a + self.track_button_names_b:
             self.push.buttons.set_button_color(button_name, definitions.BLACK)
 
     def update_buttons(self):
-        for count, name in enumerate(self.pyramid_track_button_names_a):
+        for count, name in enumerate(self.track_button_names_a):
             color = self.tracks_info[count]['color']
             self.push.buttons.set_button_color(name, color)
 
-        for count, name in enumerate(self.pyramid_track_button_names_b):
-            if self.pyramid_track_selection_button_a:
-                color = self.tracks_info[self.pyramid_track_button_names_a.index(self.pyramid_track_selection_button_a)]['color']
-                equivalent_track_num = self.pyramid_track_button_names_a.index(self.pyramid_track_selection_button_a) + count * 8
-                if self.selected_pyramid_track == equivalent_track_num:
+        for count, name in enumerate(self.track_button_names_b):
+            if self.track_selection_button_a:
+                color = self.tracks_info[self.track_button_names_a.index(self.track_selection_button_a)]['color']
+                equivalent_track_num = self.track_button_names_a.index(self.track_selection_button_a) + count * 8
+                if self.selected_track == equivalent_track_num:
                     self.push.buttons.set_button_color(name, definitions.WHITE)
                     self.push.buttons.set_button_color(name, color, animation=definitions.DEFAULT_ANIMATION)
                 else:
                     self.push.buttons.set_button_color(name, color)
             else:
                 color = self.get_current_track_color()
-                equivalent_track_num = (self.selected_pyramid_track % 8) + count * 8
-                if self.selected_pyramid_track == equivalent_track_num:
+                equivalent_track_num = (self.selected_track % 8) + count * 8
+                if self.selected_track == equivalent_track_num:
                     self.push.buttons.set_button_color(name, definitions.WHITE)
                     self.push.buttons.set_button_color(name, color, animation=definitions.DEFAULT_ANIMATION)
                 else:
@@ -165,7 +165,7 @@ class PyramidiMode(PyshaMode):
         # Draw track selector labels
         height = 20
         for i in range(0, 8):
-            if self.selected_pyramid_track % 8 == i:
+            if self.selected_track % 8 == i:
                 background_color = self.tracks_info[i]['color']
                 font_color = definitions.BLACK
             else:
@@ -176,37 +176,37 @@ class PyramidiMode(PyshaMode):
                       font_color=font_color, background_color=background_color)
  
     def on_button_pressed(self, button_name):
-        if button_name in self.pyramid_track_button_names_a:
-            self.pyramid_track_selection_button_a = button_name
-            self.pyramid_track_selection_button_a_pressing_time = time.time()
+        if button_name in self.track_button_names_a:
+            self.track_selection_button_a = button_name
+            self.track_selection_button_a_pressing_time = time.time()
             self.app.buttons_need_update = True
             return True
 
-        elif button_name in self.pyramid_track_button_names_b:
-            if self.pyramid_track_selection_button_a:
+        elif button_name in self.track_button_names_b:
+            if self.track_selection_button_a:
                 # While pressing one of the track selection a buttons
-                self.select_pyramid_track(self.pyramid_track_button_names_a.index(
-                    self.pyramid_track_selection_button_a) + self.pyramid_track_button_names_b.index(button_name) * 8)
+                self.select_track(self.track_button_names_a.index(
+                    self.track_selection_button_a) + self.track_button_names_b.index(button_name) * 8)
                 self.app.buttons_need_update = True
                 self.app.pads_need_update = True
-                self.pyramid_track_selection_button_a = False
-                self.pyramid_track_selection_button_a_pressing_time = 0
+                self.track_selection_button_a = False
+                self.track_selection_button_a_pressing_time = 0
                 return True
             else:
                 # No track selection a button being pressed...
-                self.select_pyramid_track(self.selected_pyramid_track % 8 + 8 * self.pyramid_track_button_names_b.index(button_name))
+                self.select_track(self.selected_track % 8 + 8 * self.track_button_names_b.index(button_name))
                 self.app.buttons_need_update = True
                 self.app.pads_need_update = True
                 return True
 
     def on_button_released(self, button_name):
-        if button_name in self.pyramid_track_button_names_a:
-            if self.pyramid_track_selection_button_a:
-                if time.time() - self.pyramid_track_selection_button_a_pressing_time < self.pyramid_track_selection_quick_press_time:
+        if button_name in self.track_button_names_a:
+            if self.track_selection_button_a:
+                if time.time() - self.track_selection_button_a_pressing_time < self.track_selection_quick_press_time:
                     # Only switch to track if it was a quick press
-                    self.select_pyramid_track(self.pyramid_track_button_names_a.index(button_name))
-                self.pyramid_track_selection_button_a = False
-                self.pyramid_track_selection_button_a_pressing_time = 0
+                    self.select_track(self.track_button_names_a.index(button_name))
+                self.track_selection_button_a = False
+                self.track_selection_button_a_pressing_time = 0
                 self.app.buttons_need_update = True
                 self.app.pads_need_update = True
                 return True

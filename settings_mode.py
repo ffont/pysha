@@ -214,7 +214,7 @@ class SettingsMode(definitions.PyshaMode):
 
                 elif i == 4:  # Pyramidi out channel
                     show_title(ctx, part_x, h, 'PYRAMIDI CH')
-                    show_value(ctx, part_x, h, self.app.pyramidi_mode.pyramidi_channel + 1, color)
+                    show_value(ctx, part_x, h, self.app.track_selection_mode.pyramidi_channel + 1, color)
                 
                 elif i == 5:  # Re-send MIDI connection established (to push, not MIDI in/out device)
                     show_title(ctx, part_x, h, 'RESET MIDI')
@@ -331,7 +331,7 @@ class SettingsMode(definitions.PyshaMode):
                 self.app.set_midi_out_channel(self.app.midi_out_channel + increment, wrap=False)
 
             elif encoder_name == push2_python.constants.ENCODER_TRACK5_ENCODER:
-                self.app.pyramidi_mode.set_pyramidi_channel(self.app.pyramidi_mode.pyramidi_channel + increment, wrap=False)
+                self.app.track_selection_mode.set_pyramidi_channel(self.app.track_selection_mode.pyramidi_channel + increment, wrap=False)
 
         elif self.current_page == 2:  # About
             pass
