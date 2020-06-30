@@ -14,6 +14,7 @@ from pyramidi_mode import PyramidiMode
 from rhythmic_mode import RhythmicMode
 from settings_mode import SettingsMode
 from main_controls_mode import MainControlsMode
+from midi_cc_mode import MIDICCMode
 
 class PyshaApp(object):
 
@@ -69,7 +70,9 @@ class PyshaApp(object):
         self.set_melodic_mode()
 
         self.pyramidi_mode = PyramidiMode(self, settings=settings)
-        self.active_modes.append(self.pyramidi_mode)
+        self.midi_cc_mode = MIDICCMode(self, settings=settings)  # Requires pyramidi mode to be initialized
+        self.active_modes += [self.pyramidi_mode, self.midi_cc_mode]
+        self.pyramidi_mode.select_pyramid_track(self.pyramidi_mode.selected_pyramid_track)
 
         self.settings_mode = SettingsMode(self, settings=settings)
         
