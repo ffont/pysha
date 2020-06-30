@@ -392,6 +392,7 @@ class SettingsMode(definitions.PyshaMode):
                 return True
 
             elif button_name == push2_python.constants.BUTTON_UPPER_ROW_5:
+                self.app.send_local_off_to_dominion()
                 self.app.on_midi_push_connection_established()
                 return True
 

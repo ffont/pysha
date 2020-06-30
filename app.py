@@ -60,6 +60,7 @@ class PyshaApp(object):
         self.init_push()
 
         self.init_modes(settings)
+        self.send_local_off_to_dominion()
         
     def init_modes(self, settings):
         self.main_controls_mode = MainControlsMode(self, settings=settings)
@@ -117,6 +118,25 @@ class PyshaApp(object):
     def set_rhythmic_mode(self):
         if not self.is_mode_active(self.rhyhtmic_mode):
             self.toggle_melodic_rhythmic_modes()
+
+    def send_local_off_to_dominion(self):
+        # This is a bit of a hack, I use it to auto configure Dominon for local off control
+        # I need to first select one of the tracks where Dominon is configured, then switch
+        # to that track, send a spceicifc MIDI CC, and switch back to the previously selected
+        # track.
+        dominion_track_number = None
+        for count, track_info in enumerate(self.track_selection_mode.tracks_info):
+            if track_info['instrument_short_name'] == 'DOMINION':
+                dominion_track_number = count
+                break
+
+        if dominion_track_number is not None:
+            print('Sending local off to dominon')
+            previously_selected_track = self.track_selection_mode.selected_track
+            self.track_selection_mode.select_track(dominion_track_number)
+            local_off_message = mido.Message('control_change', control=122, value=0)
+            self.send_midi(local_off_message)
+            self.track_selection_mode.select_track(previously_selected_track)
 
     def save_current_settings_to_file(self):
         settings = {
