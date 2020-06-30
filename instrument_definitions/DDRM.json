@@ -1,0 +1,62 @@
+{
+    "instrument_name": "Deckard's Dream",
+    "instrument_short_name": "DDRM",
+    "color": "orange",
+    "midi_cc": [
+        {
+            "section": "GLOBAL",
+            "controls": [
+                [
+                    "BRILL",
+                    109
+                ],
+                [
+                    "RESSO",
+                    110
+                ],
+                [
+                    "FEET1",
+                    102
+                ],
+                [
+                    "FEET2",
+                    103
+                ]
+            ]
+        },
+        {
+            "section": "VCO I",
+            "controls": [
+                [
+                    "SPEED",
+                    40
+                ],
+                [
+                    "PWM",
+                    41
+                ],
+                [
+                    "PW",
+                    42
+                ]
+            ]
+        },
+        {
+            "section": "VCO II",
+            "controls": [
+                [
+                    "SPEED",
+                    67
+                ],
+                [
+                    "PWM",
+                    68
+                ],
+                [
+                    "PW",
+                    69
+                ]
+            ]
+        }
+    ]
+}

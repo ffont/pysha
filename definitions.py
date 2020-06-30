@@ -52,6 +52,8 @@ NOTE_ON_COLOR = GREEN
 
 DEFAULT_ANIMATION = push2_python.constants.ANIMATION_PULSING_QUARTER
 
+INSTRUMENT_DEFINITION_FOLDER = 'instrument_definitions'
+TRACK_LISTING_PATH = 'track_listing.json'
 
 class PyshaMode(object):
     """

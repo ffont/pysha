@@ -3,12 +3,13 @@ import mido
 import push2_python
 import time
 import math
+import os
+import json
 
-from definitions import PyshaMode, OFF_BTN_COLOR, LAYOUT_MELODIC, LAYOUT_RHYTHMIC
 from display_utils import show_text
 
 
-class TrackSelectionMode(PyshaMode):
+class TrackSelectionMode(definitions.PyshaMode):
 
     tracks_info = []
     track_button_names_a = [
@@ -37,46 +38,50 @@ class TrackSelectionMode(PyshaMode):
     track_selection_quick_press_time = 0.400
     pyramidi_channel = 15
 
-
     def initialize(self, settings=None):
+        if settings is not None:
+            self.pyramidi_channel = settings.get('pyramidi_channel', self.pyramidi_channel)
         
-        for i in range(0, 64):
-            data = {
-                'track_name': '{0}{1}'.format((i % 16) + 1, ['A', 'B', 'C', 'D'][i//16]),
-                'instrument_name': '-',
-                'instrument_short_name': '-',
-                'color': definitions.GRAY_DARK,
-                'default_layout': LAYOUT_MELODIC,
-            }
-            if i % 8 == 0:
-                data['instrument_name'] = 'Deckard\'s Dream'
-                data['instrument_short_name'] = 'DDRM'
-                data['color'] = definitions.ORANGE
-            elif i % 8 == 1:
-                data['instrument_name'] = 'Minitaur'
-                data['instrument_short_name'] = 'MINITAUR'
-                data['color'] = definitions.YELLOW
-            elif i % 8 == 2:
-                data['instrument_name'] = 'Dominion'
-                data['instrument_short_name'] = 'DOMINON'
-                data['color'] = definitions.TURQUOISE
-            elif i % 8 == 3:
-                data['instrument_name'] = 'Kijimi'
-                data['instrument_short_name'] = 'KIJIMI'
-                data['color'] = definitions.LIME
-            elif i % 8 == 4:
-                data['instrument_name'] = 'Black Box (Pads)'
-                data['instrument_short_name'] = 'BBPADS'
-                data['color'] = definitions.RED
-                data['default_layout'] = LAYOUT_RHYTHMIC
-            elif i % 8 == 5:
-                data['instrument_name'] = 'Black Box (Notes)'
-                data['instrument_short_name'] = 'BBNOTES'
-                data['color'] = definitions.PINK
-            self.tracks_info.append(data)
+        self.create_tracks()
 
-            if settings is not None:
-                self.pyramidi_channel = settings.get('pyramidi_channel', self.pyramidi_channel)
+    def create_tracks(self):
+        """This method creates 64 tracks corresponding to the Pyramid tracks that I use in my live setup.
+        Instrument names are assigned according to the way I have them configured in the 64 tracks of Pyramid.
+        Instrument names per track are loaded from "track_listing.json" file, and should correspond to instrument
+        definition filenames from "instrument_definitions" folder.
+        """
+        tmp_instruments_data = {}
+
+        if os.path.exists(definitions.TRACK_LISTING_PATH):
+            track_instruments = json.load(open(definitions.TRACK_LISTING_PATH))
+            for i, instrument_short_name in enumerate(track_instruments):
+                if instrument_short_name not in tmp_instruments_data:
+                    try:
+                        instrument_data = json.load(open(os.path.join(definitions.INSTRUMENT_DEFINITION_FOLDER, '{}.json'.format(instrument_short_name))))
+                        tmp_instruments_data[instrument_short_name] = instrument_data
+                    except FileNotFoundError:
+                        # No definition file for instrument exists
+                        instrument_data = {}
+                else:
+                    instrument_data = tmp_instruments_data[instrument_short_name]
+                self.tracks_info.append({
+                    'track_name': '{0}{1}'.format((i % 16) + 1, ['A', 'B', 'C', 'D'][i//16]),
+                    'instrument_name': instrument_data.get('instrument_name', '-'),
+                    'instrument_short_name': instrument_short_name,
+                    'color': instrument_data.get('color', definitions.GRAY_DARK),
+                    'default_layout': instrument_data.get('default_layout', definitions.LAYOUT_MELODIC),
+                })
+            print('Created {0} tracks!'.format(len(self.tracks_info)))
+        else:
+            # Create 64 empty tracks
+            for i in range(0, 64):
+                self.tracks_info.append({
+                        'track_name': '{0}{1}'.format((i % 16) + 1, ['A', 'B', 'C', 'D'][i//16]),
+                        'instrument_name': '-',
+                        'instrument_short_name': '-',
+                        'color': definitions.ORANGE,
+                        'default_layout': definitions.LAYOUT_MELODIC,
+                    })
 
     def get_settings_to_save(self):
         return {
@@ -103,9 +108,9 @@ class TrackSelectionMode(PyshaMode):
         return definitions.get_color_rgb_float(self.get_current_track_color())
         
     def load_current_default_layout(self):
-        if self.tracks_info[self.selected_track]['default_layout'] == LAYOUT_MELODIC:
+        if self.tracks_info[self.selected_track]['default_layout'] == definitions.LAYOUT_MELODIC:
             self.app.set_melodic_mode()
-        elif self.tracks_info[self.selected_track]['default_layout'] == LAYOUT_RHYTHMIC:
+        elif self.tracks_info[self.selected_track]['default_layout'] == definitions.LAYOUT_RHYTHMIC:
             self.app.set_rhythmic_mode()
 
     def clean_currently_notes_being_played(self):
@@ -165,12 +170,13 @@ class TrackSelectionMode(PyshaMode):
         # Draw track selector labels
         height = 20
         for i in range(0, 8):
+            track_color = self.tracks_info[i]['color']
             if self.selected_track % 8 == i:
-                background_color = self.tracks_info[i]['color']
+                background_color = track_color
                 font_color = definitions.BLACK
             else:
                 background_color = definitions.BLACK
-                font_color = self.tracks_info[i]['color']
+                font_color = track_color
             instrument_short_name = self.tracks_info[i]['instrument_short_name']
             show_text(ctx, i, h - height, instrument_short_name, height=height,
                       font_color=font_color, background_color=background_color)

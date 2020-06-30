@@ -3,48 +3,12 @@ import mido
 import push2_python
 import time
 import math
+import json
+import os
 
 from definitions import PyshaMode, OFF_BTN_COLOR
 from display_utils import show_text
 
-
-# TODO: this shoud be loaded from some definition file(s)
-synth_midi_control_cc_data = {
-    'DDRM': [
-        {
-            'section': 'GLOBAL',
-            'controls': [('BRILL', 109),
-                            ('RESSO', 110),
-                            ('FEET1', 102),
-                            ('FEET2', 103)],
-        },{
-            'section': 'VCO I',
-            'controls': [('SPEED', 40),
-                            ('PWM', 41),
-                            ('PW', 42)],
-        },{
-            'section': 'VCO II',
-            'controls': [('SPEED', 67),
-                            ('PWM', 68),
-                            ('PW', 69)],
-        }
-    ],
-    'MINITAUR': [
-        {
-            'section': 'VCO',
-            'controls': [('VCO1 LEV', 15),
-                            ('VCO2 LEV', 16)],
-        },{
-            'section': 'VCF',
-            'controls': [('CUTOFF', 19),
-                            ('RESSO', 21)],
-        },{
-            'section': 'LFO',
-            'controls': [('VCO AMT', 13),
-                            ('VCF AMT', 12)],
-        }
-    ]
-}
 
 class MIDICCControl(object):
 
@@ -141,34 +105,39 @@ class MIDICCMode(PyshaMode):
         push2_python.constants.BUTTON_UPPER_ROW_7,
         push2_python.constants.BUTTON_UPPER_ROW_8
     ]
-    synth_midi_control_ccs = {}
+    instrument_midi_control_ccs = {}
     active_midi_control_ccs = []
     current_selected_section_and_page = {}
 
     def initialize(self, settings=None):
-
-        # Create MIDI CC mappings for synths with definitions
-        for synth_name, data in synth_midi_control_cc_data.items():
-            self.synth_midi_control_ccs[synth_name] = []
-            for section in data:
-                section_name = section['section']
-                for name, cc_number in section['controls']:
-                    control = MIDICCControl(cc_number, name, section_name, self.get_current_track_color_helper, self.app.send_midi)
-                    self.synth_midi_control_ccs[synth_name].append(control)
-
-        # Create MIDI CC mappings for synths without definitions
-        for synth_name in self.get_all_distinct_instrument_short_names_helper():
-            if synth_name not in self.synth_midi_control_ccs:
-                self.synth_midi_control_ccs[synth_name] = []
+        for instrument_short_name in self.get_all_distinct_instrument_short_names_helper():
+            try:
+                midi_cc = json.load(open(os.path.join(definitions.INSTRUMENT_DEFINITION_FOLDER, '{}.json'.format(instrument_short_name)))).get('midi_cc', None)
+            except FileNotFoundError:
+                midi_cc = None
+            
+            if midi_cc is not None:
+                # Create MIDI CC mappings for instruments with definitions
+                self.instrument_midi_control_ccs[instrument_short_name] = []
+                for section in midi_cc:
+                    section_name = section['section']
+                    for name, cc_number in section['controls']:
+                        control = MIDICCControl(cc_number, name, section_name, self.get_current_track_color_helper, self.app.send_midi)
+                        self.instrument_midi_control_ccs[instrument_short_name].append(control)
+                print('Loaded {0} MIDI cc mappings for instrument {1}'.format(len(self.instrument_midi_control_ccs[instrument_short_name]), instrument_short_name))
+            else:
+                # No definition file for instrument exists, or no midi CC were defined for that instrument
+                self.instrument_midi_control_ccs[instrument_short_name] = []
                 for i in range(0, 128):
                     section_s = (i // 16) * 16
                     section_e = section_s + 16
                     control = MIDICCControl(i, 'CC {0}'.format(i), '{0} to {1}'.format(section_s, section_e), self.get_current_track_color_helper, self.app.send_midi)
-                    self.synth_midi_control_ccs[synth_name].append(control)
-
+                    self.instrument_midi_control_ccs[instrument_short_name].append(control)
+                print('Loaded default MIDI cc mappings for instrument {0}'.format(instrument_short_name))
+      
         # Fill in current page and section variables
-        for synth_name in self.synth_midi_control_ccs:
-            self.current_selected_section_and_page[synth_name] = (self.synth_midi_control_ccs[synth_name][0].section, 0)
+        for instrument_short_name in self.instrument_midi_control_ccs:
+            self.current_selected_section_and_page[instrument_short_name] = (self.instrument_midi_control_ccs[instrument_short_name][0].section, 0)
 
     def get_all_distinct_instrument_short_names_helper(self):
         return self.app.track_selection_mode.get_all_distinct_instrument_short_names()
@@ -181,7 +150,7 @@ class MIDICCMode(PyshaMode):
 
     def get_current_track_midi_cc_sections(self):
         section_names = []
-        for control in self.synth_midi_control_ccs.get(self.get_current_track_instrument_short_name_helper(), []):
+        for control in self.instrument_midi_control_ccs.get(self.get_current_track_instrument_short_name_helper(), []):
             section_name = control.section
             if section_name not in section_names:
                 section_names.append(section_name)
@@ -192,7 +161,7 @@ class MIDICCMode(PyshaMode):
 
     def get_midi_cc_controls_for_current_track_and_section(self):
         section, _ = self.get_currently_selected_midi_cc_section_and_page()
-        return [control for control in self.synth_midi_control_ccs.get(self.get_current_track_instrument_short_name_helper(), []) if control.section == section]
+        return [control for control in self.instrument_midi_control_ccs.get(self.get_current_track_instrument_short_name_helper(), []) if control.section == section]
 
     def get_midi_cc_controls_for_current_track_section_and_page(self):
         all_section_controls = self.get_midi_cc_controls_for_current_track_and_section()

@@ -1,0 +1,46 @@
+{
+    "instrument_name": "Minitaur",
+    "instrument_short_name": "MINITAUR",
+    "color": "yellow",
+    "midi_cc": [
+        {
+            "section": "VCO",
+            "controls": [
+                [
+                    "VCO1 LEV",
+                    15
+                ],
+                [
+                    "VCO2 LEV",
+                    16
+                ]
+            ]
+        },
+        {
+            "section": "VCF",
+            "controls": [
+                [
+                    "CUTOFF",
+                    19
+                ],
+                [
+                    "RESSO",
+                    21
+                ]
+            ]
+        },
+        {
+            "section": "LFO",
+            "controls": [
+                [
+                    "VCO AMT",
+                    13
+                ],
+                [
+                    "VCF AMT",
+                    12
+                ]
+            ]
+        }
+    ]
+}
