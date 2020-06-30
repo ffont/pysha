@@ -4,8 +4,8 @@ import push2_python
 import time
 import math
 
-from definitions import PyshaMode, OFF_BTN_COLOR, LAYOUT_MELODIC, LAYOUT_RHYTHMIC, PYRAMIDI_CHANNEL
-from display_utils import draw_text_at, show_title, show_value, show_text
+from definitions import PyshaMode, OFF_BTN_COLOR
+from display_utils import show_text
 
 
 # TODO: this shoud be loaded from some definition file(s)
@@ -172,13 +172,25 @@ class MIDICCMode(PyshaMode):
 
 
     def get_all_distinct_instrument_short_names_helper(self):
-        return self.app.pyramidi_mode.get_all_distinct_instrument_short_names()
+        try:
+            return self.app.pyramidi_mode.get_all_distinct_instrument_short_names()
+        except AttributeError:
+            # If pyramidi_mode is not enabled, return empty list as only the first instrument in self.synth_midi_control_cc_data will be used
+            return []
 
     def get_current_track_color_helper(self):
-        return self.app.pyramidi_mode.get_current_track_color()
+        try:
+            return self.app.pyramidi_mode.get_current_track_color()
+        except AttributeError:
+            # If pyramidi_mode is not enabled, return generic color
+            return definitions.WHITE
 
     def get_current_track_instrument_short_name_helper(self):
-        return self.get_current_track_instrument_short_name_helper()
+        try:
+            return self.app.pyramidi_mode.get_current_track_instrument_short_name()
+        except AttributeError:
+            # If pyramidi_mode is not enabled, return first instrument name from self.synth_midi_control_cc_data
+            return list(synth_midi_control_cc_data.keys())[0]
         
 
     def get_current_track_midi_cc_sections(self):
@@ -273,7 +285,7 @@ class MIDICCMode(PyshaMode):
                     if selected_section == section_name:
                         is_selected = True
 
-                    current_track_color = self.app.pyramidi_mode.get_current_track_color()
+                    current_track_color = self.get_current_track_color_helper()
                     if is_selected:
                         background_color = current_track_color
                         font_color = definitions.BLACK

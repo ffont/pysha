@@ -70,7 +70,7 @@ class PyshaApp(object):
         self.set_melodic_mode()
 
         self.pyramidi_mode = PyramidiMode(self, settings=settings)
-        self.midi_cc_mode = MIDICCMode(self, settings=settings)  # Requires pyramidi mode to be initialized
+        self.midi_cc_mode = MIDICCMode(self, settings=settings)  # Should be initialized after pyramidi mode
         self.active_modes += [self.pyramidi_mode, self.midi_cc_mode]
         self.pyramidi_mode.select_pyramid_track(self.pyramidi_mode.selected_pyramid_track)
 

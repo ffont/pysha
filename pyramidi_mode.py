@@ -5,7 +5,7 @@ import time
 import math
 
 from definitions import PyshaMode, OFF_BTN_COLOR, LAYOUT_MELODIC, LAYOUT_RHYTHMIC, PYRAMIDI_CHANNEL
-from display_utils import draw_text_at, show_title, show_value, show_text
+from display_utils import show_text
 
 
 class PyramidiMode(PyshaMode):
@@ -111,8 +111,8 @@ class PyramidiMode(PyshaMode):
         self.clean_currently_notes_being_played()
         try:
             self.app.midi_cc_mode.new_track_selected()
-        except:
-            # Might fail if MIDICCMode not yet initialized?
+        except AttributeError:
+            # Might fail if MIDICCMode not initialized
             pass
         
     def activate(self):
