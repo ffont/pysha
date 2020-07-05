@@ -337,7 +337,12 @@ class PyshaApp(object):
         # Initialize all buttons to black, initialize all pads to off
         app.push.buttons.set_all_buttons_color(color=definitions.BLACK)
         app.push.pads.set_all_pads_to_color(color=definitions.BLACK)
-        
+
+        # Iterate over modes and (re-)activate them
+        for mode in self.active_modes:
+            mode.activate()
+
+        # Update buttons and pads (just in case something was missing!)
         app.update_push2_buttons()
         app.update_push2_pads()
 
