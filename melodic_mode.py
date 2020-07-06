@@ -19,6 +19,7 @@ class MelodicMode(definitions.PyshaMode):
     latest_poly_at_value = (0, 0)
     latest_velocity_value = (0, 0)
     last_time_at_params_edited = None
+    modulation_wheel_mode = False
 
     def initialize(self, settings=None):
         if settings is not None:
@@ -118,21 +119,29 @@ class MelodicMode(definitions.PyshaMode):
             self.root_midi_note = 127
 
     def activate(self):
+    
+        # Configure polyAT and AT
         if self.use_poly_at:
             self.push.pads.set_polyphonic_aftertouch()
         else:
             self.push.pads.set_channel_aftertouch()
-
-        # Configure polyAT and AT
         self.push.pads.set_channel_aftertouch_range(range_start=self.channel_at_range_start, range_end=self.channel_at_range_end)
         self.push.pads.set_velocity_curve(velocities=self.get_poly_at_curve())
 
+        # Configure touchstrip behaviour
+        if self.modulation_wheel_mode:
+            self.push.touchstrip.set_modulation_wheel_mode()
+        else:
+            self.push.touchstrip.set_pitch_bend_mode()
+
+        # Update buttons
         self.update_buttons()
 
     def deactivate(self):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, definitions.BLACK)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, definitions.BLACK)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, definitions.BLACK)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_SHIFT, definitions.BLACK)
 
     def check_for_delayed_actions(self):
         if self.last_time_at_params_edited is not None and time.time() - self.last_time_at_params_edited > definitions.DELAYED_ACTIONS_APPLY_TIME:
@@ -163,6 +172,11 @@ class MelodicMode(definitions.PyshaMode):
     def update_buttons(self):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, definitions.WHITE)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, definitions.WHITE)
+        if self.modulation_wheel_mode:
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_SHIFT, definitions.BLACK)
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_SHIFT, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
+        else:
+            self.push.buttons.set_button_color(push2_python.constants.BUTTON_SHIFT, definitions.OFF_BTN_COLOR)
         self.update_accent_button()
 
     def update_pads(self):
@@ -221,7 +235,10 @@ class MelodicMode(definitions.PyshaMode):
         return True
 
     def on_touchstrip(self, value):
-        msg = mido.Message('pitchwheel', pitch=value)
+        if self.modulation_wheel_mode:
+            msg = mido.Message('control_change', control=1, value=value)
+        else:
+            msg = mido.Message('pitchwheel', pitch=value)
         self.app.send_midi(msg)
         return True
 
@@ -245,4 +262,13 @@ class MelodicMode(definitions.PyshaMode):
             self.fixed_velocity_mode = not self.fixed_velocity_mode
             self.app.buttons_need_update = True
             self.app.pads_need_update = True
+            return True
+
+        elif button_name == push2_python.constants.BUTTON_SHIFT:
+            self.modulation_wheel_mode = not self.modulation_wheel_mode
+            if self.modulation_wheel_mode:
+                self.push.touchstrip.set_modulation_wheel_mode()
+            else:
+                self.push.touchstrip.set_pitch_bend_mode()
+            self.app.buttons_need_update = True
             return True

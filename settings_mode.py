@@ -392,6 +392,10 @@ class SettingsMode(definitions.PyshaMode):
                 return True
 
             elif button_name == push2_python.constants.BUTTON_UPPER_ROW_5:
+                self.app.track_selection_mode.set_pyramidi_channel(self.app.track_selection_mode.pyramidi_channel + 1, wrap=False)
+                return True
+
+            elif button_name == push2_python.constants.BUTTON_UPPER_ROW_6:
                 self.app.send_local_off_to_dominion()
                 self.app.on_midi_push_connection_established()
                 return True

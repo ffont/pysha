@@ -16,7 +16,7 @@ class MIDICCControl(object):
     color_rgb = None
     name = 'Unknown'
     section = 'unknown'
-    cc_number = 10
+    cc_number = 10  # 0-127
     value = 64
     vmin = 0
     vmax = 127
@@ -90,7 +90,7 @@ class MIDICCControl(object):
             self.value += increment
 
         # Send cc message, subtract 1 to number because MIDO works from 0 - 127
-        msg = mido.Message('control_change', control=self.cc_number - 1, value=self.value)
+        msg = mido.Message('control_change', control=self.cc_number, value=self.value)
         self.send_midi_func(msg)
 
 
@@ -131,8 +131,8 @@ class MIDICCMode(PyshaMode):
                 self.instrument_midi_control_ccs[instrument_short_name] = []
                 for i in range(0, 128):
                     section_s = (i // 16) * 16
-                    section_e = section_s + 16
-                    control = MIDICCControl(i + 1, 'CC {0}'.format(i), '{0} to {1}'.format(section_s, section_e), self.get_current_track_color_helper, self.app.send_midi)
+                    section_e = section_s + 15
+                    control = MIDICCControl(i, 'CC {0}'.format(i), '{0} to {1}'.format(section_s, section_e), self.get_current_track_color_helper, self.app.send_midi)
                     self.instrument_midi_control_ccs[instrument_short_name].append(control)
                 print('Loaded default MIDI cc mappings for instrument {0}'.format(instrument_short_name))
       
@@ -267,7 +267,7 @@ class MIDICCMode(PyshaMode):
             idx = self.midi_cc_button_names.index(button_name)
             if idx < n_sections:
                 new_section = current_track_sections[idx]
-                self.update_current_section_page(new_section=new_section)
+                self.update_current_section_page(new_section=new_section, new_page=0)
             return True
 
         elif button_name in [push2_python.constants.BUTTON_PAGE_LEFT, push2_python.constants.BUTTON_PAGE_RIGHT]:
