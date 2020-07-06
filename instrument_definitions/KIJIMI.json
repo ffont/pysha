@@ -1,5 +1,314 @@
 {
     "instrument_name": "Kijimi",
     "instrument_short_name": "KIJIMI",
-    "color": "lime"
+    "color": "lime",
+    "midi_cc": [
+        {
+            "section": "Modulations",
+            "controls": [
+                [
+                    "LFO1 AMT",
+                    5
+                ],
+                [
+                    "LFO1VCO1 P",
+                    88
+                ],
+                [
+                    "LFO1VCO2 P",
+                    89
+                ],
+                [
+                    "LFO1WAVE1 P",
+                    90
+                ],
+                [
+                    "LFO1WAVE2 P",
+                    91
+                ],
+                [
+                    "LFO1SUB P",
+                    92
+                ],
+                [
+                    "LFO1VCF P",
+                    93
+                ],
+                [
+                    "LFO1RESO P",
+                    94
+                ],
+                [
+                    "LFO1VCA P",
+                    95
+                ],
+                [
+                    "LFO2 AMT",
+                    8
+                ],
+                [
+                    "LFO2VCO1 P",
+                    102
+                ],
+                [
+                    "LFO2VCO2 P",
+                    103
+                ],
+                [
+                    "LFO2WAVE1 P",
+                    104
+                ],
+                [
+                    "LFO2WAVE2 P",
+                    105
+                ],
+                [
+                    "LFO2SUB P",
+                    106
+                ],
+                [
+                    "LFO2VCF P",
+                    114
+                ],
+                [
+                    "LFO2RESO P",
+                    108
+                ],
+                [
+                    "LFO2VCA P",
+                    109
+                ],
+                [
+                    "ADSR2 AMT",
+                    40
+                ],
+                [
+                    "ADSR2VCO1 P",
+                    110
+                ],
+                [
+                    "ADSR2VCO2 P",
+                    115
+                ],
+                [
+                    "ADSR2WAVE1 P",
+                    112
+                ],
+                [
+                    "ADSR2WAVE2 P",
+                    113
+                ],
+                [
+                    "VCO2VCO1",
+                    49
+                ],
+                [
+                    "VCO2VCF",
+                    52
+                ],
+                [
+                    "VEL LFO1RATE",
+                    41
+                ],
+                [
+                    "VEL LFO2RATE",
+                    43
+                ],
+                [
+                    "VEL WAVE",
+                    45
+                ],
+                [
+                    "VEL SUB",
+                    47
+                ],
+                [
+                    "VEL PITCH",
+                    50
+                ],
+                [
+                    "VEL VCA",
+                    53
+                ],
+                [
+                    "AT LFO1RATE",
+                    42
+                ],
+                [
+                    "AT LFO2RATE",
+                    44
+                ],
+                [
+                    "AT WAVE",
+                    46
+                ],
+                [
+                    "AT SUB",
+                    48
+                ],
+                [
+                    "AT PITCH",
+                    51
+                ],
+                [
+                    "AT VCA",
+                    54
+                ]
+            ]
+        },
+        {
+            "section": "LFO",
+            "controls": [
+                [
+                    "LFO1 RATE",
+                    55
+                ],
+                [
+                    "LFO1 A",
+                    56
+                ],
+                [
+                    "LFO1 D",
+                    57
+                ],
+                [
+                    "LFO2 RATE",
+                    58
+                ],
+                [
+                    "LFO2 A",
+                    59
+                ],
+                [
+                    "LFO2 D",
+                    60
+                ]
+            ]
+        },
+        {
+            "section": "VCO",
+            "controls": [
+                [
+                    "VCO1 FREQ",
+                    61
+                ],
+                [
+                    "VCO1 WAVE",
+                    62
+                ],
+                [
+                    "SUB VOL",
+                    63
+                ],
+                [
+                    "VCO2 FREQ",
+                    65
+                ],
+                [
+                    "VCO2WAVE",
+                    66
+                ],
+                [
+                    "VCO2 VOL",
+                    67
+                ],
+                [
+                    "VCO2 DETUNE",
+                    68
+                ]
+            ]
+        },
+        {
+            "section": "VCF",
+            "controls": [
+                [
+                    "VCF FREQ",
+                    69
+                ],
+                [
+                    "VCF VEL C",
+                    70
+                ],
+                [
+                    "VCF AT C",
+                    71
+                ],
+                [
+                    "VCF ADSR2 C",
+                    72
+                ],
+                [
+                    "VCF RESO",
+                    73
+                ],
+                [
+                    "VCF Q VEL C",
+                    75
+                ],
+                [
+                    "VCF Q AT C",
+                    76
+                ],
+                [
+                    "VCF KEY C",
+                    77
+                ]
+            ]
+        },
+        {
+            "section": "ADSR",
+            "controls": [
+                [
+                    "ADSR2 A",
+                    78
+                ],
+                [
+                    "ADSR2 D",
+                    79
+                ],
+                [
+                    "ADSR2 S",
+                    80
+                ],
+                [
+                    "ADSR2 R",
+                    81
+                ],
+                [
+                    "ADSR1 A",
+                    82
+                ],
+                [
+                    "ADSR1 D",
+                    83
+                ],
+                [
+                    "ADSR1 S",
+                    84
+                ],
+                [
+                    "ADSR1 R",
+                    85
+                ]
+            ]
+        },
+        {
+            "section": "GLIDE",
+            "controls": [
+                [
+                    "GLIDE RATE",
+                    86
+                ]
+            ]
+        },
+        {
+            "section": "VOLUME",
+            "controls": [
+                [
+                    "VOLUME",
+                    87
+                ]
+            ]
+        }
+    ]
 }
