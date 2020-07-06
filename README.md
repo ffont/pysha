@@ -1,6 +1,6 @@
 # Pysha
 
-**Pysha** is a Python 3 app to use Push2 as a standalone MIDI controller. Simply run `app.py` on a computer connected to Push2 and with a MIDI interface than can be used to output MIDI messages. Pysha can work on a Raspberry Pi so you can use Push2 as a standalone controller without your laptop around. The name is some sort of blend of the names of the technologies it involves. Generic instructions to run it:
+**Pysha** is a Python 3 app to use Push2 as a standalone MIDI controller. It has manily been designed to work as a contorller for [Squarp's Pyramid](https://squarp.net/pyramid/), but it can also be used as a generic controller. Simply run `app.py` on a computer connected to Push2 and with a MIDI interface than can be used to output MIDI messages. Pysha can work on a Raspberry Pi so you can use Push2 as a standalone controller without your laptop around. The name is some sort of blend of the names of the technologies it involves. Generic instructions to run it:
 
 ```
 pip install -r requirements.txt
@@ -17,8 +17,9 @@ I designed Pysha (and I continue to update it) with the only purpose to serve my
 * Play melodies and chords in a chromatic scale mode
 * Use classic 4x4 (and up to 8x8!) pad grid in the rhythm layout mode
 * Choose between channel aftertouch and polyphonic aftertouch
-* Use *accent* mode for fixed 127 velocity playing
-* Interactively adjust aftertouch sensitivity curves
+* Use *accent* mode for fixed 127 velocity playingç
+* Use touchstrip as a pitch bend or modulation wheel
+* Interactively adjust velocity/aftertouch sensitivity curves
 * Merge MIDI in from a MIDI input (using a MIDI intergace with the Rapsberry Pi) and also send it to the main MIDI out
 * Interactively configure MIDI in/out settings
 * Select Pyramid tracks and show track number information on screen
