@@ -16,7 +16,7 @@ I designed Pysha (and I continue to update it) to serve my own specific setup ne
 
 * Play melodies and chords in a chromatic scale mode
 * Use classic 4x4 (and up to 8x8!) pad grid in the rhythm layout mode
-* Choose between channel aftertouch and polyphonic aftertouch
+* Choose between channel aftertouch and polyphonic aftertouch (note: unfortunately polyphonic aftertouch mode won't work with Pyramid)
 * Use *accent* mode for fixed 127 velocity playing
 * Use touchstrip as a pitch bend or modulation wheel
 * Interactively adjust velocity/aftertouch sensitivity curves
