@@ -124,6 +124,8 @@ class PyshaApp(object):
         # I need to first select one of the tracks where Dominon is configured, then switch
         # to that track, send a spceicifc MIDI CC, and switch back to the previously selected
         # track.
+        # NOTE: MFB Dominon seems to not be recognizing local off messages as expected, therefore
+        # this code seems not to be working...
         dominion_track_number = None
         for count, track_info in enumerate(self.track_selection_mode.tracks_info):
             if track_info['instrument_short_name'] == 'DOMINION':
