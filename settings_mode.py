@@ -428,9 +428,10 @@ def restart_program():
 
 
 def run_sw_update():
-    """Runs "git pull" in the current directory to retrieve latest code definitions.VERSION and then
-    restarts the process"""
+    """Runs "git pull" in the current directory to retrieve latest code, then restart process"""
     print('Running SW update...')
+    print('- installing dependencies')
+    os.system('pip3 install -r requirements.txt --no-cache')
     print('- pulling from repository')
     os.system('git pull')
     print('- restarting process')

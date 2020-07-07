@@ -211,7 +211,7 @@ class MIDICCMode(PyshaMode):
             if count < n_midi_cc_sections:
                 self.push.buttons.set_button_color(name, definitions.WHITE)
             else:
-                self.push.buttons.set_button_color(name, definitions.OFF_BTN_COLOR)
+                self.push.buttons.set_button_color(name, definitions.BLACK)
 
         show_prev, show_next = self.get_should_show_midi_cc_next_prev_pages_for_section()
         if show_prev:
