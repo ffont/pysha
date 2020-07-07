@@ -37,15 +37,19 @@ Here are a couple of photos of Pysha working:
 
 
 <img src="docs/pysha_melodic_mode.jpeg" style="width:100%"/>
+
 *Melodic mode*
 
 <img src="docs/pysha_rhythmic_mode.jpeg" style="width:100%"/>
+
 *Rhythmic mode*
 
 <img src="docs/pysha_instrument_selection_midi_cc.jpeg" style="width:100%"/>
+
 *MIDI CC controls with instrument definition file*
 
 <img src="docs/pysha_velocity_curves.jpeg" style="width:100%"/>
+
 *Interactive adjustment of aftertouch range/velocity curve*
 
 
