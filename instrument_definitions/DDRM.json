@@ -1,7 +1,6 @@
 {
     "instrument_name": "Deckard's Dream",
     "instrument_short_name": "DDRM",
-    "color": "orange",
     "midi_cc": [
         {
             "section": "CH I",

@@ -1,6 +1,6 @@
 import push2_python
 
-VERSION = '0.4'
+VERSION = '0.5'
 
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
 
@@ -37,7 +37,7 @@ TURQUOISE = 'turquoise'
 GREEN = 'green'
 LIME = 'lime'
 
-COLORS_NAMES = [BLACK, GRAY_DARK, GRAY_LIGHT, WHITE, YELLOW, ORANGE, RED, PINK, PURPLE, BLUE, CYAN, TURQUOISE, GREEN, LIME]
+COLORS_NAMES = [ORANGE, YELLOW, TURQUOISE, LIME, RED, PINK, PURPLE, BLUE, CYAN, GREEN, BLACK, GRAY_DARK, GRAY_LIGHT, WHITE]
 
 def get_color_rgb(color_name):
     return globals().get('{0}_RGB'.format(color_name.upper()), [0, 0, 0])

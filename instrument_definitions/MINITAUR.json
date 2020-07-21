@@ -1,7 +1,6 @@
 {
     "instrument_name": "Minitaur",
     "instrument_short_name": "MINITAUR",
-    "color": "yellow",
     "midi_cc": [
         {
             "section": "VCO",

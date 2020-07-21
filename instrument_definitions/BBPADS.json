@@ -1,6 +1,5 @@
 {
     "instrument_name": "Black Box (Pads)",
     "instrument_short_name": "BBPADS",
-    "color": "red",
     "default_layout": "lrhytmic"
 }

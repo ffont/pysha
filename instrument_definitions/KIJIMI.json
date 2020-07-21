@@ -1,7 +1,6 @@
 {
     "instrument_name": "Kijimi",
     "instrument_short_name": "KIJIMI",
-    "color": "lime",
     "midi_cc": [
         {
             "section": "Modulations",

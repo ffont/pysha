@@ -64,11 +64,17 @@ class TrackSelectionMode(definitions.PyshaMode):
                         instrument_data = {}
                 else:
                     instrument_data = tmp_instruments_data[instrument_short_name]
+                color = instrument_data.get('color', None)
+                if color is None:
+                    if instrument_short_name != '-':
+                        color = definitions.COLORS_NAMES[i % 8]
+                    else:
+                        color = definitions.GRAY_DARK
                 self.tracks_info.append({
                     'track_name': '{0}{1}'.format((i % 16) + 1, ['A', 'B', 'C', 'D'][i//16]),
                     'instrument_name': instrument_data.get('instrument_name', '-'),
                     'instrument_short_name': instrument_short_name,
-                    'color': instrument_data.get('color', definitions.GRAY_DARK),
+                    'color': color,
                     'default_layout': instrument_data.get('default_layout', definitions.LAYOUT_MELODIC),
                 })
             print('Created {0} tracks!'.format(len(self.tracks_info)))
