@@ -1,12 +1,17 @@
 import definitions
 import push2_python
+import time
 
 TOGGLE_DISPLAY_BUTTON = push2_python.constants.BUTTON_USER
 SETTINGS_BUTTON = push2_python.constants.BUTTON_SETUP
 MELODIC_RHYTHMIC_TOGGLE_BUTTON = push2_python.constants.BUTTON_NOTE
+PYRAMID_TRACK_TRIGGERING_BUTTON = push2_python.constants.BUTTON_ADD_TRACK
 
 
 class MainControlsMode(definitions.PyshaMode):
+
+    pyramid_track_triggering_button_pressing_time = None
+    button_quick_press_time = 0.400
 
     def activate(self):
         self.update_buttons()
@@ -15,9 +20,10 @@ class MainControlsMode(definitions.PyshaMode):
         self.push.buttons.set_button_color(MELODIC_RHYTHMIC_TOGGLE_BUTTON, definitions.BLACK)
         self.push.buttons.set_button_color(TOGGLE_DISPLAY_BUTTON, definitions.BLACK)
         self.push.buttons.set_button_color(SETTINGS_BUTTON, definitions.BLACK)
+        self.push.buttons.set_button_color(PYRAMID_TRACK_TRIGGERING_BUTTON, definitions.BLACK)
 
     def update_buttons(self):
-        # Noe button, to toggle melodic/rhythmic mode
+        # Note button, to toggle melodic/rhythmic mode
         self.push.buttons.set_button_color(MELODIC_RHYTHMIC_TOGGLE_BUTTON, definitions.WHITE)
 
         # Mute button, to toggle display on/off
@@ -32,6 +38,13 @@ class MainControlsMode(definitions.PyshaMode):
             self.push.buttons.set_button_color(SETTINGS_BUTTON, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
         else:
             self.push.buttons.set_button_color(SETTINGS_BUTTON, definitions.OFF_BTN_COLOR)
+
+        # Pyramid track triggering mode
+        if self.app.is_mode_active(self.app.pyramid_track_triggering_mode):
+            self.push.buttons.set_button_color(PYRAMID_TRACK_TRIGGERING_BUTTON, definitions.BLACK)
+            self.push.buttons.set_button_color(PYRAMID_TRACK_TRIGGERING_BUTTON, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
+        else:
+            self.push.buttons.set_button_color(PYRAMID_TRACK_TRIGGERING_BUTTON, definitions.OFF_BTN_COLOR)
 
     def on_button_pressed(self, button_name):
         if button_name == MELODIC_RHYTHMIC_TOGGLE_BUTTON:
@@ -48,4 +61,37 @@ class MainControlsMode(definitions.PyshaMode):
             if not self.app.use_push2_display:
                 self.push.display.send_to_display(self.push.display.prepare_frame(self.push.display.make_black_frame()))
             self.app.buttons_need_update = True
+            return True
+        elif button_name == PYRAMID_TRACK_TRIGGERING_BUTTON:
+            if self.app.is_mode_active(self.app.pyramid_track_triggering_mode):
+                # If already active, deactivate and set preesing time to None
+                self.app.unset_pyramid_track_triggering_mode()
+                self.pyramid_track_triggering_button_pressing_time = None
+            else:
+                # Activate track triggering mode and store time button pressed
+                self.app.set_pyramid_track_triggering_mode()
+                self.pyramid_track_triggering_button_pressing_time = time.time()
+            return True
+
+    def on_button_pressed(self, button_name):
+        if button_name == PYRAMID_TRACK_TRIGGERING_BUTTON:
+            # Decide if short press or long press
+            pressing_time = self.pyramid_track_triggering_button_pressing_time
+            is_long_press = False
+            if pressing_time is None:
+                # Consider quick press (this should not happen pressing time should have been set before)
+                pass
+            else:
+                if time.time() - pressing_time > self.button_quick_press_time:
+                    # Consider this is a long press
+                    is_long_press = True
+                self.pyramid_track_triggering_button_pressing_time = None
+
+            if is_long_press:
+                # If long press, deactivate track triggering mode
+                self.app.unset_pyramid_track_triggering_mode()
+            else:
+                # If short press, do nothing
+                pass
+
             return True

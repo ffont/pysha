@@ -1,6 +1,6 @@
 import push2_python
 
-VERSION = '0.5'
+VERSION = '0.6'
 
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
 

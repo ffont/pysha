@@ -11,6 +11,7 @@ import push2_python
 
 from melodic_mode import MelodicMode
 from track_selection_mode import TrackSelectionMode
+from pyramid_track_triggering_mode import PyramidTrackTriggeringMode
 from rhythmic_mode import RhythmicMode
 from settings_mode import SettingsMode
 from main_controls_mode import MainControlsMode
@@ -41,6 +42,7 @@ class PyshaApp(object):
 
     # other state vars
     active_modes = []
+    previously_active_melodic_rhythmic_mode = None
     pads_need_update = True
     buttons_need_update = True
 
@@ -71,6 +73,7 @@ class PyshaApp(object):
         self.set_melodic_mode()
 
         self.track_selection_mode = TrackSelectionMode(self, settings=settings)
+        self.pyramid_track_triggering_mode = PyramidTrackTriggeringMode(self)
         self.midi_cc_mode = MIDICCMode(self, settings=settings)  # Must be initialized after track selection mode so it gets info about loaded tracks
         self.active_modes += [self.track_selection_mode, self.midi_cc_mode]
         self.track_selection_mode.select_track(self.track_selection_mode.selected_track)
@@ -118,6 +121,45 @@ class PyshaApp(object):
     def set_rhythmic_mode(self):
         if not self.is_mode_active(self.rhyhtmic_mode):
             self.toggle_melodic_rhythmic_modes()
+
+    def set_pyramid_track_triggering_mode(self):
+        # TODO: the whole system for activating/deactivating modes should be rethinked. Currently it
+        # contains some complex logic to make sure some modes are never activated together and stuff like that :S
+
+        if not self.is_mode_active(self.pyramid_track_triggering_mode):
+            # Deactivate rhythmic/melodic modes and save which was was active
+            for m in [self.melodic_mode, self.rhyhtmic_mode]:
+                if self.is_mode_active(m):
+                    self.previously_active_melodic_rhythmic_mode = m
+                    self.active_modes = [mode for mode in self.active_modes if mode != m]
+                    m.deactivate()
+
+            # Activate pyramid track triggering mode
+            self.active_modes += [self.pyramid_track_triggering_mode]
+            self.pyramid_track_triggering_mode.activate()
+
+    def unset_pyramid_track_triggering_mode(self):     
+        if self.is_mode_active(self.pyramid_track_triggering_mode):
+            # Deactivate track triggering mode
+            if self.is_mode_active(self.pyramid_track_triggering_mode):
+                self.active_modes = [mode for mode in self.active_modes if mode != self.pyramid_track_triggering_mode]
+                self.pyramid_track_triggering_mode.deactivate()
+            
+            # Reactivate the rhythm/melodic mode that was active before activating pyramid track triggering mode
+            if not self.is_mode_active(self.melodic_mode) and not self.is_mode_active(self.rhyhtmic_mode):
+                if self.previously_active_melodic_rhythmic_mode is not None:
+                    if not self.is_mode_active(self.previously_active_melodic_rhythmic_mode):
+                        # If the mode listed as being rpeviously selected is not active, do it
+                        self.active_modes += [self.previously_active_melodic_rhythmic_mode]
+                        self.previously_active_melodic_rhythmic_mode.activate()
+                    else:
+                        # If the mode is already active, do nothing
+                        pass
+                    self.previously_active_melodic_rhythmic_mode = None
+                else:
+                    # If none of melodic/rhythmic modes have been set and we did not store which one was active, just
+                    # activate the default
+                    self.toggle_melodic_rhythmic_modes()
 
     def send_local_off_to_dominion(self):
         # This is a bit of a hack, I use it to auto configure Dominon for local off control

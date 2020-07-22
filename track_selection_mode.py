@@ -107,8 +107,11 @@ class TrackSelectionMode(definitions.PyshaMode):
     def get_current_track_instrument_short_name(self):
         return self.tracks_info[self.selected_track]['instrument_short_name']
 
+    def get_track_color(self, i):
+        return self.tracks_info[i]['color']
+    
     def get_current_track_color(self):
-        return self.tracks_info[self.selected_track]['color']
+        return self.get_track_color(self.selected_track)
 
     def get_current_track_color_rgb(self):
         return definitions.get_color_rgb_float(self.get_current_track_color())

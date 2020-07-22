@@ -24,6 +24,7 @@ I designed Pysha (and I continue to update it) to serve my own specific setup ne
 * Interactively configure MIDI in/out settings
 * Select Pyramid tracks and show track number information on screen
 * Show track instrument information and sync colors (with preloaded information about what each Pyramid track is routed to)
+* Mute/unmute 64 Pyramid tracks displayed in Push2's 64 pads
 * Send MIDI control CC data using the encoders, use synth definition files (much like Pyramid's) to show show controls and control names in a meaningful way
 * Temporarily disable screen rendering for slow Raspberry Pi's (like mine!)
 * Save current settings so these are automatically loaded on next run
@@ -78,6 +79,8 @@ Well, this is not a proper user manual, but here are some notes about how to use
  * Use instrument definition files to show proper MIDI CC control names and group them in meaningful sections. See examples in the `instrument_definitions` folder.
  * Customize Pyramid track contents editing the `track_listing.json` file. What comes by default is what I use in my setup.
  * Press `User` button to deactivate the display (useful for slow computers running Pysha).
+ * Press `Add track` button to enter *Pyramid track triggering* mode (or hold the button to only momentarily activate that mode). While in this mode, you can mute/unmute the 64 Pyramid tracks using the 64 pads of the Push. Note that Pysha does not get information from Pyramid about the current status of tracks, therefore it might be out of sync with it. You can manually indicate that a track "has content" by pressing the corresponding pad, then you can mute/unmute that track by pressing the pad again. Long pressing one pad will set the corresponding track to "no content" state. In this way, you can manualy sync the track status in Pysha and the track status from Pyramid. Hopefully future Pyramid updated will allow to do this process automatically and provide tighter integration. 
+ * While in *Pyramid track triggering*, use the 8 buttons on the right of pads (i.e. `1/32t`, `1/32`...) to trigger unmute of all the tracks in the selected row (that have content), and mute all other tracks. This enables a scene triggering workflow similar to that of Ableton Live.
 
 
 ## Instructions to get Pysha running on a RaspberryPi

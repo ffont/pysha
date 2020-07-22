@@ -1,0 +1,174 @@
+import definitions
+import mido
+import push2_python
+import time
+import math
+import os
+import json
+
+
+class PyramidTrackState(object):
+
+    track_num = 0
+    has_content = False
+    is_playing = False
+
+    def __init__(self, track_num=0):
+        self.track_num = track_num
+
+
+class PyramidTrackTriggeringMode(definitions.PyshaMode):
+
+    scene_trigger_buttons = [
+        push2_python.constants.BUTTON_1_32T,
+        push2_python.constants.BUTTON_1_32,
+        push2_python.constants.BUTTON_1_16T,
+        push2_python.constants.BUTTON_1_16,
+        push2_python.constants.BUTTON_1_8T,
+        push2_python.constants.BUTTON_1_8,
+        push2_python.constants.BUTTON_1_4T,
+        push2_python.constants.BUTTON_1_4
+    ]
+
+    pyramidi_channel = 15
+    
+    track_states = []
+    
+    pad_pressing_states = {}
+    pad_quick_press_time = 0.400
+
+    def initialize(self, settings=None):
+        self.pyramidi_channel = self.app.track_selection_mode.pyramidi_channel  # Note TrackSelectionMode needs to have been initialized before PyramidTrackTriggeringMode
+        self.create_tracks()
+
+    def create_tracks(self):
+        for i in range(0, 64):
+            self.track_states.append(PyramidTrackState(track_num=i))
+
+    def track_is_playing(self, track_num):
+        return self.track_states[track_num].is_playing
+
+    def track_has_content(self, track_num):
+        return self.track_states[track_num].has_content
+
+    def set_track_is_playing(self, track_num, value, send_to_pyramid=True):
+        self.track_states[track_num].is_playing = value
+        if send_to_pyramid:
+            if value == True:
+                self.send_unmute_track_to_pyramid(track_num)
+            else:
+                self.send_mute_track_to_pyramid(track_num)
+
+    def set_track_has_content(self, track_num, value):
+        self.track_states[track_num].has_content = value
+
+    def set_pyramidi_channel(self, channel, wrap=False):
+        self.pyramidi_channel = channel
+        if self.pyramidi_channel < 0:
+            self.pyramidi_channel = 0 if not wrap else 15
+        elif self.pyramidi_channel > 15:
+            self.pyramidi_channel = 15 if not wrap else 0
+
+    def pad_ij_to_track_num(self, pad_ij):
+        return pad_ij[0] * 8 + pad_ij[1]  # TODO: test if indexes should be reversed?
+
+    def send_mute_track_to_pyramid(self, track_num):
+        # Follows pyramidi specification (Pyramid configured to receive on ch 16)
+        msg = mido.Message('control_change', control=track_num + 1, value=0)
+        self.app.send_midi(msg, force_channel=self.pyramidi_channel)
+
+    def send_unmute_track_to_pyramid(self, track_num):
+        # Follows pyramidi specification (Pyramid configured to receive on ch 16)
+        msg = mido.Message('control_change', control=track_num + 1, value=1)
+        self.app.send_midi(msg, force_channel=self.pyramidi_channel)
+
+    def activate(self):
+        self.update_buttons()
+
+    def deactivate(self):
+        for button_name in self.scene_trigger_buttons:
+            self.push.buttons.set_button_color(button_name, definitions.BLACK)
+        app.push.pads.set_all_pads_to_color(color=definitions.BLACK)
+
+    def update_buttons(self):
+        for button_name in self.scene_trigger_buttons:
+            self.push.buttons.set_button_color(button_name, definitions.WHITE)
+
+    def update_pads(self):
+        # Update pads according to track state
+        color_matrix = []
+        for i in range(0, 8):
+            row_colors = []
+            for j in range(0, 8):
+                track_num = self.pad_ij_to_track_num((i, j))
+                if not self.track_has_content(track_num):
+                    cell_color = definitions.BLACK
+                else:
+                    if self.track_is_playing(track_num):
+                        cell_color = self.app.track_selection_mode.get_track_color(track_num)
+                    else:
+                        # TODO: this should be a darkened version of the correpsonding track color
+                        cell_color = self.app.track_selection_mode.get_track_color(track_num)
+                row_colors.append(cell_color)
+            color_matrix.append(row_colors)
+        self.push.pads.set_pads_color(color_matrix)
+
+    def on_button_pressed(self, button_name):
+        if button_name in self.scene_trigger_buttons:
+            triggered_scene_row = self.scene_trigger_buttons.index(button_name)
+            # Unmute all tracks in that row, mute all tracks from other rows (only tracks that have content)
+            for i in range(0, 8):
+                for j in range(0, 8):
+                    track_num = pad_ij_to_track_num((i, j))
+                    # If track in selected row  
+                    # # TODO: check that indexing is correct
+                    if j == triggered_scene_row:
+                        if self.track_has_content(track_num):
+                            self.set_track_is_playing(track_num, True)
+                    else:
+                        if self.track_has_content(track_num):
+                            self.set_track_is_playing(track_num, False)
+            self.app.pads_need_update = True
+
+            return True  # Prevent other modes to get this event
+
+    def on_pad_pressed(self, pad_n, pad_ij, velocity):
+        pad_pressing_states[pad_n] = time.time()  # Store time at which pad_n was pressed
+        return True  # Prevent other modes to get this event
+
+    def on_pad_released(self, pad_n, pad_ij, velocity):
+        pressing_time = pad_pressing_states.get(pad_n, None)
+        is_long_press = False
+        if pressing_time is None:
+            # Consider quick press (this should not happen as pad_pressing_states[pad_n] should have been set before)
+            pass
+        else:
+            if time.time() - pressing_time > self.pad_quick_press_time:
+                # Consider this is a long press
+                is_long_press = True
+            pad_pressing_states[pad_n] = None  # Reset pressing time to none
+
+        track_num = self.pad_ij_to_track_num(pad_ij)
+
+        if is_long_press:
+            # Long press
+            #   - if track has no content: mark it as having content
+            #   - if track has content: mark it as having no content
+            self.set_track_has_content(track_num, not self.track_has_content(track_num))
+            self.app.pads_need_update = True
+
+        else:
+            # Short press
+            #   - if track has no content: mark it as having content
+            #   - if track has content: toggle mute/unmute
+            if not self.track_has_content(track_num):
+                self.set_track_has_content(track_num, True)
+                self.app.pads_need_update = True
+            else:
+                if self.track_is_playing(track_num):
+                    self.set_track_is_playing(track_num, False)
+                else:
+                    self.set_track_is_playing(track_num, True)
+                self.app.pads_need_update = True
+
+        return True  # Prevent other modes to get this event
