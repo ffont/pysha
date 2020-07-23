@@ -104,11 +104,9 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
                 if not self.track_has_content(track_num):
                     cell_color = definitions.BLACK
                 else:
-                    if self.track_is_playing(track_num):
-                        cell_color = self.app.track_selection_mode.get_track_color(track_num)
-                    else:
-                        # TODO: this should be a darkened version of the correpsonding track color
-                        cell_color = self.app.track_selection_mode.get_track_color(track_num)
+                    cell_color = self.app.track_selection_mode.get_track_color(track_num)  # Track color
+                    if not self.track_is_playing(track_num):
+                        cell_color += '_darker1'  # Choose darker version of track color
                 row_colors.append(cell_color)
             color_matrix.append(row_colors)
         self.push.pads.set_pads_color(color_matrix)
