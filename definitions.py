@@ -1,7 +1,7 @@
 import push2_python
 import colorsys
 
-VERSION = '0.6'
+VERSION = '0.7'
 
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
 
@@ -78,6 +78,7 @@ class PyshaMode(object):
     """
 
     name = ''
+    xor_group = None
 
     def __init__(self, app, settings=None):
         self.app = app

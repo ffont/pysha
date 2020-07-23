@@ -6,6 +6,8 @@ import time
 
 class MelodicMode(definitions.PyshaMode):
 
+    xor_group = 'pads'
+
     notes_being_played = []
     root_midi_note = 0  # default redefined in initialize
     scale_pattern = [True, False, True, False, True, True, False, True, False, True, False, True]

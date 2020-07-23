@@ -16,6 +16,7 @@ from rhythmic_mode import RhythmicMode
 from settings_mode import SettingsMode
 from main_controls_mode import MainControlsMode
 from midi_cc_mode import MIDICCMode
+from preset_selection_mode import PresetSelectionMode
 
 class PyshaApp(object):
 
@@ -43,6 +44,7 @@ class PyshaApp(object):
     # other state vars
     active_modes = []
     previously_active_melodic_rhythmic_mode = None
+    previously_active_mode_for_xor_group = {}
     pads_need_update = True
     buttons_need_update = True
 
@@ -73,7 +75,8 @@ class PyshaApp(object):
         self.set_melodic_mode()
 
         self.track_selection_mode = TrackSelectionMode(self, settings=settings)
-        self.pyramid_track_triggering_mode = PyramidTrackTriggeringMode(self)
+        self.pyramid_track_triggering_mode = PyramidTrackTriggeringMode(self, settings=settings)
+        self.preset_selection_mode = PresetSelectionMode(self, settings=settings)
         self.midi_cc_mode = MIDICCMode(self, settings=settings)  # Must be initialized after track selection mode so it gets info about loaded tracks
         self.active_modes += [self.track_selection_mode, self.midi_cc_mode]
         self.track_selection_mode.select_track(self.track_selection_mode.selected_track)
@@ -96,70 +99,75 @@ class PyshaApp(object):
             self.active_modes.append(self.settings_mode)
             self.settings_mode.activate()
 
+    def set_mode_for_xor_group(self, mode_to_set):
+        '''This activates the mode_to_set, but makes sure that if any other modes are currently activated
+        for the same xor_group, these other modes get deactivated. This also stores a reference to the
+        latest active mode for xor_group, so once a mode gets unset, the previously active one can be
+        automatically set'''
+
+        if not self.is_mode_active(mode_to_set):
+        
+            # First deactivate all existing modes for that xor group
+            new_active_modes = []
+            for mode in self.active_modes:
+                if mode.xor_group is not None and mode.xor_group == mode_to_set.xor_group:
+                    mode.deactivate()
+                    previously_active_mode_for_xor_group[mode.xor_group] = mode  # Store last mode that was active for the group
+                else:
+                    new_active_modes.append(mode)
+            self.active_modes = new_active_modes
+            
+            # Now add the mode to set to the active modes list and activate it
+            new_active_modes.append(mode_to_set)
+            mode_to_set.activate()
+
+    def unset_mode_for_xor_group(self, mode_to_unset):
+        '''This deactivates the mode_to_unset and reactivates the previous mode that was active for this xor_group.
+        This allows to make sure that one (and onyl one) mode will be always active for a given xor_group.
+        '''
+        if self.is_mode_active(mode_to_unset):
+
+            # Deactivate the mode to unset
+            self.active_modes = [mode for mode in self.active_modes if mode != mode_to_unset]
+            mode_to_unset.deactivate()
+
+            # Activate the previous mode that was activated for the same xor_group. If none listed, activate a default one
+            previous_mode = previously_active_mode_for_xor_group.get(mode_to_unset.xor_group, None)
+            if previous_mode is not None:
+                del previously_active_mode_for_xor_group[mode_to_unset.xor_group]
+                self.set_mode_for_xor_group(previous_mode)
+            else:
+                # Enable default
+                # TODO: here we hardcoded the default mode for a specific xor_group, I should clean this a little bit in the future...
+                if mode_to_unset.xor_group == 'pads':
+                    self.set_mode_for_xor_group(self.melodic_mode)
+
     def toggle_melodic_rhythmic_modes(self):
         if self.is_mode_active(self.melodic_mode):
-            # Switch to rhythmic mode
-            self.active_modes = [mode for mode in self.active_modes if mode != self.melodic_mode]
-            self.active_modes += [self.rhyhtmic_mode]
-            self.melodic_mode.deactivate()
-            self.rhyhtmic_mode.activate()
+            self.set_rhythmic_mode()
         elif self.is_mode_active(self.rhyhtmic_mode):
-            # Switch to melodic mdoe
-            self.active_modes = [mode for mode in self.active_modes if mode != self.rhyhtmic_mode]
-            self.active_modes += [self.melodic_mode]
-            self.rhyhtmic_mode.deactivate()
-            self.melodic_mode.activate()
+            self.set_melodic_mode()
         else:
             # If none of melodic or rhythmic modes were active, enable melodic by default
-            self.active_modes += [self.melodic_mode]
-            self.melodic_mode.activate()
+            self.set_melodic_mode()
 
     def set_melodic_mode(self):
-        if not self.is_mode_active(self.melodic_mode):
-            self.toggle_melodic_rhythmic_modes()
-
+        self.set_mode_for_xor_group(self.melodic_mode)
+    
     def set_rhythmic_mode(self):
-        if not self.is_mode_active(self.rhyhtmic_mode):
-            self.toggle_melodic_rhythmic_modes()
+        self.set_mode_for_xor_group(self.rhyhtmic_mode)
 
     def set_pyramid_track_triggering_mode(self):
-        # TODO: the whole system for activating/deactivating modes should be rethinked. Currently it
-        # contains some complex logic to make sure some modes are never activated together and stuff like that :S
-
-        if not self.is_mode_active(self.pyramid_track_triggering_mode):
-            # Deactivate rhythmic/melodic modes and save which was was active
-            for m in [self.melodic_mode, self.rhyhtmic_mode]:
-                if self.is_mode_active(m):
-                    self.previously_active_melodic_rhythmic_mode = m
-                    self.active_modes = [mode for mode in self.active_modes if mode != m]
-                    m.deactivate()
-
-            # Activate pyramid track triggering mode
-            self.active_modes += [self.pyramid_track_triggering_mode]
-            self.pyramid_track_triggering_mode.activate()
-
+        self.set_mode_for_xor_group(self.pyramid_track_triggering_mode)
+        
     def unset_pyramid_track_triggering_mode(self):     
-        if self.is_mode_active(self.pyramid_track_triggering_mode):
-            # Deactivate track triggering mode
-            if self.is_mode_active(self.pyramid_track_triggering_mode):
-                self.active_modes = [mode for mode in self.active_modes if mode != self.pyramid_track_triggering_mode]
-                self.pyramid_track_triggering_mode.deactivate()
-            
-            # Reactivate the rhythm/melodic mode that was active before activating pyramid track triggering mode
-            if not self.is_mode_active(self.melodic_mode) and not self.is_mode_active(self.rhyhtmic_mode):
-                if self.previously_active_melodic_rhythmic_mode is not None:
-                    if not self.is_mode_active(self.previously_active_melodic_rhythmic_mode):
-                        # If the mode listed as being rpeviously selected is not active, do it
-                        self.active_modes += [self.previously_active_melodic_rhythmic_mode]
-                        self.previously_active_melodic_rhythmic_mode.activate()
-                    else:
-                        # If the mode is already active, do nothing
-                        pass
-                    self.previously_active_melodic_rhythmic_mode = None
-                else:
-                    # If none of melodic/rhythmic modes have been set and we did not store which one was active, just
-                    # activate the default
-                    self.toggle_melodic_rhythmic_modes()
+        self.unset_mode_for_xor_group(self.pyramid_track_triggering_mode)
+
+    def set_preset_selection_mode(self):
+        self.set_mode_for_xor_group(self.preset_selection_mode)
+
+    def unset_preset_selection_mode(self):
+        self.unset_mode_for_xor_group(self.preset_selection_mode)
 
     def send_local_off_to_dominion(self):
         # This is a bit of a hack, I use it to auto configure Dominon for local off control

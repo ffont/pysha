@@ -19,6 +19,8 @@ class PyramidTrackState(object):
 
 class PyramidTrackTriggeringMode(definitions.PyshaMode):
 
+    xor_group = 'pads'
+
     scene_trigger_buttons = [
         push2_python.constants.BUTTON_1_32T,
         push2_python.constants.BUTTON_1_32,
@@ -84,6 +86,7 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
 
     def activate(self):
         self.update_buttons()
+        self.update_pads()
 
     def deactivate(self):
         for button_name in self.scene_trigger_buttons:
