@@ -111,7 +111,7 @@ class MelodicMode(definitions.PyshaMode):
     def note_number_to_name(self, note_number):
         semis = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
         note_number = int(round(note_number))
-        return semis[note_number % 12] + str(note_number//12 - 1)
+        return semis[note_number % 12] + str(note_number//12 - 2)
 
     def set_root_midi_note(self, note_number):
         self.root_midi_note = note_number
