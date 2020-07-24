@@ -238,10 +238,14 @@ class PyshaApp(object):
     def init_midi_out(self, device_name=None):
         print('Configuring MIDI out...')
         self.available_midi_out_device_names = [name for name in mido.get_output_names() if 'Ableton Push' not in name]
+        self.available_midi_out_device_names += ['Virtual']
 
         if device_name is not None:
             try:
-                self.midi_out = mido.open_output(device_name)
+                if device_name == 'Virtual':
+                    self.midi_out = mido.open_output(device_name, virtual=True)
+                else:
+                    self.midi_out = mido.open_output(device_name)
                 print('Will send MIDI to "{0}"'.format(device_name))
             except IOError:
                 print('Could not connect to MIDI output port "{0}"\nAvailable device names:'.format(device_name))
