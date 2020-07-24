@@ -135,6 +135,7 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
         self.pad_pressing_states[pad_n] = time.time()  # Store time at which pad_n was pressed
+        self.push.pads.set_pad_color(pad_ij, color=definitions.GREEN)
         return True  # Prevent other modes to get this event
 
     def on_pad_released(self, pad_n, pad_ij, velocity):
@@ -158,7 +159,6 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
             self.set_track_has_content(track_num, not self.track_has_content(track_num))
             if self.track_is_playing(track_num):
                 self.set_track_is_playing(track_num, False)
-            self.app.pads_need_update = True
 
         else:
             # Short press
@@ -166,12 +166,11 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
             #   - if track has content: toggle mute/unmute
             if not self.track_has_content(track_num):
                 self.set_track_has_content(track_num, True)
-                self.app.pads_need_update = True
             else:
                 if self.track_is_playing(track_num):
                     self.set_track_is_playing(track_num, False)
                 else:
                     self.set_track_is_playing(track_num, True)
-                self.app.pads_need_update = True
-
+        
+        self.app.pads_need_update = True
         return True  # Prevent other modes to get this event

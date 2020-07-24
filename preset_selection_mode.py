@@ -154,6 +154,7 @@ class PresetSelectionMode(definitions.PyshaMode):
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
         self.pad_pressing_states[pad_n] = time.time()  # Store time at which pad_n was pressed
+        self.push.pads.set_pad_color(pad_ij, color=definitions.GREEN)
         return True  # Prevent other modes to get this event
 
     def on_pad_released(self, pad_n, pad_ij, velocity):
@@ -176,8 +177,6 @@ class PresetSelectionMode(definitions.PyshaMode):
                 self.add_favourite_preset(preset_num, bank_num)
             else:
                 self.remove_favourite_preset(preset_num, bank_num)
-            self.app.pads_need_update = True
-
         else:
             # Send midi message to select the bank and preset preset
             self.send_select_new_bank(bank_num)
@@ -186,7 +185,8 @@ class PresetSelectionMode(definitions.PyshaMode):
                 bank_num + 1,  # Show 1-indexed value
                 preset_num + 1  # Show 1-indexed value
             ))
-
+            
+        self.app.pads_need_update = True
         return True  # Prevent other modes to get this event
 
     def on_button_pressed(self, button_name):
