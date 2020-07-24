@@ -1,4 +1,5 @@
 {
     "instrument_name": "Black Box (Notes)",
-    "instrument_short_name": "BBNOTES"
+    "instrument_short_name": "BBNOTES",
+    "n_banks": 1
 }

@@ -75,6 +75,7 @@ class TrackSelectionMode(definitions.PyshaMode):
                     'instrument_name': instrument_data.get('instrument_name', '-'),
                     'instrument_short_name': instrument_short_name,
                     'color': color,
+                    'n_banks': instrument_data.get('n_banks', 1),
                     'default_layout': instrument_data.get('default_layout', definitions.LAYOUT_MELODIC),
                 })
             print('Created {0} tracks!'.format(len(self.tracks_info)))
@@ -104,8 +105,11 @@ class TrackSelectionMode(definitions.PyshaMode):
     def get_all_distinct_instrument_short_names(self):
         return list(set([track['instrument_short_name'] for track in self.tracks_info]))
 
+    def get_current_track_info(self):
+        return self.tracks_info[self.selected_track]
+
     def get_current_track_instrument_short_name(self):
-        return self.tracks_info[self.selected_track]['instrument_short_name']
+        return self.get_current_track_info()['instrument_short_name']
 
     def get_track_color(self, i):
         return self.tracks_info[i]['color']
@@ -117,9 +121,9 @@ class TrackSelectionMode(definitions.PyshaMode):
         return definitions.get_color_rgb_float(self.get_current_track_color())
         
     def load_current_default_layout(self):
-        if self.tracks_info[self.selected_track]['default_layout'] == definitions.LAYOUT_MELODIC:
+        if self.get_current_track_info()['default_layout'] == definitions.LAYOUT_MELODIC:
             self.app.set_melodic_mode()
-        elif self.tracks_info[self.selected_track]['default_layout'] == definitions.LAYOUT_RHYTHMIC:
+        elif self.get_current_track_info()['default_layout'] == definitions.LAYOUT_RHYTHMIC:
             self.app.set_rhythmic_mode()
 
     def clean_currently_notes_being_played(self):

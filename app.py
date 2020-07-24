@@ -18,6 +18,8 @@ from main_controls_mode import MainControlsMode
 from midi_cc_mode import MIDICCMode
 from preset_selection_mode import PresetSelectionMode
 
+from display_utils import show_notification
+
 class PyshaApp(object):
 
     # midi
@@ -47,6 +49,10 @@ class PyshaApp(object):
     previously_active_mode_for_xor_group = {}
     pads_need_update = True
     buttons_need_update = True
+
+    # notifications
+    notification_text = None
+    notification_time = 0
 
     def __init__(self):
         if os.path.exists('settings.json'):
@@ -293,6 +299,10 @@ class PyshaApp(object):
                 for mode in self.active_modes:
                     mode.on_midi_in(msg)
 
+    def add_display_notification(self, text):
+        self.notification_text = text
+        self.notification_time = time.time()
+
     def init_push(self):
         print('Configuring Push...')
         self.push = push2_python.Push2()
@@ -321,6 +331,14 @@ class PyshaApp(object):
             # Call all active modes to write to context
             for mode in self.active_modes:
                 mode.update_display(ctx, w, h)
+
+            # Show any notifications that should be shown
+            if self.notification_text is not None:
+                time_since_notification_started = time.time() - self.notification_time
+                if time_since_notification_started < definitions.NOTIFICATION_TIME:
+                    show_notification(self.notification_text, opacity=1 - time_since_notification_started/definitions.NOTIFICATION_TIME)
+                else:
+                    self.notification_text = None
             
             # Convert cairo data to numpy array and send to push
             buf = surface.get_data()

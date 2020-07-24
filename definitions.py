@@ -1,12 +1,14 @@
 import push2_python
 import colorsys
 
-VERSION = '0.7'
+VERSION = '0.8'
 
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
 
 LAYOUT_MELODIC = 'lmelodic'
 LAYOUT_RHYTHMIC = 'lrhytmic'
+
+NOTIFICATION_TIME = 3
 
 BLACK_RGB = [0, 0, 0]
 GRAY_DARK_RGB = [30, 30, 30]
