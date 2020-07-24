@@ -2,6 +2,7 @@ import json
 import os
 import platform
 import time
+import traceback
 
 import cairo
 import definitions
@@ -45,7 +46,6 @@ class PyshaApp(object):
 
     # other state vars
     active_modes = []
-    previously_active_melodic_rhythmic_mode = None
     previously_active_mode_for_xor_group = {}
     pads_need_update = True
     buttons_need_update = True
@@ -118,7 +118,7 @@ class PyshaApp(object):
             for mode in self.active_modes:
                 if mode.xor_group is not None and mode.xor_group == mode_to_set.xor_group:
                     mode.deactivate()
-                    previously_active_mode_for_xor_group[mode.xor_group] = mode  # Store last mode that was active for the group
+                    self.previously_active_mode_for_xor_group[mode.xor_group] = mode  # Store last mode that was active for the group
                 else:
                     new_active_modes.append(mode)
             self.active_modes = new_active_modes
@@ -138,9 +138,9 @@ class PyshaApp(object):
             mode_to_unset.deactivate()
 
             # Activate the previous mode that was activated for the same xor_group. If none listed, activate a default one
-            previous_mode = previously_active_mode_for_xor_group.get(mode_to_unset.xor_group, None)
+            previous_mode = self.previously_active_mode_for_xor_group.get(mode_to_unset.xor_group, None)
             if previous_mode is not None:
-                del previously_active_mode_for_xor_group[mode_to_unset.xor_group]
+                del self.previously_active_mode_for_xor_group[mode_to_unset.xor_group]
                 self.set_mode_for_xor_group(previous_mode)
             else:
                 # Enable default
@@ -336,7 +336,7 @@ class PyshaApp(object):
             if self.notification_text is not None:
                 time_since_notification_started = time.time() - self.notification_time
                 if time_since_notification_started < definitions.NOTIFICATION_TIME:
-                    show_notification(self.notification_text, opacity=1 - time_since_notification_started/definitions.NOTIFICATION_TIME)
+                    show_notification(ctx, self.notification_text, opacity=1 - time_since_notification_started/definitions.NOTIFICATION_TIME)
                 else:
                     self.notification_text = None
             
@@ -425,8 +425,9 @@ def on_encoder_rotated(_, encoder_name, increment):
             action_performed = mode.on_encoder_rotated(encoder_name, increment)
             if action_performed:
                 break  # If mode took action, stop event propagation
-    except NameError:
-       print('app object not yet ready!')
+    except NameError as e:
+       print('Error:  {}'.format(str(e)))
+       traceback.print_exc()
 
 
 @push2_python.on_pad_pressed()
@@ -436,8 +437,9 @@ def on_pad_pressed(_, pad_n, pad_ij, velocity):
             action_performed = mode.on_pad_pressed(pad_n, pad_ij, velocity)
             if action_performed:
                 break  # If mode took action, stop event propagation
-    except NameError:
-       print('app object not yet ready!')
+    except NameError as e:
+       print('Error:  {}'.format(str(e)))
+       traceback.print_exc()
 
 
 @push2_python.on_pad_released()
@@ -447,8 +449,9 @@ def on_pad_released(_, pad_n, pad_ij, velocity):
             action_performed = mode.on_pad_released(pad_n, pad_ij, velocity)
             if action_performed:
                 break  # If mode took action, stop event propagation
-    except NameError:
-       print('app object not yet ready!')
+    except NameError as e:
+       print('Error:  {}'.format(str(e)))
+       traceback.print_exc()
 
 
 @push2_python.on_pad_aftertouch()
@@ -458,8 +461,9 @@ def on_pad_aftertouch(_, pad_n, pad_ij, velocity):
             action_performed = mode.on_pad_aftertouch(pad_n, pad_ij, velocity)
             if action_performed:
                 break  # If mode took action, stop event propagation
-    except NameError:
-       print('app object not yet ready!')
+    except NameError as e:
+       print('Error:  {}'.format(str(e)))
+       traceback.print_exc()
 
 
 @push2_python.on_button_pressed()
@@ -469,8 +473,9 @@ def on_button_pressed(_, name):
             action_performed = mode.on_button_pressed(name)
             if action_performed:
                 break  # If mode took action, stop event propagation
-    except NameError:
-       print('app object not yet ready!')
+    except NameError as e:
+       print('Error:  {}'.format(str(e)))
+       traceback.print_exc()
 
 
 @push2_python.on_button_released()
@@ -480,8 +485,9 @@ def on_button_released(_, name):
             action_performed = mode.on_button_released(name)
             if action_performed:
                 break  # If mode took action, stop event propagation
-    except NameError:
-       print('app object not yet ready!')
+    except NameError as e:
+       print('Error:  {}'.format(str(e)))
+       traceback.print_exc()
 
 
 @push2_python.on_touchstrip()
@@ -491,8 +497,9 @@ def on_touchstrip(_, value):
             action_performed = mode.on_touchstrip(value)
             if action_performed:
                 break  # If mode took action, stop event propagation
-    except NameError:
-       print('app object not yet ready!')
+    except NameError as e:
+       print('Error:  {}'.format(str(e)))
+       traceback.print_exc()
 
 
 @push2_python.on_sustain_pedal()
@@ -502,16 +509,18 @@ def on_sustain_pedal(_, sustain_on):
             action_performed = mode.on_sustain_pedal(sustain_on)
             if action_performed:
                 break  # If mode took action, stop event propagation
-    except NameError:
-       print('app object not yet ready!')
+    except NameError as e:
+       print('Error:  {}'.format(str(e)))
+       traceback.print_exc()
 
 
 @push2_python.on_midi_connected()
 def on_midi_connected(_):
     try:
         app.on_midi_push_connection_established()
-    except NameError:
-       print('app object not yet ready!') 
+    except NameError as e:
+       print('Error:  {}'.format(str(e)))
+       traceback.print_exc()
 
 
 # Run app main loop

@@ -150,6 +150,7 @@ class TrackSelectionMode(definitions.PyshaMode):
         
     def activate(self):
         self.update_buttons()
+        self.update_pads()
 
     def deactivate(self):
         for button_name in self.track_button_names_a + self.track_button_names_b:

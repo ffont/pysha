@@ -20,30 +20,34 @@ class PresetSelectionMode(definitions.PyshaMode):
 
     def initialize(self, settings=None):
         if os.path.exists(self.favourtie_presets_filename):
-            self.favourtie_presets = json.load(open(favourtie_presets))
+            self.favourtie_presets = json.load(open(self.favourtie_presets_filename))
 
     def activate(self):
         self.current_page = 0
+        self.update_buttons()
+        self.update_pads()
     
     def add_favourite_preset(self, preset_number, bank_number):
-        instrument_short_name = self.app.track_selection_mode.get_current_track_instrument_short_name(track_num) 
+        instrument_short_name = self.app.track_selection_mode.get_current_track_instrument_short_name() 
         if instrument_short_name not in self.favourtie_presets:
             self.favourtie_presets[instrument_short_name] = []
         self.favourtie_presets[instrument_short_name].append((preset_number, bank_number))
         json.dump(self.favourtie_presets, open(self.favourtie_presets_filename, 'w'))  # Save to file
 
     def remove_favourite_preset(self, preset_number, bank_number):
-        instrument_short_name = self.app.track_selection_mode.get_current_track_instrument_short_name(track_num) 
+        instrument_short_name = self.app.track_selection_mode.get_current_track_instrument_short_name() 
         if instrument_short_name in self.favourtie_presets:
             self.favourtie_presets[instrument_short_name] = \
                 [(fp_preset_number, fp_bank_number) for fp_preset_number, fp_bank_number in self.favourtie_presets[instrument_short_name] 
-                if preset_number == c_preset_number and bank_number == fp_bank_number]
+                if preset_number == fp_preset_number and bank_number == fp_bank_number]
             json.dump(self.favourtie_presets, open(self.favourtie_presets_filename, 'w'))  # Save to file
 
     def preset_num_in_favourites(self, preset_number, bank_number):
-        instrument_short_name = self.app.track_selection_mode.get_current_track_instrument_short_name(track_num) 
+        instrument_short_name = self.app.track_selection_mode.get_current_track_instrument_short_name() 
+        if instrument_short_name not in self.favourtie_presets:
+            return False
         for fp_preset_number, fp_bank_number in self.favourtie_presets[instrument_short_name]:
-            if preset_number == c_preset_number and bank_number == fp_bank_number:
+            if preset_number == fp_preset_number and bank_number == fp_bank_number:
                 return True
         return False
 
@@ -93,7 +97,7 @@ class PresetSelectionMode(definitions.PyshaMode):
         return (has_prev, has_next)
 
     def pad_ij_to_bank_and_preset_num(self, pad_ij):
-        preset_num = (self.get_current_page() % 2) * 64 + pad_ij[0] * 8 + pad_ij[1]  # TODO: test if indexes should be reversed?
+        preset_num = (self.get_current_page() % 2) * 64 + pad_ij[0] * 8 + pad_ij[1]
         bank_num = self.get_current_page() // 2
         return (preset_num, bank_num)
 
@@ -104,7 +108,7 @@ class PresetSelectionMode(definitions.PyshaMode):
     def send_select_new_bank(self, bank_num):
         # If synth only has 1 bank, don't send bank change messages
         if self.get_num_banks() > 1:
-            msg = mido.Message('control_change', control=0, program=bank_num)
+            msg = mido.Message('control_change', control=0, value=bank_num)
             self.app.send_midi(msg)
 
     def notify_status_in_display(self):
@@ -118,7 +122,7 @@ class PresetSelectionMode(definitions.PyshaMode):
         self.notify_status_in_display()
 
     def deactivate(self):
-        app.push.pads.set_all_pads_to_color(color=definitions.BLACK)
+        self.app.push.pads.set_all_pads_to_color(color=definitions.BLACK)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_LEFT, definitions.BLACK)
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_RIGHT, definitions.BLACK)
 
@@ -134,8 +138,8 @@ class PresetSelectionMode(definitions.PyshaMode):
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_RIGHT, definitions.BLACK)
 
     def update_pads(self):
-        instrument_short_name = self.app.track_selection_mode.get_current_track_instrument_short_name(track_num) 
-        track_color = self.app.track_selection_mode.get_track_color(track_num) 
+        instrument_short_name = self.app.track_selection_mode.get_current_track_instrument_short_name() 
+        track_color = self.app.track_selection_mode.get_current_track_color() 
         color_matrix = []
         for i in range(0, 8):
             row_colors = []
@@ -149,22 +153,22 @@ class PresetSelectionMode(definitions.PyshaMode):
         self.push.pads.set_pads_color(color_matrix)
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
-        pad_pressing_states[pad_n] = time.time()  # Store time at which pad_n was pressed
+        self.pad_pressing_states[pad_n] = time.time()  # Store time at which pad_n was pressed
         return True  # Prevent other modes to get this event
 
     def on_pad_released(self, pad_n, pad_ij, velocity):
-        pressing_time = pad_pressing_states.get(pad_n, None)
+        pressing_time = self.pad_pressing_states.get(pad_n, None)
         is_long_press = False
         if pressing_time is None:
-            # Consider quick press (this should not happen as pad_pressing_states[pad_n] should have been set before)
+            # Consider quick press (this should not happen as self.pad_pressing_states[pad_n] should have been set before)
             pass
         else:
             if time.time() - pressing_time > self.pad_quick_press_time:
                 # Consider this is a long press
                 is_long_press = True
-            pad_pressing_states[pad_n] = None  # Reset pressing time to none
+            self.pad_pressing_states[pad_n] = None  # Reset pressing time to none
 
-        preset_num, bank_num = self.pad_ij_to_bank_and_preset_num((i, j))
+        preset_num, bank_num = self.pad_ij_to_bank_and_preset_num(pad_ij)
 
         if is_long_press:
             # Add/remove preset to favourites, don't send any MIDI

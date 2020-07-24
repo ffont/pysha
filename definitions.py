@@ -49,18 +49,30 @@ def get_color_rgb_float(color_name):
     return [x/255 for x in get_color_rgb(color_name)]
 
 
-# Create darker versions of each color in COLOR_NAMES, add new colors back to COLOR_NAMES
+# Create darker1 and darker2 versions of each color in COLOR_NAMES, add new colors back to COLOR_NAMES
 to_add_in_color_names = []
 for name in COLORS_NAMES:
-    darkify_amount = 0.5
+
+    # Create darker 1
+    color_mod = 0.35  # < 1 means make colour darker, > 1 means make colour brighter
     c = colorsys.rgb_to_hls(*get_color_rgb_float(name))
-    darker_color = colorsys.hls_to_rgb(c[0], max(0, min(1, 0.5 * c[1])), c[2])
+    darker_color = colorsys.hls_to_rgb(c[0], max(0, min(1, color_mod * c[1])), c[2])
     new_color_name = f'{name}_darker1'
     globals()[new_color_name.upper()] = new_color_name
     if new_color_name not in COLORS_NAMES:
         to_add_in_color_names.append(new_color_name)
-    
     new_color_rgb_name = f'{name}_darker1_rgb'
+    globals()[new_color_rgb_name.upper()] = list(darker_color)
+
+    # Create darker 2
+    color_mod = 0.05  # < 1 means make colour darker, > 1 means make colour brighter
+    c = colorsys.rgb_to_hls(*get_color_rgb_float(name))
+    darker_color = colorsys.hls_to_rgb(c[0], max(0, min(1, color_mod * c[1])), c[2])
+    new_color_name = f'{name}_darker2'
+    globals()[new_color_name.upper()] = new_color_name
+    if new_color_name not in COLORS_NAMES:
+        to_add_in_color_names.append(new_color_name)
+    new_color_rgb_name = f'{name}_darker2_rgb'
     globals()[new_color_rgb_name.upper()] = list(darker_color)
 
 COLORS_NAMES += to_add_in_color_names  # Update list of color names with darkified versiond of existing colors

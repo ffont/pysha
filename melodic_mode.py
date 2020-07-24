@@ -136,8 +136,9 @@ class MelodicMode(definitions.PyshaMode):
         else:
             self.push.touchstrip.set_pitch_bend_mode()
 
-        # Update buttons
+        # Update buttons and pads
         self.update_buttons()
+        self.update_pads()
 
     def deactivate(self):
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, definitions.BLACK)
@@ -253,17 +254,26 @@ class MelodicMode(definitions.PyshaMode):
         if button_name == push2_python.constants.BUTTON_OCTAVE_UP:
             self.set_root_midi_note(self.root_midi_note + 12)
             self.app.pads_need_update = True
+            self.app.add_display_notification("Octave up: from {0} to {1}".format(
+                self.note_number_to_name(self.pad_ij_to_midi_note((7, 0))),
+                self.note_number_to_name(self.pad_ij_to_midi_note((0, 7))),
+            ))
             return True
 
         elif button_name == push2_python.constants.BUTTON_OCTAVE_DOWN:
             self.set_root_midi_note(self.root_midi_note - 12)
             self.app.pads_need_update = True
+            self.app.add_display_notification("Octave down: from {0} to {1}".format(
+                self.note_number_to_name(self.pad_ij_to_midi_note((7, 0))),
+                self.note_number_to_name(self.pad_ij_to_midi_note((0, 7))),
+            ))
             return True
 
         elif button_name == push2_python.constants.BUTTON_ACCENT:
             self.fixed_velocity_mode = not self.fixed_velocity_mode
             self.app.buttons_need_update = True
             self.app.pads_need_update = True
+            self.app.add_display_notification("Fixed velocity: {0}".format('On' if self.fixed_velocity_mode else 'Off'))
             return True
 
         elif button_name == push2_python.constants.BUTTON_SHIFT:
@@ -273,4 +283,5 @@ class MelodicMode(definitions.PyshaMode):
             else:
                 self.push.touchstrip.set_pitch_bend_mode()
             self.app.buttons_need_update = True
+            self.app.add_display_notification("Touchstrip mode: {0}".format('Modulation wheel' if self.modulation_wheel_mode else 'Pitch bend'))
             return True

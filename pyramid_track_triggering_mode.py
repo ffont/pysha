@@ -72,7 +72,7 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
             self.pyramidi_channel = 15 if not wrap else 0
 
     def pad_ij_to_track_num(self, pad_ij):
-        return pad_ij[0] * 8 + pad_ij[1]  # TODO: test if indexes should be reversed?
+        return pad_ij[0] * 8 + pad_ij[1]
 
     def send_mute_track_to_pyramid(self, track_num):
         # Follows pyramidi specification (Pyramid configured to receive on ch 16)
@@ -91,7 +91,7 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
     def deactivate(self):
         for button_name in self.scene_trigger_buttons:
             self.push.buttons.set_button_color(button_name, definitions.BLACK)
-        app.push.pads.set_all_pads_to_color(color=definitions.BLACK)
+        self.app.push.pads.set_all_pads_to_color(color=definitions.BLACK)
 
     def update_buttons(self):
         for button_name in self.scene_trigger_buttons:
@@ -104,12 +104,12 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
             row_colors = []
             for j in range(0, 8):
                 track_num = self.pad_ij_to_track_num((i, j))
-                if not self.track_has_content(track_num):
-                    cell_color = definitions.BLACK
-                else:
-                    cell_color = self.app.track_selection_mode.get_track_color(track_num)  # Track color
-                    if not self.track_is_playing(track_num):
-                        cell_color += '_darker1'  # Choose darker version of track color
+                track_color = self.app.track_selection_mode.get_track_color(track_num)  # Track color
+                cell_color = track_color + '_darker2'  # Choose super darker version of track color
+                if self.track_has_content(track_num):
+                    cell_color = track_color + '_darker1'  # Choose darker version of track color
+                if self.track_is_playing(track_num):
+                    cell_color = track_color
                 row_colors.append(cell_color)
             color_matrix.append(row_colors)
         self.push.pads.set_pads_color(color_matrix)
@@ -120,10 +120,10 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
             # Unmute all tracks in that row, mute all tracks from other rows (only tracks that have content)
             for i in range(0, 8):
                 for j in range(0, 8):
-                    track_num = pad_ij_to_track_num((i, j))
+                    track_num = self.pad_ij_to_track_num((i, j))
                     # If track in selected row  
                     # # TODO: check that indexing is correct
-                    if j == triggered_scene_row:
+                    if i == triggered_scene_row:
                         if self.track_has_content(track_num):
                             self.set_track_is_playing(track_num, True)
                     else:
@@ -134,20 +134,20 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
             return True  # Prevent other modes to get this event
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
-        pad_pressing_states[pad_n] = time.time()  # Store time at which pad_n was pressed
+        self.pad_pressing_states[pad_n] = time.time()  # Store time at which pad_n was pressed
         return True  # Prevent other modes to get this event
 
     def on_pad_released(self, pad_n, pad_ij, velocity):
-        pressing_time = pad_pressing_states.get(pad_n, None)
+        pressing_time = self.pad_pressing_states.get(pad_n, None)
         is_long_press = False
         if pressing_time is None:
-            # Consider quick press (this should not happen as pad_pressing_states[pad_n] should have been set before)
+            # Consider quick press (this should not happen as self.pad_pressing_states[pad_n] should have been set before)
             pass
         else:
             if time.time() - pressing_time > self.pad_quick_press_time:
                 # Consider this is a long press
                 is_long_press = True
-            pad_pressing_states[pad_n] = None  # Reset pressing time to none
+            self.pad_pressing_states[pad_n] = None  # Reset pressing time to none
 
         track_num = self.pad_ij_to_track_num(pad_ij)
 
@@ -156,6 +156,8 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
             #   - if track has no content: mark it as having content
             #   - if track has content: mark it as having no content
             self.set_track_has_content(track_num, not self.track_has_content(track_num))
+            if self.track_is_playing(track_num):
+                self.set_track_is_playing(track_num, False)
             self.app.pads_need_update = True
 
         else:

@@ -64,18 +64,18 @@ def show_notification(ctx, text, opacity=1.0):
     # Background
     display_w = push2_python.constants.DISPLAY_LINE_PIXELS
     display_h = push2_python.constants.DISPLAY_N_LINES
-    initial_bg_opacity = 0.1
-    ctx.set_source_rgba(1.0, 1.0, 1.0, initial_bg_opacity - opacity * initial_bg_opacity)
+    initial_bg_opacity = 0.8
+    ctx.set_source_rgba(0.0, 0.0, 0.0, initial_bg_opacity * opacity)
     ctx.rectangle(0, 0, display_w, display_h)
     ctx.fill()
 
     # Text
     initial_text_opacity = 1.0
-    ctx.set_source_rgba(1.0, 1.0, 1.0, initial_text_opacity - opacity * initial_text_opacity)
-    font_size = display_h // 3
+    ctx.set_source_rgba(1.0, 1.0, 1.0, initial_text_opacity * opacity)
+    font_size = display_h // 4
     ctx.set_font_size(font_size)
-    margin_left = 4
-    ctx.move_to(margin_left, 2 * font_size)
+    margin_left = 8
+    ctx.move_to(margin_left, 2.2 * font_size)
     ctx.show_text(text)
 
     ctx.restore()
