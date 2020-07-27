@@ -162,7 +162,7 @@ class PresetSelectionMode(definitions.PyshaMode):
                 cell_color = track_color
                 preset_num, bank_num = self.pad_ij_to_bank_and_preset_num((i, j))
                 if not self.preset_num_in_favourites(preset_num, bank_num):
-                    cell_color = f'{cell_color}_darker1'  # If preset not in favourites, use a darker version of the track color
+                    cell_color = f'{cell_color}_darker2'  # If preset not in favourites, use a darker version of the track color
                 row_colors.append(cell_color)
             color_matrix.append(row_colors)
         self.push.pads.set_pads_color(color_matrix)
