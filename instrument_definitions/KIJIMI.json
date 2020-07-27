@@ -1,7 +1,8 @@
 {
     "instrument_name": "Kijimi",
     "instrument_short_name": "KIJIMI",
-    "n_banks": 9,
+    "n_banks": 11,
+    "bank_names": ["MJ", "1", "PS", "3", "4", "5", "6", "7", "8", "9", "RD"],
     "midi_cc": [
         {
             "section": "Modulations",

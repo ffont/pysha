@@ -2,6 +2,11 @@
     "instrument_name": "Deckard's Dream",
     "instrument_short_name": "DDRM",
     "n_banks": 3,
+    "bank_names": [
+        "1",
+        "PS",
+        "FCTRY"
+    ],
     "midi_cc": [
         {
             "section": "CH I",

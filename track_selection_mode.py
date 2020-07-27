@@ -76,6 +76,7 @@ class TrackSelectionMode(definitions.PyshaMode):
                     'instrument_short_name': instrument_short_name,
                     'color': color,
                     'n_banks': instrument_data.get('n_banks', 1),
+                    'bank_names': instrument_data.get('bank_names', None),
                     'default_layout': instrument_data.get('default_layout', definitions.LAYOUT_MELODIC),
                 })
             print('Created {0} tracks!'.format(len(self.tracks_info)))
@@ -144,8 +145,9 @@ class TrackSelectionMode(definitions.PyshaMode):
         self.clean_currently_notes_being_played()
         try:
             self.app.midi_cc_mode.new_track_selected()
+            self.app.preset_selection_mode.new_track_selected()
         except AttributeError:
-            # Might fail if MIDICCMode not initialized
+            # Might fail if MIDICCMode/PresetSelectionMode not initialized
             pass
         
     def activate(self):

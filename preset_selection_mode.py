@@ -26,6 +26,11 @@ class PresetSelectionMode(definitions.PyshaMode):
         self.current_page = 0
         self.update_buttons()
         self.update_pads()
+
+    def new_track_selected(self):
+        self.current_page = 0
+        self.update_buttons()
+        self.update_pads()
     
     def add_favourite_preset(self, preset_number, bank_number):
         instrument_short_name = self.app.track_selection_mode.get_current_track_instrument_short_name() 
@@ -64,6 +69,10 @@ class PresetSelectionMode(definitions.PyshaMode):
     def get_num_banks(self):
         # Returns the number of available banks of the selected instrument
         return self.app.track_selection_mode.get_current_track_info()['n_banks']
+
+    def get_bank_names(self):
+        # Returns list of bank names
+        return self.app.track_selection_mode.get_current_track_info()['bank_names']
 
     def get_num_pages(self):
         # Returns the number of available preset pages per instrument (2 per bank)
@@ -112,8 +121,14 @@ class PresetSelectionMode(definitions.PyshaMode):
             self.app.send_midi(msg)
 
     def notify_status_in_display(self):
+        bank_number = self.get_current_page() // 2 + 1
+        bank_names = self.get_bank_names() 
+        if bank_names is not None:
+            bank_name = bank_names[bank_number - 1]
+        else:
+            bank_name = bank_number
         self.app.add_display_notification("Preset selection: bank {0}, presets {1}".format(
-            self.get_current_page() // 2 + 1,
+            bank_name,
             '1-64' if self.get_current_page() % 2 == 0 else '65-128'
         ))
 
