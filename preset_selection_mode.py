@@ -29,8 +29,8 @@ class PresetSelectionMode(definitions.PyshaMode):
 
     def new_track_selected(self):
         self.current_page = 0
-        self.update_buttons()
-        self.update_pads()
+        self.app.pads_need_update = True
+        self.app.buttons_need_update = True
     
     def add_favourite_preset(self, preset_number, bank_number):
         instrument_short_name = self.app.track_selection_mode.get_current_track_instrument_short_name() 
