@@ -39,6 +39,9 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
     pad_pressing_states = {}
     pad_quick_press_time = 0.400
 
+    track_selection_modifier_button_being_pressed = False
+    track_selection_modifier_button = push2_python.constants.BUTTON_MASTER
+
     def initialize(self, settings=None):
         self.pyramidi_channel = self.app.track_selection_mode.pyramidi_channel  # Note TrackSelectionMode needs to have been initialized before PyramidTrackTriggeringMode
         self.create_tracks()
@@ -85,17 +88,31 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
         self.app.send_midi(msg, force_channel=self.pyramidi_channel)
 
     def activate(self):
+        self.pad_pressing_states = {}
+        self.track_selection_modifier_button_being_pressed = False
         self.update_buttons()
         self.update_pads()
+
+    def new_track_selected(self):
+        self.pad_pressing_states = {}
+        self.track_selection_modifier_button_being_pressed = False
+        self.app.pads_need_update = True
+        self.app.buttons_need_update = True
 
     def deactivate(self):
         for button_name in self.scene_trigger_buttons:
             self.push.buttons.set_button_color(button_name, definitions.BLACK)
+        self.push.buttons.set_button_color(self.track_selection_modifier_button, definitions.BLACK)
         self.app.push.pads.set_all_pads_to_color(color=definitions.BLACK)
 
     def update_buttons(self):
         for button_name in self.scene_trigger_buttons:
             self.push.buttons.set_button_color(button_name, definitions.WHITE)
+        if self.track_selection_modifier_button_being_pressed:
+            self.push.buttons.set_button_color(self.track_selection_modifier_button, definitions.WHITE)
+        else:
+            self.push.buttons.set_button_color(self.track_selection_modifier_button, definitions.BLACK)
+            self.push.buttons.set_button_color(self.track_selection_modifier_button, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
 
     def update_pads(self):
         # Update pads according to track state
@@ -133,10 +150,27 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
 
             return True  # Prevent other modes to get this event
 
+        elif button_name == self.track_selection_modifier_button:
+            self.track_selection_modifier_button_being_pressed = True
+            return True  # Prevent other modes to get this event
+
+    def on_button_released(self, button_name):
+        if button_name == self.track_selection_modifier_button:
+            self.track_selection_modifier_button_being_pressed = False
+            return True  # Prevent other modes to get this event
+
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
-        self.pad_pressing_states[pad_n] = time.time()  # Store time at which pad_n was pressed
-        self.push.pads.set_pad_color(pad_ij, color=definitions.GREEN)
-        return True  # Prevent other modes to get this event
+        if not self.track_selection_modifier_button_being_pressed:
+            self.pad_pressing_states[pad_n] = time.time()  # Store time at which pad_n was pressed
+            self.push.pads.set_pad_color(pad_ij, color=definitions.GREEN)
+            return True  # Prevent other modes to get this event
+        else:
+            # If a pad is pressed while the modifier key is also pressed,
+            # we select the corresponding track. This will trigger exiting
+            # the PyramidTrackTriggering mode
+            track_num = self.pad_ij_to_track_num(pad_ij)
+            self.app.track_selection_mode.select_track(track_num)
+            return True  # Prevent other modes to get this event
 
     def on_pad_released(self, pad_n, pad_ij, velocity):
         pressing_time = self.pad_pressing_states.get(pad_n, None)

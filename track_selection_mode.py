@@ -139,6 +139,9 @@ class TrackSelectionMode(definitions.PyshaMode):
         self.app.send_midi(msg, force_channel=self.pyramidi_channel)
 
     def select_track(self, track_idx):
+        # Selects a track and activates its melodic/rhythmic layout
+        # Note that if this is called from a mode form the same xor group with melodic/rhythmic modes,
+        # that other mode will be deactivated.
         self.selected_track = track_idx
         self.send_select_track_to_pyramid(self.selected_track)
         self.load_current_default_layout()
@@ -146,8 +149,9 @@ class TrackSelectionMode(definitions.PyshaMode):
         try:
             self.app.midi_cc_mode.new_track_selected()
             self.app.preset_selection_mode.new_track_selected()
+            self.app.pyramid_track_triggering_mode.new_track_selected()
         except AttributeError:
-            # Might fail if MIDICCMode/PresetSelectionMode not initialized
+            # Might fail if MIDICCMode/PresetSelectionMode/PyramidTrackTriggeringMode not initialized
             pass
         
     def activate(self):
