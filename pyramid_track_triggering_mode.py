@@ -109,7 +109,7 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
         for button_name in self.scene_trigger_buttons:
             self.push.buttons.set_button_color(button_name, definitions.WHITE)
         if not self.track_selection_modifier_button_being_pressed:
-            self.push.buttons.set_button_color(self.track_selection_modifier_button, definitions.WHITE)
+            self.push.buttons.set_button_color(self.track_selection_modifier_button, definitions.OFF_BTN_COLOR)
         else:
             self.push.buttons.set_button_color(self.track_selection_modifier_button, definitions.BLACK)
             self.push.buttons.set_button_color(self.track_selection_modifier_button, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
