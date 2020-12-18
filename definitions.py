@@ -1,7 +1,7 @@
 import push2_python
 import colorsys
 
-VERSION = '0.11'
+VERSION = '0.12'
 
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
 

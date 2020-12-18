@@ -210,7 +210,7 @@ class MelodicMode(definitions.PyshaMode):
             self.latest_velocity_value = (time.time(), velocity)
             self.add_note_being_played(midi_note, 'push')
             msg = mido.Message('note_on', note=midi_note, velocity=velocity if not self.fixed_velocity_mode else 127)
-            self.app.send_midi(msg)
+            self.app.send_midi(msg, replicate_to_ot_out=False)
             self.update_pads()  # Directly calling update pads method because we want user to feel feedback as quick as possible
             return True
 

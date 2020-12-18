@@ -79,13 +79,13 @@ class PyramidTrackTriggeringMode(definitions.PyshaMode):
 
     def send_mute_track_to_pyramid(self, track_num):
         # Follows pyramidi specification (Pyramid configured to receive on ch 16)
-        msg = mido.Message('control_change', control=track_num + 1, value=0)
-        self.app.send_midi(msg, force_channel=self.pyramidi_channel)
+        msg = mido.Message('control_change', control=track_num + 1, value=0, channel=self.pyramidi_channel)
+        self.app.send_midi_to_pyramid(msg)
 
     def send_unmute_track_to_pyramid(self, track_num):
         # Follows pyramidi specification (Pyramid configured to receive on ch 16)
-        msg = mido.Message('control_change', control=track_num + 1, value=1)
-        self.app.send_midi(msg, force_channel=self.pyramidi_channel)
+        msg = mido.Message('control_change', control=track_num + 1, value=1, channel=self.pyramidi_channel)
+        self.app.send_midi_to_pyramid(msg)
 
     def activate(self):
         self.pad_pressing_states = {}

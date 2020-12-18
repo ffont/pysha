@@ -135,8 +135,8 @@ class TrackSelectionMode(definitions.PyshaMode):
 
     def send_select_track_to_pyramid(self, track_idx):
         # Follows pyramidi specification (Pyramid configured to receive on ch 16)
-        msg = mido.Message('control_change', control=0, value=track_idx + 1)
-        self.app.send_midi(msg, force_channel=self.pyramidi_channel)
+        msg = mido.Message('control_change', control=0, value=track_idx + 1, channel=self.pyramidi_channel)
+        self.app.send_midi_to_pyramid(msg)
 
     def select_track(self, track_idx):
         # Selects a track and activates its melodic/rhythmic layout
