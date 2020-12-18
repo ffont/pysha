@@ -240,7 +240,7 @@ class SettingsMode(definitions.PyshaMode):
                         else:
                             name = "{0} {1}".format(self.app.ot_midi_out_tmp_device_idx + 1, self.app.available_midi_out_device_names[self.app.ot_midi_out_tmp_device_idx])
                     else:
-                        if self.app.midi_out is not None:
+                        if self.app.ot_midi_out is not None:
                             name = "{0} {1}".format(self.app.available_midi_out_device_names.index(self.app.ot_midi_out.name) + 1, self.app.ot_midi_out.name)
                         else:
                             color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DISABLED)
@@ -261,7 +261,7 @@ class SettingsMode(definitions.PyshaMode):
                         else:
                             color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DISABLED)
                             name = "None"
-                    show_title(ctx, part_x, h, 'IN DEVICE')
+                    show_title(ctx, part_x, h, 'PY IN DEVICE')
                     show_value(ctx, part_x, h, name, color)
 
                 elif i == 7:  # Re-send MIDI connection established (to push, not MIDI in/out device)
