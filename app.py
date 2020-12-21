@@ -356,11 +356,9 @@ class PyshaApp(object):
             self.init_py_midi_in(None)
 
     def send_midi(self, msg, use_original_msg_channel=False):
-        
         # Unless we specifically say we want to use the original msg mnidi channel, set it to global midi out channel
         if not use_original_msg_channel and hasattr(msg, 'channel'):
-            msg = msg.copy(channel=self.midi_out_channel)  
-
+            msg = msg.copy(channel=self.midi_out_channel)
         if self.midi_out is not None:
             self.midi_out.send(msg)
 

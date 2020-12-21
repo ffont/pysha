@@ -14,8 +14,8 @@ class MelodicMode(definitions.PyshaMode):
     fixed_velocity_mode = False
     use_poly_at = False  # default redefined in initialize
     channel_at_range_start = 401  # default redefined in initialize
-    channel_at_range_end = 800 # default redefined in initialize
-    poly_at_max_range = 40 # default redefined in initialize
+    channel_at_range_end = 800  # default redefined in initialize
+    poly_at_max_range = 40  # default redefined in initialize
     poly_at_curve_bending = 50  # default redefined in initialize
     latest_channel_at_value = (0, 0)
     latest_poly_at_value = (0, 0)
@@ -121,7 +121,7 @@ class MelodicMode(definitions.PyshaMode):
             self.root_midi_note = 127
 
     def activate(self):
-    
+
         # Configure polyAT and AT
         if self.use_poly_at:
             self.push.pads.set_polyphonic_aftertouch()
@@ -162,7 +162,7 @@ class MelodicMode(definitions.PyshaMode):
                 self.add_note_being_played(msg.note, self.app.midi_in.name)
         elif msg.type == "note_off":
             self.remove_note_being_played(msg.note, self.app.midi_in.name)
-        self.app.pads_need_update = True 
+        self.app.pads_need_update = True
 
     def update_accent_button(self):
         # Accent button has its own method so it can be reused in the rhythmic mode which inherits from melodic mode
@@ -210,7 +210,7 @@ class MelodicMode(definitions.PyshaMode):
             self.latest_velocity_value = (time.time(), velocity)
             self.add_note_being_played(midi_note, 'push')
             msg = mido.Message('note_on', note=midi_note, velocity=velocity if not self.fixed_velocity_mode else 127)
-            self.app.send_midi(msg, replicate_to_ot_out=False)
+            self.app.send_midi(msg)
             self.update_pads()  # Directly calling update pads method because we want user to feel feedback as quick as possible
             return True
 
