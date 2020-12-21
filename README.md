@@ -90,6 +90,8 @@ Well, this is not a proper user manual, but here are some notes about how to use
 
 These are instructions to have the script running on a Rapsberry Pi and load at startup. I'm using this with a Raspberry Pi 2 and Raspbian 2020-02-13. It works a bit slow but it works. I also tested on a Raspberry Pi 4 and it is much faster and reliable.
 
+These instructions assume you have ssh connection with the Rpasberry Pi. Here are the instructions for [enabling ssh](https://www.raspberrypi.org/documentation/remote-access/ssh/) on the Pi. Here are instructions for [setting up wifi networks](https://www.raspberrypi.org/documentation/configuration/wireless/wireless-cli.md). Also, here are instructions for [changing the hostname](https://thepihut.com/blogs/raspberry-pi-tutorials/19668676-renaming-your-raspberry-pi-the-hostname) of the Pi so for example you can access it like `ssh pi@pysha`.
+
 1. Install system dependencies
 ```
 sudo apt-get update && sudo apt-get install -y libusb-1.0-0-dev libcairo2-dev python3 python3-pip git libasound2-dev libatlas-base-dev
