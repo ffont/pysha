@@ -196,8 +196,13 @@ class PresetSelectionMode(definitions.PyshaMode):
             # Send midi message to select the bank and preset preset
             self.send_select_new_bank(bank_num)
             self.send_select_new_preset(preset_num)
+            bank_names = self.get_bank_names()
+            if bank_names is not None:
+                bank_name = bank_names[bank_num]
+            else:
+                bank_name = bank_num + 1
             self.app.add_display_notification("Selected bank {0}, preset {1}".format(
-                bank_num + 1,  # Show 1-indexed value
+                bank_name,  # Show 1-indexed value
                 preset_num + 1  # Show 1-indexed value
             ))
             

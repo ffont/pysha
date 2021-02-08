@@ -385,7 +385,16 @@ class PyshaApp(object):
     def py_midi_in_handler(self, msg):
         # When receiving MIDI from Pyramid, forward it to the out going to Octatrack so we get clock to Octatrack and can
         # sequence it from Pyramid while at the same time having full control of Octatrack using Pysha.
-        self.send_midi_to_octatrack(msg)
+        # NOTE: I'm no longer using this setup, but using this extra MIDI loop as a filter. I keep only messages
+        # sent to the DDRM channel. This will be used right before entering DDRM, and in this way I avoid notes sent
+        # to other instruments resetting ringo modulator envelope. In the future all these methods should be renamed so
+        # it makes more sense. Or the MIDI filter could even run on a completely separate process (that'd be the best
+        # probably)
+        try:
+            if msg.channel == 0:
+                self.send_midi_to_octatrack(msg)
+        except:
+            pass
 
     def add_display_notification(self, text):
         self.notification_text = text
