@@ -44,7 +44,7 @@ class PresetSelectionMode(definitions.PyshaMode):
         if instrument_short_name in self.favourtie_presets:
             self.favourtie_presets[instrument_short_name] = \
                 [(fp_preset_number, fp_bank_number) for fp_preset_number, fp_bank_number in self.favourtie_presets[instrument_short_name] 
-                if preset_number == fp_preset_number and bank_number == fp_bank_number]
+                if preset_number != fp_preset_number or bank_number != fp_bank_number]
             json.dump(self.favourtie_presets, open(self.favourtie_presets_filename, 'w'))  # Save to file
 
     def preset_num_in_favourites(self, preset_number, bank_number):
