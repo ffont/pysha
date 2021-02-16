@@ -156,6 +156,8 @@ Enable the service (and do the linger thing which really I'm not sure if it is n
 
     loginctl enable-linger pi
     sudo systemctl enable pysha.service
-    sudo systemctl status pysha.service
 
-After that, the app should at startup. Logs got o `syslog` (check them running `tail -300f /var/log/syslog`)
+After that, the app should at startup. You can start/stop/restart and check logs running:
+
+    sudo systemctl start|stop|restart pysha
+    sudo journalctl -fu pysha
