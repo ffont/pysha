@@ -34,12 +34,6 @@ class PyshaApp(object):
     midi_in_channel = 0  # 0-15
     midi_in_tmp_device_idx = None  # This is to store device names while rotating encoders
 
-    ot_midi_out = None
-    ot_midi_out_tmp_device_idx = None  # This is to store device names while rotating encoders
-
-    py_midi_in = None
-    py_midi_in_tmp_device_idx = None  # This is to store device names while rotating encoders
-
     # push
     push = None
     use_push2_display = None
@@ -73,12 +67,9 @@ class PyshaApp(object):
 
         self.init_midi_in(device_name=settings.get('default_midi_in_device_name', None))
         self.init_midi_out(device_name=settings.get('default_midi_out_device_name', None))
-        self.init_ot_midi_out(device_name=settings.get('default_ot_midi_out_device_name', None))
-        self.init_py_midi_in(device_name=settings.get('default_py_midi_in_device_name', None))
         self.init_push()
 
         self.init_modes(settings)
-        self.send_local_off_to_dominion()
         
     def init_modes(self, settings):
         self.main_controls_mode = MainControlsMode(self, settings=settings)
@@ -183,35 +174,12 @@ class PyshaApp(object):
     def unset_preset_selection_mode(self):
         self.unset_mode_for_xor_group(self.preset_selection_mode)
 
-    def send_local_off_to_dominion(self):
-        # This is a bit of a hack, I use it to auto configure Dominon for local off control
-        # I need to first select one of the tracks where Dominon is configured, then switch
-        # to that track, send a spceicifc MIDI CC, and switch back to the previously selected
-        # track.
-        # NOTE: MFB Dominon seems to not be recognizing local off messages as expected, therefore
-        # this code seems not to be working...
-        dominion_track_number = None
-        for count, track_info in enumerate(self.track_selection_mode.tracks_info):
-            if track_info['instrument_short_name'] == 'DOMINION':
-                dominion_track_number = count
-                break
-
-        if dominion_track_number is not None:
-            print('Sending local off to dominon')
-            previously_selected_track = self.track_selection_mode.selected_track
-            self.track_selection_mode.select_track(dominion_track_number)
-            local_off_message = mido.Message('control_change', control=122, value=0)
-            self.send_midi(local_off_message)
-            self.track_selection_mode.select_track(previously_selected_track)
-
     def save_current_settings_to_file(self):
         settings = {
             'midi_in_default_channel': self.midi_in_channel,
             'midi_out_default_channel': self.midi_out_channel,
             'default_midi_in_device_name': self.midi_in.name if self.midi_in is not None else None,
             'default_midi_out_device_name': self.midi_out.name if self.midi_out is not None else None,
-            'default_ot_midi_out_device_name': self.ot_midi_out.name if self.ot_midi_out is not None else None,
-            'default_py_midi_in_device_name': self.py_midi_in.name if self.py_midi_in is not None else None,
             'use_push2_display': self.use_push2_display,
             'target_frame_rate': self.target_frame_rate,
         }
@@ -269,54 +237,6 @@ class PyshaApp(object):
         if self.midi_out is None:
             print('Won\'t send MIDI to any device')
 
-    def init_ot_midi_out(self, device_name=None):
-        print('Configuring OT MIDI out...')
-        self.available_midi_out_device_names = [name for name in mido.get_output_names() if 'Ableton Push' not in name]
-        self.available_midi_out_device_names += ['Virtual']
-
-        if device_name is not None:
-            try:
-                if device_name == 'Virtual':
-                    self.ot_midi_out = mido.open_output(device_name, virtual=True)
-                else:
-                    self.ot_midi_out = mido.open_output(device_name)
-                print('Will send OT MIDI to "{0}"'.format(device_name))
-            except IOError:
-                print('Could not connect to MIDI output port "{0}"\nAvailable device names:'.format(device_name))
-                for name in self.available_midi_out_device_names:
-                    print(' - {0}'.format(name))
-        else:
-            if self.ot_midi_out is not None:
-                self.ot_midi_out.close()
-                self.ot_midi_out = None
-
-        if self.ot_midi_out is None:
-            print('Won\'t send MIDI to OT')
-
-    def init_py_midi_in(self, device_name=None):
-        print('Configuring PY MIDI in...')
-        self.available_midi_in_device_names = [name for name in mido.get_input_names() if 'Ableton Push' not in name]
-
-        if device_name is not None:
-            if self.py_midi_in is not None:
-                self.py_midi_in.callback = None  # Disable current callback (if any)
-            try:
-                self.py_midi_in = mido.open_input(device_name)
-                self.py_midi_in.callback = self.py_midi_in_handler
-                print('Receiving PY MIDI in from "{0}"'.format(device_name))
-            except IOError:
-                print('Could not connect to MIDI input port "{0}"\nAvailable device names:'.format(device_name))
-                for name in self.available_midi_in_device_names:
-                    print(' - {0}'.format(name))
-        else:
-            if self.py_midi_in is not None:
-                self.py_midi_in.callback = None  # Disable current callback (if any)
-                self.py_midi_in.close()
-                self.py_midi_in = None
-
-        if self.py_midi_in is None:
-            print('Not receiving from any PY MIDI input')
-
     def set_midi_in_channel(self, channel, wrap=False):
         self.midi_in_channel = channel
         if self.midi_in_channel < -1:  # Use "-1" for "all channels"
@@ -343,18 +263,6 @@ class PyshaApp(object):
         else:
             self.init_midi_out(None)
 
-    def set_ot_midi_out_device_by_index(self, device_idx):
-        if device_idx >= 0 and device_idx < len(self.available_midi_out_device_names):
-            self.init_ot_midi_out(self.available_midi_out_device_names[device_idx])
-        else:
-            self.init_ot_midi_out(None)
-
-    def set_py_midi_in_device_by_index(self, device_idx):
-        if device_idx >= 0 and device_idx < len(self.available_midi_in_device_names):
-            self.init_py_midi_in(self.available_midi_in_device_names[device_idx])
-        else:
-            self.init_py_midi_in(None)
-
     def send_midi(self, msg, use_original_msg_channel=False):
         # Unless we specifically say we want to use the original msg mnidi channel, set it to global midi out channel
         if not use_original_msg_channel and hasattr(msg, 'channel'):
@@ -366,11 +274,6 @@ class PyshaApp(object):
         # When sending to Pyramid, don't replace the MIDI channel because msg is already prepared with pyramidi chanel
         self.send_midi(msg, use_original_msg_channel=True)
 
-    def send_midi_to_octatrack(self, msg):
-        # When sending to octatrack, do it to the correct device
-        if self.ot_midi_out is not None:
-            self.ot_midi_out.send(msg)
-
     def midi_in_handler(self, msg):
         if hasattr(msg, 'channel'):  # This will rule out sysex and other "strange" messages that don't have channel info
             if self.midi_in_channel == -1 or msg.channel == self.midi_in_channel:   # If midi input channel is set to -1 (all) or a specific channel
@@ -381,20 +284,6 @@ class PyshaApp(object):
                 # Forward the midi message to the active modes
                 for mode in self.active_modes:
                     mode.on_midi_in(msg)
-
-    def py_midi_in_handler(self, msg):
-        # When receiving MIDI from Pyramid, forward it to the out going to Octatrack so we get clock to Octatrack and can
-        # sequence it from Pyramid while at the same time having full control of Octatrack using Pysha.
-        # NOTE: I'm no longer using this setup, but using this extra MIDI loop as a filter. I keep only messages
-        # sent to the DDRM channel. This will be used right before entering DDRM, and in this way I avoid notes sent
-        # to other instruments resetting ringo modulator envelope. In the future all these methods should be renamed so
-        # it makes more sense. Or the MIDI filter could even run on a completely separate process (that'd be the best
-        # probably)
-        try:
-            if msg.channel == 0:
-                self.send_midi_to_octatrack(msg)
-        except:
-            pass
 
     def add_display_notification(self, text):
         self.notification_text = text
