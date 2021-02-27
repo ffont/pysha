@@ -1,6 +1,7 @@
 {
     "instrument_name": "Minitaur",
     "instrument_short_name": "MINITAUR",
+    "midi_channel": 3,
     "n_banks": 1,
     "midi_cc": [
         {

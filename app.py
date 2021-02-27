@@ -34,6 +34,8 @@ class PyshaApp(object):
     midi_in_channel = 0  # 0-15
     midi_in_tmp_device_idx = None  # This is to store device names while rotating encoders
 
+    notes_midi_in = None  # MIDI input device only used to receive note messages and illuminate pads/keys
+
     # push
     push = None
     use_push2_display = None
@@ -68,6 +70,8 @@ class PyshaApp(object):
         self.init_midi_in(device_name=settings.get('default_midi_in_device_name', None))
         self.init_midi_out(device_name=settings.get('default_midi_out_device_name', None))
         self.init_push()
+
+        self.init_notes_midi_in()
 
         self.init_modes(settings)
         
@@ -237,6 +241,17 @@ class PyshaApp(object):
         if self.midi_out is None:
             print('Won\'t send MIDI to any device')
 
+    def init_notes_midi_in(self):
+        # Init notes midi in device
+        # If the devices can't be opened, leave it None
+        try:
+            midi_in_device_name_template = "MIDIFACE 2X2:MIDIFACE 2X2 MIDI 2"
+            for name in mido.get_input_names():
+                if midi_in_device_name_template.lower() in name.lower():
+                    self.notes_midi_in = mido.open_input(name, callback=self.notes_midi_in_handler)
+        except:
+            print('Could not init notes MIDI in device...')
+
     def set_midi_in_channel(self, channel, wrap=False):
         self.midi_in_channel = channel
         if self.midi_in_channel < -1:  # Use "-1" for "all channels"
@@ -284,6 +299,16 @@ class PyshaApp(object):
                 # Forward the midi message to the active modes
                 for mode in self.active_modes:
                     mode.on_midi_in(msg)
+
+    def notes_midi_in_handler(self, msg):
+        # Check if message is note on or off and check if the MIDI channel is the one assigned to the currently selected track
+        # Then, send message to the melodic/rhythmic active modes so the notes are shown in pads/keys
+        if msg.type == 'note_on' or msg.type == 'note_off':
+            track_midi_channel = self.track_selection_mode.get_current_track_info()['midi_channel']
+            if msg.channel == track_midi_channel - 1:  # msg.channel is 0-indexed
+                for mode in self.active_modes:
+                    if mode == self.melodic_mode or mode == self.rhyhtmic_mode:
+                        mode.on_midi_in(msg)
 
     def add_display_notification(self, text):
         self.notification_text = text

@@ -1,5 +1,6 @@
 {
     "instrument_name": "Dominion",
     "instrument_short_name": "DOMINION",
+    "midi_channel": 3,
     "n_banks": 1
 }

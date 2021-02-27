@@ -74,6 +74,7 @@ class TrackSelectionMode(definitions.PyshaMode):
                     'track_name': '{0}{1}'.format((i % 16) + 1, ['A', 'B', 'C', 'D'][i//16]),
                     'instrument_name': instrument_data.get('instrument_name', '-'),
                     'instrument_short_name': instrument_short_name,
+                    'midi_channel': instrument_data.get('midi_channel', -1),
                     'color': color,
                     'n_banks': instrument_data.get('n_banks', 1),
                     'bank_names': instrument_data.get('bank_names', None),
@@ -87,6 +88,7 @@ class TrackSelectionMode(definitions.PyshaMode):
                         'track_name': '{0}{1}'.format((i % 16) + 1, ['A', 'B', 'C', 'D'][i//16]),
                         'instrument_name': '-',
                         'instrument_short_name': '-',
+                        'midi_channel': -1,
                         'color': definitions.ORANGE,
                         'default_layout': definitions.LAYOUT_MELODIC,
                     })
