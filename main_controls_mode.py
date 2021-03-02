@@ -7,6 +7,7 @@ SETTINGS_BUTTON = push2_python.constants.BUTTON_SETUP
 MELODIC_RHYTHMIC_TOGGLE_BUTTON = push2_python.constants.BUTTON_NOTE
 PYRAMID_TRACK_TRIGGERING_BUTTON = push2_python.constants.BUTTON_ADD_TRACK
 PRESET_SELECTION_MODE_BUTTON = push2_python.constants.BUTTON_ADD_DEVICE
+DDRM_TONE_SELECTION_MODE_BUTTON = push2_python.constants.BUTTON_DEVICE
 
 
 class MainControlsMode(definitions.PyshaMode):
@@ -24,6 +25,7 @@ class MainControlsMode(definitions.PyshaMode):
         self.push.buttons.set_button_color(SETTINGS_BUTTON, definitions.BLACK)
         self.push.buttons.set_button_color(PYRAMID_TRACK_TRIGGERING_BUTTON, definitions.BLACK)
         self.push.buttons.set_button_color(PRESET_SELECTION_MODE_BUTTON, definitions.BLACK)
+        self.push.buttons.set_button_color(DDRM_TONE_SELECTION_MODE_BUTTON, definitions.BLACK)
 
     def update_buttons(self):
         # Note button, to toggle melodic/rhythmic mode
@@ -55,6 +57,14 @@ class MainControlsMode(definitions.PyshaMode):
             self.push.buttons.set_button_color(PRESET_SELECTION_MODE_BUTTON, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
         else:
             self.push.buttons.set_button_color(PRESET_SELECTION_MODE_BUTTON, definitions.OFF_BTN_COLOR)
+
+        # DDRM tone selector mode
+        if self.app.ddrm_tone_selector_mode.should_be_enabled():
+            if self.app.is_mode_active(self.app.ddrm_tone_selector_mode):
+                self.push.buttons.set_button_color(DDRM_TONE_SELECTION_MODE_BUTTON, definitions.BLACK)
+                self.push.buttons.set_button_color(DDRM_TONE_SELECTION_MODE_BUTTON, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
+            else:
+                self.push.buttons.set_button_color(DDRM_TONE_SELECTION_MODE_BUTTON, definitions.OFF_BTN_COLOR)
 
     def on_button_pressed(self, button_name):
         if button_name == MELODIC_RHYTHMIC_TOGGLE_BUTTON:
@@ -94,6 +104,12 @@ class MainControlsMode(definitions.PyshaMode):
                 self.preset_selection_button_pressing_time = time.time()
             self.app.buttons_need_update = True
             return True
+        elif button_name == DDRM_TONE_SELECTION_MODE_BUTTON:
+            if self.app.ddrm_tone_selector_mode.should_be_enabled():
+                self.app.toggle_ddrm_tone_selector_mode()
+                self.app.buttons_need_update = True
+            return True
+
 
     def on_button_released(self, button_name):
         if button_name == PYRAMID_TRACK_TRIGGERING_BUTTON:

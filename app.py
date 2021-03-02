@@ -18,6 +18,7 @@ from settings_mode import SettingsMode
 from main_controls_mode import MainControlsMode
 from midi_cc_mode import MIDICCMode
 from preset_selection_mode import PresetSelectionMode
+from ddrm_tone_selector_mode import DDRMToneSelectorMode
 
 from display_utils import show_notification
 
@@ -89,6 +90,7 @@ class PyshaApp(object):
         self.midi_cc_mode = MIDICCMode(self, settings=settings)  # Must be initialized after track selection mode so it gets info about loaded tracks
         self.active_modes += [self.track_selection_mode, self.midi_cc_mode]
         self.track_selection_mode.select_track(self.track_selection_mode.selected_track)
+        self.ddrm_tone_selector_mode = DDRMToneSelectorMode(self, settings=settings)
 
         self.settings_mode = SettingsMode(self, settings=settings)
         
@@ -107,6 +109,33 @@ class PyshaApp(object):
         else:
             self.active_modes.append(self.settings_mode)
             self.settings_mode.activate()
+
+    def toggle_ddrm_tone_selector_mode(self):
+        if self.is_mode_active(self.ddrm_tone_selector_mode):
+            # Deactivate (replace ddrm tone selector mode by midi cc and track selection mode)
+            new_active_modes = []
+            for mode in self.active_modes:
+                if mode != self.ddrm_tone_selector_mode:
+                    new_active_modes.append(mode)
+                else:
+                    new_active_modes.append(self.track_selection_mode)
+                    new_active_modes.append(self.midi_cc_mode)
+            self.active_modes = new_active_modes
+            self.ddrm_tone_selector_mode.deactivate()
+            self.midi_cc_mode.activate()
+            self.track_selection_mode.activate()
+        else:
+            # Activate (replace midi cc and track selection mode by ddrm tone selector mode)
+            new_active_modes = []
+            for mode in self.active_modes:
+                if mode != self.track_selection_mode and mdoe != self.midi_cc_mode:
+                    new_active_modes.append(mode)
+                elif mode == self.midi_cc_mode:
+                    new_active_modes.append(self.ddrm_tone_selector_mode)
+            self.active_modes = new_active_modes
+            self.midi_cc_mode.deactivate()
+            self.track_selection_mode.deactivate()
+            self.ddrm_tone_selector_mode.activate()
 
     def set_mode_for_xor_group(self, mode_to_set):
         '''This activates the mode_to_set, but makes sure that if any other modes are currently activated
