@@ -632,7 +632,7 @@ class DDRMToneSelectorMode(PyshaMode):
         NAME_ORGAN_2,
         NAME_GUITAR_2,
         NAME_FUNKY_2,
-        NAME_FUNKY_4
+        #NAME_FUNKY_4
     ]
 
     colors = {
@@ -665,12 +665,12 @@ class DDRMToneSelectorMode(PyshaMode):
     lower_row_selected = ''
 
     def should_be_enabled(self):
-        self.app.track_selection_mode.get_current_track_instrument_short_name() == "DDRM"
+        return self.app.track_selection_mode.get_current_track_instrument_short_name() == "DDRM"
 
     def get_should_show_next_prev(self):
-        show_prev = self.current_page == 1
-        show_next = self.current_page == 0
-        return show_prev, show_prev
+        show_prev = self.page_n == 1
+        show_next = self.page_n == 0
+        return show_prev, show_next
 
     def send_lower_row(self):
         if self.lower_row_selected in tone_selector_values:
@@ -693,7 +693,6 @@ class DDRMToneSelectorMode(PyshaMode):
 
     def update_buttons(self):
 
-        
         for count, name in enumerate(self.upper_row_button_names):
             try:
                 tone_name = self.upper_row_names[count + self.page_n * 8]
@@ -701,14 +700,14 @@ class DDRMToneSelectorMode(PyshaMode):
             except IndexError:
                 self.push.buttons.set_button_color(name, definitions.OFF_BTN_COLOR)
 
-        for count, name in enumerate(self.upper_lower_button_names):
+        for count, name in enumerate(self.lower_row_button_names):
             try:
                 tone_name = self.lower_row_names[count + self.page_n * 8]
                 self.push.buttons.set_button_color(name, self.colors[tone_name])
             except IndexError:
                 self.push.buttons.set_button_color(name, definitions.OFF_BTN_COLOR)
 
-        show_prev, show_prev = self.get_should_show_next_prev()
+        show_prev, show_next = self.get_should_show_next_prev()
         if show_prev:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_PAGE_LEFT, definitions.WHITE)
         else:
@@ -717,6 +716,7 @@ class DDRMToneSelectorMode(PyshaMode):
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_PAGE_RIGHT, definitions.WHITE)
         else:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_PAGE_RIGHT, definitions.BLACK)
+        
 
     def update_display(self, ctx, w, h):
 
@@ -727,46 +727,58 @@ class DDRMToneSelectorMode(PyshaMode):
             start = self.page_n * 8
 
             # Draw upper row
-            for i, name in enumerate(self.upper_row_names[start:]):
+            for i, name in enumerate(self.upper_row_names[start:][:8]):
                 if name == self.upper_row_selected:
                     background_color = self.colors[name]
                     font_color = definitions.BLACK
                 else:
                     background_color = definitions.BLACK
                     font_color = self.colors[name]
-                height = 20
-                top_offset = 10
-                show_text(ctx, i, top_offset, name.upper(), height=height, font_color=font_color, background_color=background_color)
+                height = 80
+                top_offset = 0
+                show_text(ctx, i, top_offset, name.replace('\n', ' ').upper(), height=height, font_color=font_color, background_color=background_color, font_size_percentage=0.2)
 
             # Draw lower row
-            for i, name in enumerate(self.lower_row_names[start:]):
-                if name == self.lower_row_selected:
-                    background_color = self.colors[name]
-                    font_color = definitions.BLACK
-                else:
-                    background_color = definitions.BLACK
-                    font_color = self.colors[name]
-                height = 20
-                top_offset = 40
-                show_text(ctx, i, top_offset, name.upper(), height=height, font_color=font_color, background_color=background_color)
+            for i, name in enumerate(self.lower_row_names[start:][:8]):
+                if name != NAME_FUNKY_4:
+                    if name == self.lower_row_selected:
+                        background_color = self.colors[name]
+                        font_color = definitions.BLACK
+                    else:
+                        background_color = definitions.BLACK
+                        font_color = self.colors[name]
+                    height = 80
+                    top_offset = 80
+                    show_text(ctx, i, top_offset, name.replace('\n', ' ').upper(), height=height, font_color=font_color, background_color=background_color, font_size_percentage=0.2)
  
     def on_button_pressed(self, button_name):
         if  button_name in self.upper_row_button_names:
+            start = self.page_n * 8
             button_idx = self.upper_row_button_names.index(button_name)
-            self.upper_row_selected = self.upper_row_names[button_idx]
-            self.send_upper_row()
+            try:
+                self.upper_row_selected = self.upper_row_names[button_idx + start]
+                self.send_upper_row()
+            except IndexError:
+                # Do nothing because the button has no assigned tone
+                pass
             return True
 
         elif button_name in self.lower_row_button_names:
+            start = self.page_n * 8
             button_idx = self.lower_row_button_names.index(button_name)
-            self.lower_row_selected = self.lower_row_names[button_idx]
-            self.send_lower_row()
+            try:
+                self.lower_row_selected = self.lower_row_names[button_idx + start]
+                self.send_lower_row()
+            except IndexError:
+                # Do nothing because the button has no assigned tone
+                pass
             return True
 
         elif button_name in [push2_python.constants.BUTTON_PAGE_LEFT, push2_python.constants.BUTTON_PAGE_RIGHT]:
-            show_prev, show_prev = self.get_should_show_next_prev()
+            show_prev, show_next = self.get_should_show_next_prev()
             if button_name == push2_python.constants.BUTTON_PAGE_LEFT and show_prev:
-                self.current_page = 0
+                self.page_n = 0
             elif button_name == push2_python.constants.BUTTON_PAGE_RIGHT and show_next:
-                self.current_page = 1
+                self.page_n = 1
+            self.app.buttons_need_update = True
             return True

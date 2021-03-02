@@ -22,6 +22,7 @@ from ddrm_tone_selector_mode import DDRMToneSelectorMode
 
 from display_utils import show_notification
 
+
 class PyshaApp(object):
 
     # midi
@@ -75,7 +76,7 @@ class PyshaApp(object):
         self.init_notes_midi_in()
 
         self.init_modes(settings)
-        
+
     def init_modes(self, settings):
         self.main_controls_mode = MainControlsMode(self, settings=settings)
         self.active_modes.append(self.main_controls_mode)
@@ -93,7 +94,7 @@ class PyshaApp(object):
         self.ddrm_tone_selector_mode = DDRMToneSelectorMode(self, settings=settings)
 
         self.settings_mode = SettingsMode(self, settings=settings)
-        
+
     def get_all_modes(self):
         return [getattr(self, element) for element in vars(self) if isinstance(getattr(self, element), definitions.PyshaMode)]
 
@@ -128,7 +129,7 @@ class PyshaApp(object):
             # Activate (replace midi cc and track selection mode by ddrm tone selector mode)
             new_active_modes = []
             for mode in self.active_modes:
-                if mode != self.track_selection_mode and mdoe != self.midi_cc_mode:
+                if mode != self.track_selection_mode and mode != self.midi_cc_mode:
                     new_active_modes.append(mode)
                 elif mode == self.midi_cc_mode:
                     new_active_modes.append(self.ddrm_tone_selector_mode)
@@ -144,7 +145,7 @@ class PyshaApp(object):
         automatically set'''
 
         if not self.is_mode_active(mode_to_set):
-        
+
             # First deactivate all existing modes for that xor group
             new_active_modes = []
             for mode in self.active_modes:
@@ -154,7 +155,7 @@ class PyshaApp(object):
                 else:
                     new_active_modes.append(mode)
             self.active_modes = new_active_modes
-            
+
             # Now add the mode to set to the active modes list and activate it
             new_active_modes.append(mode_to_set)
             mode_to_set.activate()
@@ -191,14 +192,14 @@ class PyshaApp(object):
 
     def set_melodic_mode(self):
         self.set_mode_for_xor_group(self.melodic_mode)
-    
+
     def set_rhythmic_mode(self):
         self.set_mode_for_xor_group(self.rhyhtmic_mode)
 
     def set_pyramid_track_triggering_mode(self):
         self.set_mode_for_xor_group(self.pyramid_track_triggering_mode)
-        
-    def unset_pyramid_track_triggering_mode(self):     
+
+    def unset_pyramid_track_triggering_mode(self):
         self.unset_mode_for_xor_group(self.pyramid_track_triggering_mode)
 
     def set_preset_selection_mode(self):
@@ -321,9 +322,9 @@ class PyshaApp(object):
     def midi_in_handler(self, msg):
         if hasattr(msg, 'channel'):  # This will rule out sysex and other "strange" messages that don't have channel info
             if self.midi_in_channel == -1 or msg.channel == self.midi_in_channel:   # If midi input channel is set to -1 (all) or a specific channel
-                
+
                 # Forward message to the main MIDI out
-                self.send_midi(msg)  
+                self.send_midi(msg)
 
                 # Forward the midi message to the active modes
                 for mode in self.active_modes:
@@ -367,7 +368,7 @@ class PyshaApp(object):
             w, h = push2_python.constants.DISPLAY_LINE_PIXELS, push2_python.constants.DISPLAY_N_LINES
             surface = cairo.ImageSurface(cairo.FORMAT_RGB16_565, w, h)
             ctx = cairo.Context(surface)
-            
+
             # Call all active modes to write to context
             for mode in self.active_modes:
                 mode.update_display(ctx, w, h)
@@ -379,7 +380,7 @@ class PyshaApp(object):
                     show_notification(ctx, self.notification_text, opacity=1 - time_since_notification_started/definitions.NOTIFICATION_TIME)
                 else:
                     self.notification_text = None
-            
+
             # Convert cairo data to numpy array and send to push
             buf = surface.get_data()
             frame = numpy.ndarray(shape=(h, w), dtype=numpy.uint16, buffer=buf).transpose()
@@ -387,9 +388,9 @@ class PyshaApp(object):
 
     def check_for_delayed_actions(self):
         # If MIDI not configured, make sure we try sending messages so it gets configured
-        if not self.push.midi_is_configured():  
+        if not self.push.midi_is_configured():
             self.push.configure_midi()
-        
+
         # Call dalyed actions in active modes
         for mode in self.active_modes:
             mode.check_for_delayed_actions()

@@ -65,6 +65,8 @@ class MainControlsMode(definitions.PyshaMode):
                 self.push.buttons.set_button_color(DDRM_TONE_SELECTION_MODE_BUTTON, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
             else:
                 self.push.buttons.set_button_color(DDRM_TONE_SELECTION_MODE_BUTTON, definitions.OFF_BTN_COLOR)
+        else:
+            self.push.buttons.set_button_color(DDRM_TONE_SELECTION_MODE_BUTTON, definitions.BLACK)
 
     def on_button_pressed(self, button_name):
         if button_name == MELODIC_RHYTHMIC_TOGGLE_BUTTON:
@@ -110,7 +112,6 @@ class MainControlsMode(definitions.PyshaMode):
                 self.app.buttons_need_update = True
             return True
 
-
     def on_button_released(self, button_name):
         if button_name == PYRAMID_TRACK_TRIGGERING_BUTTON:
             # Decide if short press or long press
@@ -151,4 +152,3 @@ class MainControlsMode(definitions.PyshaMode):
                 self.app.buttons_need_update = True
 
             return True
-            
