@@ -37,6 +37,7 @@ class PyshaApp(object):
     midi_in_tmp_device_idx = None  # This is to store device names while rotating encoders
 
     notes_midi_in = None  # MIDI input device only used to receive note messages and illuminate pads/keys
+    notes_midi_in_tmp_device_idx = None  # This is to store device names while rotating encoders
 
     # push
     push = None
@@ -71,9 +72,8 @@ class PyshaApp(object):
 
         self.init_midi_in(device_name=settings.get('default_midi_in_device_name', None))
         self.init_midi_out(device_name=settings.get('default_midi_out_device_name', None))
+        self.init_notes_midi_in(device_name=settings.get('default_notes_midi_in_device_name', None))
         self.init_push()
-
-        self.init_notes_midi_in()
 
         self.init_modes(settings)
 
@@ -214,6 +214,7 @@ class PyshaApp(object):
             'midi_out_default_channel': self.midi_out_channel,
             'default_midi_in_device_name': self.midi_in.name if self.midi_in is not None else None,
             'default_midi_out_device_name': self.midi_out.name if self.midi_out is not None else None,
+            'default_notes_midi_in_device_name': self.notes_midi_in.name if self.notes_midi_in is not None else None,
             'use_push2_display': self.use_push2_display,
             'target_frame_rate': self.target_frame_rate,
         }
@@ -271,16 +272,29 @@ class PyshaApp(object):
         if self.midi_out is None:
             print('Won\'t send MIDI to any device')
 
-    def init_notes_midi_in(self):
-        # Init notes midi in device
-        # If the devices can't be opened, leave it None
-        try:
-            midi_in_device_name_template = "MIDIFACE 2X2:MIDIFACE 2X2 MIDI 2"
-            for name in mido.get_input_names():
-                if midi_in_device_name_template.lower() in name.lower():
-                    self.notes_midi_in = mido.open_input(name, callback=self.notes_midi_in_handler)
-        except:
-            print('Could not init notes MIDI in device...')
+    def init_notes_midi_in(self, device_name=None):
+        print('Configuring notes MIDI in...')
+        self.available_midi_in_device_names = [name for name in mido.get_input_names() if 'Ableton Push' not in name]
+
+        if device_name is not None:
+            if self.notes_midi_in is not None:
+                self.notes_midi_in.callback = None  # Disable current callback (if any)
+            try:
+                self.notes_midi_in = mido.open_input(device_name)
+                self.notes_midi_in.callback = self.notes_midi_in_handler
+                print('Receiving notes MIDI in from "{0}"'.format(device_name))
+            except IOError:
+                print('Could not connect to notes MIDI input port "{0}"\nAvailable device names:'.format(device_name))
+                for name in self.available_midi_in_device_names:
+                    print(' - {0}'.format(name))
+        else:
+            if self.notes_midi_in is not None:
+                self.notes_midi_in.callback = None  # Disable current callback (if any)
+                self.notes_midi_in.close()
+                self.notes_midi_in = None
+
+        if self.notes_midi_in is None:
+            print('Could not configures notes MIDI input')
 
     def set_midi_in_channel(self, channel, wrap=False):
         self.midi_in_channel = channel
@@ -307,6 +321,12 @@ class PyshaApp(object):
             self.init_midi_out(self.available_midi_out_device_names[device_idx])
         else:
             self.init_midi_out(None)
+
+    def set_notes_midi_in_device_by_index(self, device_idx):
+        if device_idx >= 0 and device_idx < len(self.available_midi_in_device_names):
+            self.init_notes_midi_in(self.available_midi_in_device_names[device_idx])
+        else:
+            self.init_notes_midi_in(None)
 
     def send_midi(self, msg, use_original_msg_channel=False):
         # Unless we specifically say we want to use the original msg mnidi channel, set it to global midi out channel

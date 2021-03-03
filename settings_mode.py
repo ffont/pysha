@@ -24,6 +24,7 @@ class SettingsMode(definitions.PyshaMode):
     # - Midi device OUT
     # - Midi channel OUT
     # - Pyramidi channel
+    # - Notes Midi
     # - Rerun MIDI initial configuration
 
     # About panel
