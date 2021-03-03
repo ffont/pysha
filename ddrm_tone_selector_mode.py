@@ -735,7 +735,7 @@ class DDRMToneSelectorMode(PyshaMode):
                     font_color = self.colors[name]
                 height = 80
                 top_offset = 0
-                show_text(ctx, i, top_offset, name.replace('\n', ' ').upper(), height=height, font_color=font_color, background_color=background_color, font_size_percentage=0.2)
+                show_text(ctx, i, top_offset, name.upper(), height=height, font_color=font_color, background_color=background_color, font_size_percentage=0.2, center_vertically=True, center_horizontally=True)
 
             # Draw lower row
             for i, name in enumerate(self.lower_row_names[start:][:8]):
@@ -748,8 +748,8 @@ class DDRMToneSelectorMode(PyshaMode):
                         font_color = self.colors[name]
                     height = 80
                     top_offset = 80
-                    show_text(ctx, i, top_offset, name.replace('\n', ' ').upper(), height=height,
-                              font_color=font_color, background_color=background_color, font_size_percentage=0.2)
+                    show_text(ctx, i, top_offset, name.upper(), height=height,
+                              font_color=font_color, background_color=background_color, font_size_percentage=0.2, center_vertically=True, center_horizontally=True)
 
     def on_button_pressed(self, button_name):
         if button_name in self.upper_row_button_names:

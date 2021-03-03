@@ -32,7 +32,7 @@ def draw_text_at(ctx, x, y, text, font_size = 12, color=[1, 1, 1]):
     ctx.show_text(text)
 
 
-def show_text(ctx, x_part, pixels_from_top, text, height=20, font_color=definitions.WHITE, background_color=None, margin_left=4, font_size_percentage=0.8):
+def show_text(ctx, x_part, pixels_from_top, text, height=20, font_color=definitions.WHITE, background_color=None, margin_left=4, margin_top=4, font_size_percentage=0.8, center_vertically=True, center_horizontally=False):
     assert 0 <= x_part < 8
     assert type(x_part) == int
 
@@ -46,15 +46,23 @@ def show_text(ctx, x_part, pixels_from_top, text, height=20, font_color=definiti
 
     if background_color is not None:
         ctx.set_source_rgb(*definitions.get_color_rgb_float(background_color))
-        ctx.rectangle(x1, y1, part_w, y1 + height)
+        ctx.rectangle(x1, y1, part_w, height)
         ctx.fill()
     ctx.set_source_rgb(*definitions.get_color_rgb_float(font_color))
     ctx.select_font_face("Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
     font_size = round(int(height * font_size_percentage))
-    margin_top = (height - font_size) // 2
+    text_lines = text.split('\n')
+    n_lines = len(text_lines)
+    if center_vertically:
+        margin_top = (height - font_size * n_lines) // 2
     ctx.set_font_size(font_size)
-    ctx.move_to(x1 + margin_left, y1 + font_size + margin_top - 2)
-    ctx.show_text(text)
+    for i, line in enumerate(text_lines):
+        if center_horizontally:
+            (_, _, l_width, _, _, _) = ctx.text_extents(line)
+            ctx.move_to(x1 + part_w/2 - l_width/2, y1 + font_size * (i + 1) + margin_top - 2)
+        else:
+            ctx.move_to(x1 + margin_left, y1 + font_size * (i + 1) + margin_top - 2)
+        ctx.show_text(line)
 
     ctx.restore()
 
