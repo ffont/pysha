@@ -7,7 +7,7 @@ from melodic_mode import MelodicMode
 class SliceNotesMode(MelodicMode):
 
     start_note = 0
-    color_groups = [
+    color_groups = [  # NOTE: these color groups are currently not used
         definitions.GREEN,
         definitions.YELLOW,
         definitions.ORANGE,
@@ -31,7 +31,11 @@ class SliceNotesMode(MelodicMode):
             for j in range(0, 8):
                 corresponding_midi_note = self.pad_ij_to_midi_note([i, j])
                 midi_16_note_groups_idx = corresponding_midi_note // 16
-                cell_color = self.color_groups[midi_16_note_groups_idx]
+                #cell_color = self.color_groups[midi_16_note_groups_idx]
+                if midi_16_note_groups_idx % 2 == 0:
+                    cell_color = self.app.track_selection_mode.get_current_track_color()
+                else:
+                    cell_color = definitions.WHITE
                 if self.is_midi_note_being_played(corresponding_midi_note):
                     cell_color = definitions.NOTE_ON_COLOR
                 row_colors.append(cell_color)
