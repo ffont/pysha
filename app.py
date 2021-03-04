@@ -14,6 +14,7 @@ from melodic_mode import MelodicMode
 from track_selection_mode import TrackSelectionMode
 from pyramid_track_triggering_mode import PyramidTrackTriggeringMode
 from rhythmic_mode import RhythmicMode
+from slice_notes_mode import SliceNotesMode
 from settings_mode import SettingsMode
 from main_controls_mode import MainControlsMode
 from midi_cc_mode import MIDICCMode
@@ -83,6 +84,7 @@ class PyshaApp(object):
 
         self.melodic_mode = MelodicMode(self, settings=settings)
         self.rhyhtmic_mode = RhythmicMode(self, settings=settings)
+        self.slice_notes_mode = SliceNotesMode(self, settings=settings)
         self.set_melodic_mode()
 
         self.track_selection_mode = TrackSelectionMode(self, settings=settings)
@@ -181,13 +183,15 @@ class PyshaApp(object):
                 if mode_to_unset.xor_group == 'pads':
                     self.set_mode_for_xor_group(self.melodic_mode)
 
-    def toggle_melodic_rhythmic_modes(self):
+    def toggle_melodic_rhythmic_slice_modes(self):
         if self.is_mode_active(self.melodic_mode):
             self.set_rhythmic_mode()
         elif self.is_mode_active(self.rhyhtmic_mode):
+            self.set_slice_notes_mode()
+        elif self.is_mode_active(self.slice_notes_mode):
             self.set_melodic_mode()
         else:
-            # If none of melodic or rhythmic modes were active, enable melodic by default
+            # If none of melodic or rhythmic or slice modes were active, enable melodic by default
             self.set_melodic_mode()
 
     def set_melodic_mode(self):
@@ -195,6 +199,9 @@ class PyshaApp(object):
 
     def set_rhythmic_mode(self):
         self.set_mode_for_xor_group(self.rhyhtmic_mode)
+
+    def set_slice_notes_mode(self):
+        self.set_mode_for_xor_group(self.slice_notes_mode)
 
     def set_pyramid_track_triggering_mode(self):
         self.set_mode_for_xor_group(self.pyramid_track_triggering_mode)

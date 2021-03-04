@@ -2,6 +2,6 @@
     "instrument_name": "Source",
     "instrument_short_name": "SOURCE",
     "midi_channel": 5,
-    "default_layout": "lrhytmic",
+    "default_layout": "lrhythmic",
     "n_banks": 1
 }

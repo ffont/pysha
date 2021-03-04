@@ -23,11 +23,9 @@ class RhythmicMode(MelodicMode):
     def pad_ij_to_midi_note(self, pad_ij):
         return self.rhythmic_notes_matrix[pad_ij[0]][pad_ij[1]]
 
-    def deactivate(self):
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, definitions.BLACK)
-
-    def update_buttons(self):
-        self.update_accent_button()
+    def update_octave_buttons(self):
+        # Rhythmic does not have octave buttons
+        pass
 
     def update_pads(self):
         color_matrix = []
@@ -54,8 +52,9 @@ class RhythmicMode(MelodicMode):
         self.push.pads.set_pads_color(color_matrix)
 
     def on_button_pressed(self, button_name):
-        if button_name == push2_python.constants.BUTTON_ACCENT:
-            self.fixed_velocity_mode = not self.fixed_velocity_mode
-            self.app.buttons_need_update = True
-            self.app.pads_need_update = True
-            return True
+        if button_name == push2_python.constants.BUTTON_OCTAVE_UP or button_name == push2_python.constants.BUTTON_OCTAVE_DOWN:
+            # Don't react to octave up/down buttons as these are not used in rhythm mode
+            pass
+        else:
+            # For the other buttons, refer to the base class
+            super().on_button_pressed(button_name)

@@ -128,6 +128,8 @@ class TrackSelectionMode(definitions.PyshaMode):
             self.app.set_melodic_mode()
         elif self.get_current_track_info()['default_layout'] == definitions.LAYOUT_RHYTHMIC:
             self.app.set_rhythmic_mode()
+        elif self.get_current_track_info()['default_layout'] == definitions.LAYOUT_SLICES:
+            self.app.set_slice_notes_mode()
 
     def clean_currently_notes_being_played(self):
         if self.app.is_mode_active(self.app.melodic_mode):

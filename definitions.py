@@ -6,7 +6,8 @@ VERSION = '0.17'
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
 
 LAYOUT_MELODIC = 'lmelodic'
-LAYOUT_RHYTHMIC = 'lrhytmic'
+LAYOUT_RHYTHMIC = 'lrhythmic'
+LAYOUT_SLICES = 'lslices'
 
 NOTIFICATION_TIME = 3
 

@@ -1,5 +1,6 @@
 {
     "instrument_name": "Octatrack",
     "instrument_short_name": "OCTATRACK",
-    "n_banks": 1
+    "n_banks": 1,
+    "default_layout": "lslices"
 }

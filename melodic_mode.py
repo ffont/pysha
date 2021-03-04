@@ -164,22 +164,27 @@ class MelodicMode(definitions.PyshaMode):
             self.remove_note_being_played(msg.note, self.app.midi_in.name)
         self.app.pads_need_update = True
 
+    def update_octave_buttons(self):
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, definitions.WHITE)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, definitions.WHITE)
+
     def update_accent_button(self):
-        # Accent button has its own method so it can be reused in the rhythmic mode which inherits from melodic mode
         if self.fixed_velocity_mode:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, definitions.BLACK)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
         else:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_ACCENT, definitions.OFF_BTN_COLOR)
 
-    def update_buttons(self):
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_DOWN, definitions.WHITE)
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_OCTAVE_UP, definitions.WHITE)
+    def update_modulation_wheel_mode_button(self):
         if self.modulation_wheel_mode:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SHIFT, definitions.BLACK)
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SHIFT, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
         else:
             self.push.buttons.set_button_color(push2_python.constants.BUTTON_SHIFT, definitions.OFF_BTN_COLOR)
+
+    def update_buttons(self):
+        self.update_octave_buttons()
+        self.update_modulation_wheel_mode_button()
         self.update_accent_button()
 
     def update_pads(self):
