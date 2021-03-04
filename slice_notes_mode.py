@@ -30,7 +30,7 @@ class SliceNotesMode(MelodicMode):
             row_colors = []
             for j in range(0, 8):
                 corresponding_midi_note = self.pad_ij_to_midi_note([i, j])
-                midi_16_note_groups_idx = corresponding_midi_note % 16
+                midi_16_note_groups_idx = corresponding_midi_note // 16
                 cell_color = self.color_groups[midi_16_note_groups_idx]
                 if self.is_midi_note_being_played(corresponding_midi_note):
                     cell_color = definitions.NOTE_ON_COLOR

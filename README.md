@@ -142,6 +142,8 @@ WorkingDirectory=/home/pi/pysha
 ExecStart=/usr/bin/python3 /home/pi/pysha/app.py                                                
 StandardOutput=syslog
 User=pi
+Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
