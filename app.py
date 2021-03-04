@@ -472,7 +472,7 @@ class PyshaApp(object):
         # Configure custom color palette
         app.push.color_palette = {}
         for count, color_name in enumerate(definitions.COLORS_NAMES):
-            app.push.set_color_palette_entry(count, [color_name, color_name], rgb=definitions.get_color_rgb(color_name), allow_overwrite=True)
+            app.push.set_color_palette_entry(count, [color_name, color_name], rgb=definitions.get_color_rgb_float(color_name), allow_overwrite=True)
         app.push.reapply_color_palette()
 
         # Initialize all buttons to black, initialize all pads to off
