@@ -70,7 +70,7 @@ class MainControlsMode(definitions.PyshaMode):
 
     def on_button_pressed(self, button_name):
         if button_name == MELODIC_RHYTHMIC_TOGGLE_BUTTON:
-            self.app.toggle_melodic_rhythmic_modes()
+            self.app.toggle_melodic_rhythmic_slice_modes()
             self.app.pads_need_update = True
             self.app.buttons_need_update = True
             return True
