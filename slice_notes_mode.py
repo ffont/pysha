@@ -22,7 +22,7 @@ class SliceNotesMode(MelodicMode):
         return {}
 
     def pad_ij_to_midi_note(self, pad_ij):
-        return self.start_note + 8 * pad_ij[0] + pad_ij[1]
+        return self.start_note + 8 * (7 - pad_ij[0]) + pad_ij[1]
 
     def update_pads(self):
         color_matrix = []
