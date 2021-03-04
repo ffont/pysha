@@ -63,7 +63,7 @@ for name in COLORS_NAMES:
     if new_color_name not in COLORS_NAMES:
         to_add_in_color_names.append(new_color_name)
     new_color_rgb_name = f'{name}_darker1_rgb'
-    globals()[new_color_rgb_name.upper()] = list(darker_color)
+    globals()[new_color_rgb_name.upper()] = list([c * 255 for c in darker_color])
 
     # Create darker 2
     color_mod = 0.05  # < 1 means make colour darker, > 1 means make colour brighter
@@ -74,7 +74,7 @@ for name in COLORS_NAMES:
     if new_color_name not in COLORS_NAMES:
         to_add_in_color_names.append(new_color_name)
     new_color_rgb_name = f'{name}_darker2_rgb'
-    globals()[new_color_rgb_name.upper()] = list(darker_color)
+    globals()[new_color_rgb_name.upper()] = list([c * 255 for c in darker_color])
 
 COLORS_NAMES += to_add_in_color_names  # Update list of color names with darkified versiond of existing colors
 

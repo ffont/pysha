@@ -660,6 +660,13 @@ class DDRMToneSelectorMode(PyshaMode):
         NAME_FUNKY_4: definitions.GREEN
     }
 
+    font_colors = {
+        definitions.YELLOW: definitions.BLACK,
+        definitions.RED: definitions.WHITE,
+        definitions.WHITE: definitions.BLACK,
+        definitions.GREEN: definitions.WHITE
+    }
+
     page_n = 0
     upper_row_selected = ''
     lower_row_selected = ''
@@ -727,29 +734,28 @@ class DDRMToneSelectorMode(PyshaMode):
 
             # Draw upper row
             for i, name in enumerate(self.upper_row_names[start:][:8]):
+                font_color = self.font_colors[self.colors[name]]
                 if name == self.upper_row_selected:
                     background_color = self.colors[name]
-                    font_color = definitions.BLACK
                 else:
-                    background_color = definitions.BLACK
-                    font_color = self.colors[name]
+                    background_color = self.colors[name] + '_darker1'
                 height = 80
                 top_offset = 0
-                show_text(ctx, i, top_offset, name.upper(), height=height, font_color=font_color, background_color=background_color, font_size_percentage=0.2, center_vertically=True, center_horizontally=True)
+                show_text(ctx, i, top_offset, name.upper(), height=height, font_color=font_color, background_color=background_color,
+                          font_size_percentage=0.2, center_vertically=True, center_horizontally=True, rectangle_padding=1)
 
             # Draw lower row
             for i, name in enumerate(self.lower_row_names[start:][:8]):
                 if name != NAME_FUNKY_4:
+                    font_color = self.font_colors[self.colors[name]]
                     if name == self.lower_row_selected:
                         background_color = self.colors[name]
-                        font_color = definitions.BLACK
                     else:
-                        background_color = definitions.BLACK
-                        font_color = self.colors[name]
+                        background_color = self.colors[name] + '_darker1'
                     height = 80
                     top_offset = 80
                     show_text(ctx, i, top_offset, name.upper(), height=height,
-                              font_color=font_color, background_color=background_color, font_size_percentage=0.2, center_vertically=True, center_horizontally=True)
+                              font_color=font_color, background_color=background_color, font_size_percentage=0.2, center_vertically=True, center_horizontally=True, rectangle_padding=1)
 
     def on_button_pressed(self, button_name):
         if button_name in self.upper_row_button_names:

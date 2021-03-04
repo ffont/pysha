@@ -7,7 +7,7 @@ from melodic_mode import MelodicMode
 class SliceNotesMode(MelodicMode):
 
     start_note = 0
-    color_groups = [  # NOTE: these color groups are currently not used
+    color_groups = [
         definitions.GREEN,
         definitions.YELLOW,
         definitions.ORANGE,
