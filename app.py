@@ -466,6 +466,9 @@ class PyshaApp(object):
         # Do initial configuration of Push
         print('Doing initial Push config...')
 
+        # Force configure MIDI out (in case it wasn't...)
+        app.push.configure_midi_out()
+
         # Configure custom color palette
         app.push.color_palette = {}
         for count, color_name in enumerate(definitions.COLORS_NAMES):
@@ -582,11 +585,16 @@ def on_sustain_pedal(_, sustain_on):
        traceback.print_exc()
 
 
+midi_connected_received_before_app = False
+
+
 @push2_python.on_midi_connected()
 def on_midi_connected(_):
     try:
         app.on_midi_push_connection_established()
     except NameError as e:
+       global midi_connected_received_before_app
+       midi_connected_received_before_app = True
        print('Error:  {}'.format(str(e)))
        traceback.print_exc()
 
@@ -594,4 +602,8 @@ def on_midi_connected(_):
 # Run app main loop
 if __name__ == "__main__":
     app = PyshaApp()
+    if midi_connected_received_before_app:
+        # App received the "on_midi_connected" call before it was initialized. Do it now!
+        print('Missed MIDI initialization call, doing it now...')
+        app.on_midi_push_connection_established()
     app.run_loop()
