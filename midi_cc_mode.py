@@ -22,6 +22,7 @@ class MIDICCControl(object):
     vmax = 127
     get_color_func = None
     send_midi_func = None
+    value_labels_map = {}
 
     def __init__(self, cc_number, name, section_name, get_color_func, send_midi_func):
         self.cc_number = cc_number
@@ -40,7 +41,7 @@ class MIDICCControl(object):
         # Param value
         val_height = 30
         color = self.get_color_func()
-        show_text(ctx, x_part, margin_top + name_height, str(self.value), height=val_height, font_color=color)
+        show_text(ctx, x_part, margin_top + name_height, self.value_labels_map.get(str(self.value), str(self.value)), height=val_height, font_color=color)
 
         # Knob
         ctx.save()
@@ -124,6 +125,8 @@ class MIDICCMode(PyshaMode):
                     section_name = section['section']
                     for name, cc_number in section['controls']:
                         control = MIDICCControl(cc_number, name, section_name, self.get_current_track_color_helper, self.app.send_midi)
+                        if section.get('control_value_label_maps', {}).get(name, False):
+                            control.value_labels_map = section['control_value_label_maps'][name]
                         self.instrument_midi_control_ccs[instrument_short_name].append(control)
                 print('Loaded {0} MIDI cc mappings for instrument {1}'.format(len(self.instrument_midi_control_ccs[instrument_short_name]), instrument_short_name))
             else:
