@@ -670,7 +670,7 @@ class DDRMToneSelectorMode(PyshaMode):
     page_n = 0
     upper_row_selected = ''
     lower_row_selected = ''
-    inter_message_message_min_time = 0.03  # Wait 30ms after each messafe to DDRM
+    inter_message_message_min_time = 0.0  # Wait time after each message to DDRM
 
     def should_be_enabled(self):
         return self.app.track_selection_mode.get_current_track_instrument_short_name() == "DDRM"
