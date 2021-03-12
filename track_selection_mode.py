@@ -79,6 +79,7 @@ class TrackSelectionMode(definitions.PyshaMode):
                     'n_banks': instrument_data.get('n_banks', 1),
                     'bank_names': instrument_data.get('bank_names', None),
                     'default_layout': instrument_data.get('default_layout', definitions.LAYOUT_MELODIC),
+                    'illuminate_local_notes': instrument_data.get('illuminate_local_notes', True), 
                 })
             print('Created {0} tracks!'.format(len(self.tracks_info)))
         else:
@@ -91,6 +92,7 @@ class TrackSelectionMode(definitions.PyshaMode):
                         'midi_channel': -1,
                         'color': definitions.ORANGE,
                         'default_layout': definitions.LAYOUT_MELODIC,
+                        'illuminate_local_notes': True,
                     })
 
     def get_settings_to_save(self):

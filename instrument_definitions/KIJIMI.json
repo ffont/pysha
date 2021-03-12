@@ -1,6 +1,7 @@
 {
     "instrument_name": "Kijimi",
     "instrument_short_name": "KIJIMI",
+    "illuminate_local_notes": false,
     "midi_channel": 4,
     "n_banks": 11,
     "bank_names": [
