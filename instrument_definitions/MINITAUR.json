@@ -2,7 +2,7 @@
     "instrument_name": "Minitaur",
     "instrument_short_name": "MINITAUR",
     "illuminate_local_notes": false,
-    "midi_channel": 3,
+    "midi_channel": 2,
     "n_banks": 1,
     "midi_cc": [
         {
