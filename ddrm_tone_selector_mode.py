@@ -670,7 +670,7 @@ class DDRMToneSelectorMode(PyshaMode):
     page_n = 0
     upper_row_selected = ''
     lower_row_selected = ''
-    inter_message_message_min_time_ms = 0  # ms wait time after each message to DDRM
+    inter_message_message_min_time_ms = 4  # ms wait time after each message to DDRM
     send_messages_double = True  # This is a workaround for a DDRM bug that will ignore single CC messages. We'll send 2 messages in a row for the same control with slightly different values
 
     def should_be_enabled(self):
@@ -685,7 +685,7 @@ class DDRMToneSelectorMode(PyshaMode):
         if self.lower_row_selected in tone_selector_values:
             for _, midi_cc, midi_val in tone_selector_values[self.lower_row_selected]:
                 if self.send_messages_double:
-                    values_to_send = [midi_val + 1 % 128, midi_val]
+                    values_to_send = [(midi_val + 1) % 128, midi_val]
                 else:
                     values_to_send = [midi_val]
                 for val in values_to_send:
@@ -698,7 +698,7 @@ class DDRMToneSelectorMode(PyshaMode):
         if self.upper_row_selected in tone_selector_values:
             for midi_cc, _, midi_val in tone_selector_values[self.upper_row_selected]:
                 if self.send_messages_double:
-                    values_to_send = [midi_val + 1 % 128, midi_val]
+                    values_to_send = [(midi_val + 1) % 128, midi_val]
                 else:
                     values_to_send = [midi_val]
                 for val in values_to_send:
