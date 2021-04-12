@@ -670,7 +670,8 @@ class DDRMToneSelectorMode(PyshaMode):
     page_n = 0
     upper_row_selected = ''
     lower_row_selected = ''
-    inter_message_message_min_time = 0.0  # Wait time after each message to DDRM
+    inter_message_message_min_time_ms = 0  # ms wait time after each message to DDRM
+    send_messages_double = True  # This is a workaround for a DDRM bug that will ignore single CC messages. We'll send 2 messages in a row for the same control with slightly different values
 
     def should_be_enabled(self):
         return self.app.track_selection_mode.get_current_track_instrument_short_name() == "DDRM"
@@ -683,18 +684,28 @@ class DDRMToneSelectorMode(PyshaMode):
     def send_lower_row(self):
         if self.lower_row_selected in tone_selector_values:
             for _, midi_cc, midi_val in tone_selector_values[self.lower_row_selected]:
-                msg = mido.Message('control_change', control=midi_cc, value=midi_val)  # Should we subtract 1 from midi_cc because mido being 0-indexed?
-                self.app.send_midi(msg)
-                if self.inter_message_message_min_time:
-                    time.sleep(self.inter_message_message_min_time)
+                if self.send_messages_double:
+                    values_to_send = [midi_val + 1 % 128, midi_val]
+                else:
+                    values_to_send = [midi_val]
+                for val in values_to_send:
+                    msg = mido.Message('control_change', control=midi_cc, value=val)  # Should we subtract 1 from midi_cc because mido being 0-indexed?
+                    self.app.send_midi(msg)
+                    if self.inter_message_message_min_time_ms:
+                        time.sleep(self.inter_message_message_min_time_ms*1.0/1000)
 
     def send_upper_row(self):
         if self.upper_row_selected in tone_selector_values:
             for midi_cc, _, midi_val in tone_selector_values[self.upper_row_selected]:
-                msg = mido.Message('control_change', control=midi_cc, value=midi_val)  # Should we subtract 1 from midi_cc because mido being 0-indexed?
-                self.app.send_midi(msg)
-                if self.inter_message_message_min_time:
-                    time.sleep(self.inter_message_message_min_time)
+                if self.send_messages_double:
+                    values_to_send = [midi_val + 1 % 128, midi_val]
+                else:
+                    values_to_send = [midi_val]
+                for val in values_to_send:
+                    msg = mido.Message('control_change', control=midi_cc, value=val)  # Should we subtract 1 from midi_cc because mido being 0-indexed?
+                    self.app.send_midi(msg)
+                    if self.inter_message_message_min_time_ms:
+                        time.sleep(self.inter_message_message_min_time_ms*1.0/1000)
 
     def activate(self):
         self.update_buttons()
