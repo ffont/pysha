@@ -1,7 +1,7 @@
 import push2_python
 import colorsys
 
-VERSION = '0.21'
+VERSION = '0.22'
 
 DELAYED_ACTIONS_APPLY_TIME = 1.0  # Encoder changes won't be applied until this time has passed since last moved
 
@@ -125,7 +125,7 @@ class PyshaMode(object):
         pass
 
     # Method called when MIDI messages arrive from Pysha MIDI input
-    def on_midi_in(self, msg):
+    def on_midi_in(self, msg, source=None):
         pass
 
     # Push2 update methods
