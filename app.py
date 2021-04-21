@@ -337,11 +337,12 @@ class PyshaApp(object):
             self.midi_in_channel = 15 if not wrap else -1
 
     def set_midi_out_channel(self, channel, wrap=False):
+        # We use channel -1 for the "track setting" in which midi channel is taken from currently selected track
         self.midi_out_channel = channel
-        if self.midi_out_channel < 0:
-            self.midi_out_channel = 0 if not wrap else 15
+        if self.midi_out_channel < -1:
+            self.midi_out_channel = -1 if not wrap else 15
         elif self.midi_out_channel > 15:
-            self.midi_out_channel = 15 if not wrap else 0
+            self.midi_out_channel = 15 if not wrap else -1
 
     def set_midi_in_device_by_index(self, device_idx):
         if device_idx >= 0 and device_idx < len(self.available_midi_in_device_names):
@@ -362,9 +363,19 @@ class PyshaApp(object):
             self.init_notes_midi_in(None)
 
     def send_midi(self, msg, use_original_msg_channel=False):
-        # Unless we specifically say we want to use the original msg mnidi channel, set it to global midi out channel
+        # Unless we specifically say we want to use the original msg mnidi channel, set it to global midi out channel or to the channel of the current track
         if not use_original_msg_channel and hasattr(msg, 'channel'):
+            if self.midi_out_channel == -1:
+                # Send the message to the midi channel of the currently selected track (or to track 1 if selected track has no midi channel information)
+                track_midi_channel = self.track_selection_mode.get_current_track_info()['midi_channel']
+                if track_midi_channel == -1:
+                    midi_out_channel = 0
+                else:
+                    midi_out_channel = track_midi_channel - 1 # msg.channel is 0-indexed
+            else:
+                midi_out_channel = self.midi_out_channel    
             msg = msg.copy(channel=self.midi_out_channel)
+        
         if self.midi_out is not None:
             self.midi_out.send(msg)
 

@@ -219,7 +219,7 @@ class SettingsMode(definitions.PyshaMode):
                     if self.app.midi_out is None:
                         color = definitions.get_color_rgb_float(definitions.FONT_COLOR_DISABLED)
                     show_title(ctx, part_x, h, 'OUT CH')
-                    show_value(ctx, part_x, h, self.app.midi_out_channel + 1, color)
+                    show_value(ctx, part_x, h, self.app.midi_out_channel + 1 if self.app.midi_out_channel >= 0 else 'TR', color)
 
                 elif i == 4:  # Pyramidi out channel
                     show_title(ctx, part_x, h, 'PYRAMIDI CH')
