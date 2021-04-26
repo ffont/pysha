@@ -671,7 +671,7 @@ class DDRMToneSelectorMode(PyshaMode):
     upper_row_selected = ''
     lower_row_selected = ''
     inter_message_message_min_time_ms = 4  # ms wait time after each message to DDRM
-    send_messages_double = True  # This is a workaround for a DDRM bug that will ignore single CC messages. We'll send 2 messages in a row for the same control with slightly different values
+    send_messages_double = False  # This is a workaround for a DDRM bug that will ignore single CC messages. We'll send 2 messages in a row for the same control with slightly different values
 
     def should_be_enabled(self):
         return self.app.track_selection_mode.get_current_track_instrument_short_name() == "DDRM"
