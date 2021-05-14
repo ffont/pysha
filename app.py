@@ -74,7 +74,7 @@ class PyshaApp(object):
         else:
             settings = {}
 
-        self.shepherd_interface = ShepherdInterface()
+        self.shepherd_interface = ShepherdInterface(self)
 
         self.set_midi_in_channel(settings.get('midi_in_default_channel', 0))
         self.set_midi_out_channel(settings.get('midi_out_default_channel', 0))
