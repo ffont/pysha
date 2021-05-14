@@ -45,7 +45,7 @@ class MainControlsMode(definitions.PyshaMode):
             self.push.buttons.set_button_color(SETTINGS_BUTTON, definitions.OFF_BTN_COLOR)
 
         # Pyramid track triggering mode
-        if self.app.is_mode_active(self.app.pyramid_track_triggering_mode):
+        if self.app.is_mode_active(self.app.track_triggering_mode):
             self.push.buttons.set_button_color(PYRAMID_TRACK_TRIGGERING_BUTTON, definitions.BLACK)
             self.push.buttons.set_button_color(PYRAMID_TRACK_TRIGGERING_BUTTON, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
         else:
@@ -85,13 +85,13 @@ class MainControlsMode(definitions.PyshaMode):
             self.app.buttons_need_update = True
             return True
         elif button_name == PYRAMID_TRACK_TRIGGERING_BUTTON:
-            if self.app.is_mode_active(self.app.pyramid_track_triggering_mode):
+            if self.app.is_mode_active(self.app.track_triggering_mode):
                 # If already active, deactivate and set pressing time to None
-                self.app.unset_pyramid_track_triggering_mode()
+                self.app.unset_track_triggering_mode()
                 self.pyramid_track_triggering_button_pressing_time = None
             else:
                 # Activate track triggering mode and store time button pressed
-                self.app.set_pyramid_track_triggering_mode()
+                self.app.set_track_triggering_mode()
                 self.pyramid_track_triggering_button_pressing_time = time.time()
             self.app.buttons_need_update = True
             return True
@@ -128,7 +128,7 @@ class MainControlsMode(definitions.PyshaMode):
 
             if is_long_press:
                 # If long press, deactivate track triggering mode, else do nothing
-                self.app.unset_pyramid_track_triggering_mode()
+                self.app.unset_track_triggering_mode()
                 self.app.buttons_need_update = True
 
             return True
