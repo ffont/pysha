@@ -62,9 +62,18 @@ class ShepherdInterface(object):
             old_is_playing = self.parsed_state.get('isPlaying', False)
             old_is_recording = self.parsed_state.get('isRecording', False)
             self.parsed_state['isPlaying'] = parts[1] == "p"
-            self.parsed_state['isRecording'] = parts[2] == "y"
-            self.parsed_state['bpm'] = parts[3]
-            self.parsed_state['playhead'] = parts[4]
+            if 'clips' in self.parsed_state:
+                is_recording = False
+                for track_clips in self.parsed_state['clips']:
+                    for clip in track_clips:
+                        if 'r' in clip or 'w' in clip or 'W' in clip:
+                            is_recording = True
+                            break
+                self.parsed_state['isRecording'] = is_recording
+            else:
+                self.parsed_state['isRecording'] = False
+            self.parsed_state['bpm'] = parts[2]
+            self.parsed_state['playhead'] = parts[3]
             
             if old_is_playing != self.parsed_state['isPlaying'] or old_is_recording != self.parsed_state['isRecording']:
                 self.app.buttons_need_update = True
@@ -88,7 +97,6 @@ class ShepherdInterface(object):
                 self.parsed_state['clips'] = track_clips_state
                 self.app.pads_need_update = True
                 self.last_received_tracks_raw_state = state
-
     
     def track_select(self, track_number):
         self.osc_sender.send_message('/track/select', [track_number])

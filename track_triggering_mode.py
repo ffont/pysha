@@ -131,41 +131,29 @@ class TrackTriggeringMode(definitions.PyshaMode):
 
     def update_pads(self):
         # Update pads according to track state
-        '''
-        color_matrix = []
-        for i in range(0, 8):
-            row_colors = []
-            for j in range(0, 8):
-                track_num = self.pad_ij_to_track_num((i, j))
-                track_color = self.app.track_selection_mode.get_track_color(track_num)  # Track color
-                cell_color = track_color + '_darker2'  # Choose super darker version of track color
-                if self.track_has_content(track_num):
-                    cell_color = track_color + '_darker1'  # Choose darker version of track color
-                if self.track_is_playing(track_num):
-                    cell_color = track_color
-                row_colors.append(cell_color)
-            color_matrix.append(row_colors)
-        self.push.pads.set_pads_color(color_matrix)
-        '''
         color_matrix = []
         for i in range(0, 8):
             row_colors = []
             for j in range(0, 8):
                 state = self.app.shepherd_interface.get_clip_state(i, j)
-                cell_color = definitions.WHITE
+
+                if 'E' in state:
+                    cell_color = definitions.BLACK
+                else:
+                    cell_color = definitions.WHITE
 
                 if 'p' in state:
                     cell_color = definitions.GREEN
 
-                if 'w' in state or 'W' in state:
-                    cell_color = definitions.ORANGE
-                
-                if 'r' in state:
-                    cell_color = definitions.RED 
-
                 if 'c' in state or 'C' in state:
                     cell_color = definitions.YELLOW
-                  
+
+                if 'w' in state or 'W' in state:
+                    cell_color = definitions.ORANGE
+
+                if 'r' in state:
+                    cell_color = definitions.RED
+
                 row_colors.append(cell_color)
             color_matrix.append(row_colors)
         self.push.pads.set_pads_color(color_matrix)
