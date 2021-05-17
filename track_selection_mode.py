@@ -149,7 +149,7 @@ class TrackSelectionMode(definitions.PyshaMode):
 
     def select_track(self, track_idx):
         # Selects a track and activates its melodic/rhythmic layout
-        # Note that if this is called from a mode form the same xor group with melodic/rhythmic modes,
+        # Note that if this is called from a mode from the same xor group with melodic/rhythmic modes,
         # that other mode will be deactivated.
         self.selected_track = track_idx
         self.send_select_track(self.selected_track)

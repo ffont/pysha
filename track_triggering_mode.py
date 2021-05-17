@@ -82,20 +82,10 @@ class TrackTriggeringMode(definitions.PyshaMode):
         msg = mido.Message('control_change', control=track_num + 1, value=0, channel=self.pyramidi_channel)
         self.app.send_midi_to_pyramid(msg)
 
-        # Send clip stop in shepherd
-        shepherd_track = track_num // 8
-        shepherd_clip = track_num % 8
-        self.app.shepherd_interface.clip_play_stop(shepherd_track, shepherd_clip)
-
     def send_unmute_track(self, track_num):
         # Follows pyramidi specification (Pyramid configured to receive on ch 16)
         msg = mido.Message('control_change', control=track_num + 1, value=1, channel=self.pyramidi_channel)
         self.app.send_midi_to_pyramid(msg)
-
-        # Send clip play in shepherd
-        shepherd_track = track_num // 8
-        shepherd_clip = track_num % 8
-        self.app.shepherd_interface.clip_play_stop(shepherd_track, shepherd_clip)
 
     def activate(self):
         self.pad_pressing_states = {}
@@ -125,9 +115,11 @@ class TrackTriggeringMode(definitions.PyshaMode):
             self.push.buttons.set_button_color(self.track_selection_modifier_button, definitions.WHITE, animation=definitions.DEFAULT_ANIMATION)
 
         # Shepherd buttons
-        is_playing, is_recording = self.app.shepherd_interface.get_buttons_state()
+        is_playing, is_recording, metronome_on = self.app.shepherd_interface.get_buttons_state()
         self.push.buttons.set_button_color(push2_python.constants.BUTTON_PLAY, definitions.WHITE if not is_playing else definitions.GREEN)
-        self.push.buttons.set_button_color(push2_python.constants.BUTTON_STOP, definitions.WHITE if not is_recording else definitions.RED)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_RECORD, definitions.WHITE if not is_recording else definitions.RED)
+        self.push.buttons.set_button_color(push2_python.constants.BUTTON_METRONOME, definitions.BLACK if not metronome_on else definitions.WHITE)
+
 
     def update_pads(self):
         # Update pads according to track state
@@ -135,7 +127,7 @@ class TrackTriggeringMode(definitions.PyshaMode):
         for i in range(0, 8):
             row_colors = []
             for j in range(0, 8):
-                state = self.app.shepherd_interface.get_clip_state(i, j)
+                state = self.app.shepherd_interface.get_clip_state(j, i)
 
                 if 'E' in state:
                     cell_color = definitions.BLACK
@@ -183,10 +175,13 @@ class TrackTriggeringMode(definitions.PyshaMode):
 
         # Shepherd play/stop
         if button_name == push2_python.constants.BUTTON_PLAY:
-            self.app.shepherd_interface.global_play()
+            self.app.shepherd_interface.global_play_stop()
             return True # Prevent other modes to get this event
-        elif button_name == push2_python.constants.BUTTON_PLAY:
-            self.app.shepherd_interface.global_stop()
+        elif button_name == push2_python.constants.BUTTON_RECORD:
+            self.app.shepherd_interface.global_record()
+            return True  # Prevent other modes to get this event
+        elif button_name == push2_python.constants.BUTTON_METRONOME:
+            self.app.shepherd_interface.metronome_on_off()
             return True  # Prevent other modes to get this event
 
     def on_button_released(self, button_name):
@@ -196,11 +191,15 @@ class TrackTriggeringMode(definitions.PyshaMode):
 
     def on_encoder_rotated(self, encoder_name, increment):
         if encoder_name == push2_python.constants.ENCODER_TEMPO_ENCODER:
-            new_bpm = int(self.app.shepherd_interface.get_bpm()) + increment
+            new_bpm = int(self.app.shepherd_interface.get_bpm()) + increment * 2
             self.app.shepherd_interface.set_bpm(new_bpm)
             return True  # Prevent other modes to get this event
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
+
+        # Send clip stop in shepherd
+        self.app.shepherd_interface.clip_play_stop(pad_ij[1], pad_ij[0])
+
         if not self.track_selection_modifier_button_being_pressed:
             self.pad_pressing_states[pad_n] = time.time()  # Store time at which pad_n was pressed
             self.push.pads.set_pad_color(pad_ij, color=definitions.GREEN)
@@ -249,3 +248,4 @@ class TrackTriggeringMode(definitions.PyshaMode):
         
         self.app.pads_need_update = True
         return True  # Prevent other modes to get this event
+

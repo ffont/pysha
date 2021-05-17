@@ -61,6 +61,7 @@ class ShepherdInterface(object):
             parts = state.split(',')
             old_is_playing = self.parsed_state.get('isPlaying', False)
             old_is_recording = self.parsed_state.get('isRecording', False)
+            old_metronome_on = self.parsed_state.get('metronomeOn', False)
             self.parsed_state['isPlaying'] = parts[1] == "p"
             if 'clips' in self.parsed_state:
                 is_recording = False
@@ -74,8 +75,10 @@ class ShepherdInterface(object):
                 self.parsed_state['isRecording'] = False
             self.parsed_state['bpm'] = parts[2]
             self.parsed_state['playhead'] = parts[3]
+            self.parsed_state['metronomeOn'] = parts[4] == "p"
+            self.parsed_state['selectedTrack'] = parts[5]
             
-            if old_is_playing != self.parsed_state['isPlaying'] or old_is_recording != self.parsed_state['isRecording']:
+            if old_is_playing != self.parsed_state['isPlaying'] or old_is_recording != self.parsed_state['isRecording'] or old_metronome_on != self.parsed_state['metronomeOn']:
                 self.app.buttons_need_update = True
 
         elif state.startswith("tracks"):
@@ -93,6 +96,8 @@ class ShepherdInterface(object):
                     else:
                         if in_track:
                             current_track_clips_state.append(part)
+                if current_track_clips_state:
+                    track_clips_state.append(current_track_clips_state[1:])  # Add last one
 
                 self.parsed_state['clips'] = track_clips_state
                 self.app.pads_need_update = True
@@ -105,25 +110,33 @@ class ShepherdInterface(object):
         self.osc_sender.send_message('/clip/playStop', [track_number, clip_number])
 
     def get_clip_state(self, track_num, clip_num):
-        if self.parsed_state['clips']:
-            return self.parsed_state['clips'][track_num][clip_num]
+        if 'clips' in self.parsed_state:
+            try:
+                return self.parsed_state['clips'][track_num][clip_num]
+            except IndexError:
+                return "snE"
         else:
-            return 'sn'
+            return 'snE'
 
-    def global_play(self):
+    def global_play_stop(self):
         self.osc_sender.send_message('/transport/playStop', [])
 
     def global_record(self):
         self.osc_sender.send_message('/transport/recordOnOff', [])
 
+    def metronome_on_off(self):
+        self.osc_sender.send_message('/metronome/onOff', [])
+
     def get_buttons_state(self):
         is_playing = self.parsed_state.get('isPlaying', False)
         is_recording = self.parsed_state.get('isRecording', False)
-        return is_playing, is_recording
+        metronome_on = self.parsed_state.get('metronomeOn', False)
+        return is_playing, is_recording, metronome_on
 
     def get_bpm(self):
         return self.parsed_state.get('bpm', 120)
 
     def set_bpm(self, bpm):
         self.osc_sender.send_message('/transport/setBpm', [float(bpm)])
+
 
