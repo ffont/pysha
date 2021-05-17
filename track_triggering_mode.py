@@ -197,8 +197,13 @@ class TrackTriggeringMode(definitions.PyshaMode):
 
     def on_pad_pressed(self, pad_n, pad_ij, velocity):
 
-        # Send clip stop in shepherd
-        self.app.shepherd_interface.clip_play_stop(pad_ij[1], pad_ij[0])
+        
+        if not self.track_selection_modifier_button_being_pressed:
+            # Send clip play/stop in shepherd
+            self.app.shepherd_interface.clip_play_stop(pad_ij[1], pad_ij[0])
+        else:
+            # Send clip clear in shepherd
+            self.app.shepherd_interface.clip_clear(pad_ij[1], pad_ij[0])
 
         if not self.track_selection_modifier_button_being_pressed:
             self.pad_pressing_states[pad_n] = time.time()  # Store time at which pad_n was pressed

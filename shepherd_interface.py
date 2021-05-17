@@ -11,6 +11,7 @@ osc_receive_port = 9004
 tracks_state_fps = 4.0
 transport_state_fps = 10.0
 
+
 class ShepherdInterface(object):
 
     app = None
@@ -37,11 +38,11 @@ class ShepherdInterface(object):
         self.run_get_state_tracks_thread()
 
     def run_get_state_transport_thread(self):
-        self.state_transport_check_thread = threading.Thread(target=self.check_transport_state)        
+        self.state_transport_check_thread = threading.Thread(target=self.check_transport_state)
         self.state_transport_check_thread.start()
 
     def run_get_state_tracks_thread(self):
-        self.state_tracks_check_thread = threading.Thread(target=self.check_tracks_state)        
+        self.state_tracks_check_thread = threading.Thread(target=self.check_tracks_state)
         self.state_tracks_check_thread.start()
 
     def check_transport_state(self):
@@ -55,7 +56,7 @@ class ShepherdInterface(object):
             self.osc_sender.send_message('/state/tracks', [])
 
     def receive_state_from_shepherd(self, values):
-        
+
         state = values.decode("utf-8")
         if state.startswith("transport"):
             parts = state.split(',')
@@ -76,8 +77,12 @@ class ShepherdInterface(object):
             self.parsed_state['bpm'] = parts[2]
             self.parsed_state['playhead'] = parts[3]
             self.parsed_state['metronomeOn'] = parts[4] == "p"
-            self.parsed_state['selectedTrack'] = parts[5]
-            
+            self.parsed_state['selectedTrack'] = int(parts[5])
+
+            if (hasattr(self.app, 'track_selection_mode')):
+                if (self.app.track_selection_mode.selected_track != self.parsed_state['selectedTrack']):
+                    self.app.track_selection_mode.select_track(self.parsed_state['selectedTrack'])
+
             if old_is_playing != self.parsed_state['isPlaying'] or old_is_recording != self.parsed_state['isRecording'] or old_metronome_on != self.parsed_state['metronomeOn']:
                 self.app.buttons_need_update = True
 
@@ -102,12 +107,15 @@ class ShepherdInterface(object):
                 self.parsed_state['clips'] = track_clips_state
                 self.app.pads_need_update = True
                 self.last_received_tracks_raw_state = state
-    
+
     def track_select(self, track_number):
         self.osc_sender.send_message('/track/select', [track_number])
 
     def clip_play_stop(self, track_number, clip_number):
         self.osc_sender.send_message('/clip/playStop', [track_number, clip_number])
+
+    def clip_clear(self, track_number, clip_number):
+        self.osc_sender.send_message('/clip/clear', [track_number, clip_number])
 
     def get_clip_state(self, track_num, clip_num):
         if 'clips' in self.parsed_state:
@@ -138,5 +146,3 @@ class ShepherdInterface(object):
 
     def set_bpm(self, bpm):
         self.osc_sender.send_message('/transport/setBpm', [float(bpm)])
-
-

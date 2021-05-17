@@ -153,7 +153,7 @@ class TrackSelectionMode(definitions.PyshaMode):
         # that other mode will be deactivated.
         self.selected_track = track_idx
         self.send_select_track(self.selected_track)
-        self.load_current_default_layout()
+        #self.load_current_default_layout()
         self.clean_currently_notes_being_played()
         try:
             self.app.midi_cc_mode.new_track_selected()
