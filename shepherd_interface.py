@@ -78,6 +78,7 @@ class ShepherdInterface(object):
             self.parsed_state['playhead'] = parts[3]
             self.parsed_state['metronomeOn'] = parts[4] == "p"
             self.parsed_state['selectedTrack'] = int(parts[5])
+            self.parsed_state['selectedScene'] = int(parts[6])
 
             if (hasattr(self.app, 'track_selection_mode')):
                 if (self.app.track_selection_mode.selected_track != self.parsed_state['selectedTrack']):
@@ -117,6 +118,9 @@ class ShepherdInterface(object):
     def clip_clear(self, track_number, clip_number):
         self.osc_sender.send_message('/clip/clear', [track_number, clip_number])
 
+    def clip_double(self, track_number, clip_number):
+        self.osc_sender.send_message('/clip/double', [track_number, clip_number])
+
     def get_clip_state(self, track_num, clip_num):
         if 'clips' in self.parsed_state:
             try:
@@ -125,6 +129,12 @@ class ShepherdInterface(object):
                 return "snE"
         else:
             return 'snE'
+
+    def scene_play(self, scene_number):
+        self.osc_sender.send_message('/scene/play', [scene_number])
+
+    def scene_duplicate(self, scene_number):
+        self.osc_sender.send_message('/scene/duplicate', [scene_number])
 
     def global_play_stop(self):
         self.osc_sender.send_message('/transport/playStop', [])
@@ -140,6 +150,9 @@ class ShepherdInterface(object):
         is_recording = self.parsed_state.get('isRecording', False)
         metronome_on = self.parsed_state.get('metronomeOn', False)
         return is_playing, is_recording, metronome_on
+
+    def get_selected_scene(self):
+        return self.parsed_state.get('selectedScene', 0)
 
     def get_bpm(self):
         return self.parsed_state.get('bpm', 120)
