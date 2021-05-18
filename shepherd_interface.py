@@ -63,6 +63,7 @@ class ShepherdInterface(object):
             old_is_playing = self.parsed_state.get('isPlaying', False)
             old_is_recording = self.parsed_state.get('isRecording', False)
             old_metronome_on = self.parsed_state.get('metronomeOn', False)
+            old_selected_scene = self.parsed_state.get('selectedScene', 0)
             self.parsed_state['isPlaying'] = parts[1] == "p"
             if 'clips' in self.parsed_state:
                 is_recording = False
@@ -84,7 +85,10 @@ class ShepherdInterface(object):
                 if (self.app.track_selection_mode.selected_track != self.parsed_state['selectedTrack']):
                     self.app.track_selection_mode.select_track(self.parsed_state['selectedTrack'])
 
-            if old_is_playing != self.parsed_state['isPlaying'] or old_is_recording != self.parsed_state['isRecording'] or old_metronome_on != self.parsed_state['metronomeOn']:
+            if old_is_playing != self.parsed_state['isPlaying'] or \
+                old_is_recording != self.parsed_state['isRecording'] or \
+                    old_metronome_on != self.parsed_state['metronomeOn'] or \
+                        old_selected_scene != self.parsed_state['selectedScene']:
                 self.app.buttons_need_update = True
 
         elif state.startswith("tracks"):
