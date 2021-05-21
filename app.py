@@ -432,7 +432,7 @@ class PyshaApp(object):
 
     def init_push(self):
         print('Configuring Push...')
-        self.push = push2_python.Push2()
+        self.push = push2_python.Push2(run_simulator=platform.system() != "Linux")
         if platform.system() == "Linux":
             # When this app runs in Linux is because it is running on the Raspberrypi
             #  I've overved problems trying to reconnect many times withotu success on the Raspberrypi, resulting in
@@ -526,7 +526,11 @@ class PyshaApp(object):
         print('Doing initial Push config...')
 
         # Force configure MIDI out (in case it wasn't...)
-        app.push.configure_midi_out()
+        try:
+            app.push.configure_midi_out()
+        except push2_python.exceptions.Push2MIDIeviceNotFound:
+            # App can still run with simulator...
+            pass
 
         # Configure custom color palette
         app.push.color_palette = {}
@@ -534,6 +538,15 @@ class PyshaApp(object):
             app.push.set_color_palette_entry(count, [color_name, color_name], rgb=definitions.get_color_rgb_float(color_name), allow_overwrite=True)
         app.push.reapply_color_palette()
 
+        # Send color pallete to simulator (if running)
+        if app.push.simulator_controller is not None:
+            color_palete_for_simulator = {}
+            for count, color_name in enumerate(definitions.COLORS_NAMES):
+                rgb_color = definitions.get_color_rgb(color_name)
+                bw_color = (int(sum(rgb_color) / 3), int(sum(rgb_color) / 3), int(sum(rgb_color) / 3))
+                color_palete_for_simulator[count] = [rgb_color, bw_color]
+            app.push.simulator_controller.set_color_palette(color_palete_for_simulator)
+        
         # Initialize all buttons to black, initialize all pads to off
         app.push.buttons.set_all_buttons_color(color=definitions.BLACK)
         app.push.pads.set_all_pads_to_color(color=definitions.BLACK)
