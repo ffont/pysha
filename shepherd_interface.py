@@ -75,7 +75,7 @@ class ShepherdInterface(object):
                 self.parsed_state['isRecording'] = is_recording
             else:
                 self.parsed_state['isRecording'] = False
-            self.parsed_state['bpm'] = parts[2]
+            self.parsed_state['bpm'] = float(parts[2])
             self.parsed_state['playhead'] = parts[3]
             self.parsed_state['metronomeOn'] = parts[4] == "p"
             self.parsed_state['selectedTrack'] = int(parts[5])
