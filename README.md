@@ -1,6 +1,6 @@
 # Pysha
 
-**Pysha** is a Python 3 app to use **Push2 as a standalone MIDI controller**. It has manily been designed to work as a contorller for [Squarp's Pyramid](https://squarp.net/pyramid/), but it can also be used as a generic controller. To run Pysha, you just need to install Python requirements and run `app.py` on a computer connected to Push2 and with a MIDI interface to output messages.
+**Pysha** is a Python 3 app to use **Push2 as a standalone MIDI controller**. It has manily been designed to work as a controller for [Squarp's Pyramid](https://squarp.net/pyramid/), but it can also be used as a generic controller. To run Pysha, you just need to install Python requirements and run `app.py` on a computer connected to Push2 and with a MIDI interface to output messages.
 
 ```
 pip install -r requirements.txt
@@ -8,6 +8,9 @@ python app.py
 ```
 
 Pysha **can run on a Raspberry Pi** (see instructions below) so you can use Push2 as a standalone controller without your laptop around. Pysha is based on [push2-python](https://github.com/ffont/push2-python). `push2-python` requires [pyusb](https://github.com/pyusb/pyusb) which is based in [libusb](https://libusb.info/). You'll most probably need to manually install `libusb` for your operative system if `pip install -r requirements.txt` does not do it for you. Moreover, to draw on Push2's screen, Pysha uses [`pycairo`](https://github.com/pygobject/pycairo) Python package. You'll most probably also need to install [`cairo`](https://www.cairographics.org/) if `pip install -r requirements.txt` does not do it for you (see [this page](https://pycairo.readthedocs.io/en/latest/getting_started.html) for info on that). The name "Pysha" is some sort of blend of the names of the technologies/devices that are used.
+
+
+**NOTE**: Development for Pysha as a controller for Squarp's Pyramid has been abandoned and has evolved into [Shepherd](http://github.com/ffont/shepherd), a full "Raspberry Pi + Push 2" based MIDI sequencer which does not depend on any external piece of hardware.
 
 
 ## Features
